@@ -336,7 +336,7 @@ fun SharedTransitionScope.RoterFadenBottomNav(
                     .align(Alignment.BottomCenter)
                     .offset(x = navBarOffset)
                     .zIndex(100f)
-                    .shadow(16.dp, CircleShape, ambientColor = Color.Black.copy(alpha = 0.08f), spotColor = Color.Black.copy(alpha = 0.15f))
+                    .shadow(24.dp, CircleShape, ambientColor = Color.Black.copy(alpha = 0.15f), spotColor = Color.Black.copy(alpha = 0.3f))
                     .clip(CircleShape)
                     .background(navBarColor) // Frosted Cream Rot
                     .border(1.dp, navBarBorderColor, CircleShape)
@@ -418,7 +418,7 @@ fun SharedTransitionScope.RoterFadenBottomNav(
                                         resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(),
                                         boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 200f) }
                                     )
-                                    .shadow(12.dp, RoundedCornerShape(percent = 50), ambientColor = Color.Black.copy(alpha = 0.08f), spotColor = Color.Black.copy(alpha = 0.15f))
+                                    .shadow(16.dp, RoundedCornerShape(percent = 50), ambientColor = Color.Black.copy(alpha = 0.15f), spotColor = Color.Black.copy(alpha = 0.3f))
                                     .clip(RoundedCornerShape(percent = 50))
                                     .background(navBarColor)
                                     .border(1.dp, navBarBorderColor, RoundedCornerShape(percent = 50))
@@ -453,7 +453,7 @@ fun SharedTransitionScope.RoterFadenBottomNav(
                                         resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(),
                                         boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 200f) }
                                     )
-                                    .shadow(12.dp, RoundedCornerShape(percent = 50), ambientColor = Color.Black.copy(alpha = 0.08f), spotColor = Color.Black.copy(alpha = 0.15f))
+                                    .shadow(16.dp, RoundedCornerShape(percent = 50), ambientColor = Color.Black.copy(alpha = 0.15f), spotColor = Color.Black.copy(alpha = 0.3f))
                                     .clip(RoundedCornerShape(percent = 50))
                                     .background(navBarColor)
                                     .border(1.dp, navBarBorderColor, RoundedCornerShape(percent = 50))
@@ -490,7 +490,7 @@ fun SharedTransitionScope.RoterFadenBottomNav(
                             Box(
                                 modifier = Modifier
                                     .size(64.dp)
-                                    .shadow(16.dp, CircleShape, ambientColor = Color.Black.copy(alpha = 0.08f), spotColor = Color.Black.copy(alpha = 0.15f))
+                                    .shadow(24.dp, CircleShape, ambientColor = Color.Black.copy(alpha = 0.15f), spotColor = Color.Black.copy(alpha = 0.3f))
                                     .clip(CircleShape)
                                     .background(navBarColor)
                                     .border(1.dp, navBarBorderColor, CircleShape)

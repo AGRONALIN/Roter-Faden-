@@ -131,7 +131,7 @@ fun GlossaryDetailScreen(
                     .nestedScroll(nestedScrollConnection)
                     .background(ImmersivePillBg)
                     .padding(horizontal = 24.dp)
-                    .padding(top = 16.dp)
+                    .padding(top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 16.dp)
                     .verticalFadingEdge(topEdge = 20.dp, bottomEdge = 40.dp)
                     .verticalScroll(rememberScrollState())
             ) {

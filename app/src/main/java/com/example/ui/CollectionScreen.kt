@@ -134,7 +134,7 @@ fun CollectionScreen(
                 modifier = Modifier
                     .fillMaxSize()
             ) {
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 24.dp))
                 
                 // Top header - Title and settings icon
                 Row(
