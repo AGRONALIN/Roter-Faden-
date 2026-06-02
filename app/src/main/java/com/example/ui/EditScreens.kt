@@ -90,7 +90,7 @@ fun EditArgumentScreen(
                     .fillMaxSize()
                     .verticalFadingEdge(topEdge = 20.dp, bottomEdge = 100.dp)
                     .verticalScroll(rememberScrollState())
-                    .padding(top = padding.calculateTopPadding() + 80.dp)
+                    .padding(top = 80.dp)
                     .padding(horizontal = 24.dp, vertical = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(24.dp)
             ) {
@@ -157,7 +157,7 @@ fun EditArgumentScreen(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 8.dp)
+                .padding(top = 8.dp)
                 .padding(horizontal = 8.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
@@ -302,7 +302,7 @@ fun EditGlossaryScreen(
                     .fillMaxSize()
                     .verticalFadingEdge(topEdge = 20.dp, bottomEdge = 100.dp)
                     .verticalScroll(rememberScrollState())
-                    .padding(top = padding.calculateTopPadding() + 80.dp)
+                    .padding(top = 80.dp)
                     .padding(horizontal = 24.dp, vertical = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(24.dp)
             ) {
@@ -344,7 +344,7 @@ fun EditGlossaryScreen(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 8.dp)
+                .padding(top = 8.dp)
                 .padding(horizontal = 8.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = androidx.compose.ui.Alignment.CenterVertically

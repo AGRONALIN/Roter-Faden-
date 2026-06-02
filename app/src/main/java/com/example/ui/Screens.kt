@@ -104,7 +104,7 @@ fun HomeScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .verticalFadingEdge(topEdge = 20.dp, bottomEdge = 40.dp),
-                contentPadding = PaddingValues(top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 280.dp, bottom = 120.dp),
+                contentPadding = PaddingValues(top = 280.dp, bottom = 120.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 if (topRecentArguments.isEmpty() && topRecentGlossaries.isEmpty()) {
@@ -203,7 +203,7 @@ fun HomeScreen(
                     .align(Alignment.TopStart)
                     .fillMaxWidth()
                     .padding(
-                        top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 16.dp, 
+                        top = 16.dp, 
                         start = 12.dp,
                         end = 24.dp
                     ),
@@ -455,17 +455,18 @@ fun SearchScreen(
         }
     }
 
-    Scaffold(
-        containerColor = Color.Transparent
-    ) { padding ->
-        Box(modifier = Modifier.fillMaxSize()) {
+    with(sharedTransitionScope) {
+        Scaffold(
+            containerColor = Color.Transparent
+        ) { padding ->
+            Box(modifier = Modifier.fillMaxSize()) {
             LazyColumn(
                 state = listState,
                 modifier = Modifier
                     .fillMaxSize()
                     .verticalFadingEdge(topEdge = 20.dp, bottomEdge = 40.dp)
                     .padding(horizontal = 24.dp),
-                contentPadding = PaddingValues(top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 90.dp, bottom = 120.dp),
+                contentPadding = PaddingValues(top = 90.dp, bottom = 120.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 item {
@@ -538,7 +539,7 @@ fun SearchScreen(
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)
-                    .padding(top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 16.dp, start = 12.dp)
+                    .padding(top = 16.dp, start = 12.dp)
                     .whiteGlowPill(headerBgColor, headerBorderColor, headerGlowAlpha)
                     .padding(horizontal = 16.dp, vertical = 8.dp)
             ) {
@@ -553,6 +554,7 @@ fun SearchScreen(
             }
         }
     }
+}
 }
 
 @Composable

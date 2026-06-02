@@ -84,26 +84,10 @@ fun RoterFadenApp(viewModel: AppViewModel) {
             containerColor = Color.Transparent,
             modifier = Modifier.fillMaxSize()
                 .background(immersiveBg)
-                .drawBehind {
-                    val path1 = androidx.compose.ui.graphics.Path()
-                    path1.moveTo(size.width, 0f)
-                    path1.lineTo(size.width, size.height * 0.4f)
-                    path1.lineTo(size.width * 0.3f, 0f)
-                    path1.close()
-                    drawPath(path1, color = immersiveGreenColor.copy(alpha = 0.04f))
-
-                    val path3 = androidx.compose.ui.graphics.Path()
-                    path3.moveTo(0f, size.height * 0.2f)
-                    path3.lineTo(size.width * 0.5f, size.height * 0.45f)
-                    path3.lineTo(0f, size.height * 0.3f)
-                    path3.close()
-                    drawPath(path3, color = immersiveTextSec.copy(alpha = 0.02f))
-                }
-        ) { paddingValues ->
+        ) { _ ->
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(paddingValues)
             ) {
                 NavHost(
                     navController = navController,
@@ -283,7 +267,7 @@ fun RoterFadenApp(viewModel: AppViewModel) {
 
                 Box(modifier = Modifier
                     .fillMaxWidth()
-                    .height(WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 16.dp)
+                    .height(16.dp)
                     .zIndex(90f)
                     .background(Brush.verticalGradient(
                         colors = listOf(ImmersiveBackground, Color.Transparent)
@@ -352,7 +336,7 @@ fun SharedTransitionScope.RoterFadenBottomNav(
                     .align(Alignment.BottomCenter)
                     .offset(x = navBarOffset)
                     .zIndex(100f)
-                    .shadow(8.dp, CircleShape, ambientColor = Color.Black.copy(alpha = 0.05f), spotColor = Color.Black.copy(alpha = 0.1f))
+                    .shadow(16.dp, CircleShape, ambientColor = Color.Black.copy(alpha = 0.08f), spotColor = Color.Black.copy(alpha = 0.15f))
                     .clip(CircleShape)
                     .background(navBarColor) // Frosted Cream Rot
                     .border(1.dp, navBarBorderColor, CircleShape)
@@ -407,9 +391,10 @@ fun SharedTransitionScope.RoterFadenBottomNav(
             AnimatedVisibility(
                 visible = currentRoute != "search",
                 modifier = Modifier.align(Alignment.BottomEnd),
-                enter = androidx.compose.animation.slideInHorizontally(initialOffsetX = { -50 }, animationSpec = spring(stiffness = Spring.StiffnessLow, dampingRatio = Spring.DampingRatioNoBouncy)) + fadeIn(animationSpec = tween(300)),
-                exit = androidx.compose.animation.slideOutHorizontally(targetOffsetX = { -50 }, animationSpec = spring(stiffness = Spring.StiffnessLow, dampingRatio = Spring.DampingRatioNoBouncy)) + fadeOut(animationSpec = tween(300))
+                enter = androidx.compose.animation.slideInHorizontally(initialOffsetX = { -150 }, animationSpec = spring(stiffness = Spring.StiffnessLow, dampingRatio = Spring.DampingRatioNoBouncy)) + fadeIn(animationSpec = tween(300)),
+                exit = androidx.compose.animation.slideOutHorizontally(targetOffsetX = { -150 }, animationSpec = spring(stiffness = Spring.StiffnessLow, dampingRatio = Spring.DampingRatioNoBouncy)) + fadeOut(animationSpec = tween(300))
             ) {
+                val fabVisibilityScope = this
                 Column(
                     horizontalAlignment = Alignment.End,
                     verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -433,7 +418,7 @@ fun SharedTransitionScope.RoterFadenBottomNav(
                                         resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(),
                                         boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 200f) }
                                     )
-                                    .shadow(6.dp, RoundedCornerShape(percent = 50), ambientColor = Color.Black.copy(alpha = 0.05f), spotColor = Color.Black.copy(alpha = 0.1f))
+                                    .shadow(12.dp, RoundedCornerShape(percent = 50), ambientColor = Color.Black.copy(alpha = 0.08f), spotColor = Color.Black.copy(alpha = 0.15f))
                                     .clip(RoundedCornerShape(percent = 50))
                                     .background(navBarColor)
                                     .border(1.dp, navBarBorderColor, RoundedCornerShape(percent = 50))
@@ -468,7 +453,7 @@ fun SharedTransitionScope.RoterFadenBottomNav(
                                         resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(),
                                         boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 200f) }
                                     )
-                                    .shadow(6.dp, RoundedCornerShape(percent = 50), ambientColor = Color.Black.copy(alpha = 0.05f), spotColor = Color.Black.copy(alpha = 0.1f))
+                                    .shadow(12.dp, RoundedCornerShape(percent = 50), ambientColor = Color.Black.copy(alpha = 0.08f), spotColor = Color.Black.copy(alpha = 0.15f))
                                     .clip(RoundedCornerShape(percent = 50))
                                     .background(navBarColor)
                                     .border(1.dp, navBarBorderColor, RoundedCornerShape(percent = 50))
@@ -505,7 +490,7 @@ fun SharedTransitionScope.RoterFadenBottomNav(
                             Box(
                                 modifier = Modifier
                                     .size(64.dp)
-                                    .shadow(8.dp, CircleShape, ambientColor = Color.Black.copy(alpha = 0.05f), spotColor = Color.Black.copy(alpha = 0.1f))
+                                    .shadow(16.dp, CircleShape, ambientColor = Color.Black.copy(alpha = 0.08f), spotColor = Color.Black.copy(alpha = 0.15f))
                                     .clip(CircleShape)
                                     .background(navBarColor)
                                     .border(1.dp, navBarBorderColor, CircleShape)
