@@ -1,0 +1,6 @@
+{
+  "name": "Roter Faden",
+  "description": "Ein ablenkungsfreies Speicher- und Strukturwerkzeug für Debatten-Paare (Argument & Gegenargument) sowie ein intelligentes Glossar mit automatischer Begriffserkennung.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
