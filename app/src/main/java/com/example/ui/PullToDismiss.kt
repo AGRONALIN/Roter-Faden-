@@ -26,60 +26,10 @@ fun PullToDismissContainer(
     modifier: Modifier = Modifier,
     content: @Composable BoxScope.(nestedScrollConnection: NestedScrollConnection) -> Unit
 ) {
-    var offsetY by remember { mutableFloatStateOf(0f) }
-    var hasPopped by remember { mutableStateOf(false) }
-    val scope = rememberCoroutineScope()
-
-    val nestedScrollConnection = remember {
-        object : NestedScrollConnection {
-            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-                val delta = available.y
-                if (delta < 0 && offsetY > 0) {
-                    val consumed = minOf(-delta, offsetY)
-                    offsetY -= consumed
-                    return Offset(0f, -consumed)
-                }
-                return Offset.Zero
-            }
-
-            override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
-                if (available.y > 0) {
-                    offsetY += available.y
-                    return Offset(0f, available.y)
-                }
-                return Offset.Zero
-            }
-
-            override suspend fun onPreFling(available: Velocity): Velocity {
-                if (offsetY > 150f && !hasPopped) {
-                    hasPopped = true
-                    onDismiss()
-                    return available
-                } else if (offsetY > 0) {
-                    scope.launch {
-                        animate(
-                            initialValue = offsetY,
-                            targetValue = 0f,
-                            animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
-                        ) { value, _ ->
-                            offsetY = value
-                        }
-                    }
-                    return available
-                }
-                return super.onPreFling(available)
-            }
-        }
+    val dummyConnection = remember {
+        object : NestedScrollConnection {}
     }
-
-    val scaleRatio = 1f - (offsetY / 2500f).coerceIn(0f, 0.15f)
-
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .offset { IntOffset(0, offsetY.toInt()) }
-            .scale(scaleRatio)
-    ) {
-        content(nestedScrollConnection)
+    Box(modifier = modifier.fillMaxSize()) {
+        content(dummyConnection)
     }
 }

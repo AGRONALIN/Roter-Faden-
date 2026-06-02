@@ -65,10 +65,10 @@ fun HomeScreen(
 
     val isDarkTheme by viewModel.isDarkTheme.collectAsState()
     val listState = androidx.compose.foundation.lazy.rememberLazyListState()
-    val isScrolled by remember { derivedStateOf { listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 0 } }
-    val headerBgColor by androidx.compose.animation.animateColorAsState(if (isScrolled) Color.White.copy(alpha = 0.35f) else Color.Transparent)
-    val headerGlowAlpha by androidx.compose.animation.core.animateFloatAsState(if (isScrolled) 1f else 0f)
-    val headerBorderColor by androidx.compose.animation.animateColorAsState(if (isScrolled) ImmersiveBorder.copy(alpha = 0.4f) else ImmersiveBorder.copy(alpha = 0f))
+    val scrollAmount by remember { derivedStateOf { if (listState.firstVisibleItemIndex > 0) 1f else (listState.firstVisibleItemScrollOffset / 100f).coerceIn(0f, 1f) } }
+    val headerBgColor by androidx.compose.animation.animateColorAsState(Color.White.copy(alpha = scrollAmount * 0.95f))
+    val headerGlowAlpha by androidx.compose.animation.core.animateFloatAsState(scrollAmount)
+    val headerBorderColor = Color.Transparent
 
     DisposableEffect(Unit) {
         onDispose {
@@ -422,10 +422,10 @@ fun SearchScreen(
     val focusRequester = remember { FocusRequester() }
     val keyboardController = LocalSoftwareKeyboardController.current
     val listState = androidx.compose.foundation.lazy.rememberLazyListState()
-    val isScrolled by remember { derivedStateOf { listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 0 } }
-    val headerBgColor by androidx.compose.animation.animateColorAsState(if (isScrolled) Color.White.copy(alpha = 0.35f) else Color.Transparent)
-    val headerGlowAlpha by androidx.compose.animation.core.animateFloatAsState(if (isScrolled) 1f else 0f)
-    val headerBorderColor by androidx.compose.animation.animateColorAsState(if (isScrolled) ImmersiveBorder.copy(alpha = 0.4f) else ImmersiveBorder.copy(alpha = 0f))
+    val scrollAmount by remember { derivedStateOf { if (listState.firstVisibleItemIndex > 0) 1f else (listState.firstVisibleItemScrollOffset / 100f).coerceIn(0f, 1f) } }
+    val headerBgColor by androidx.compose.animation.animateColorAsState(Color.White.copy(alpha = scrollAmount * 0.95f))
+    val headerGlowAlpha by androidx.compose.animation.core.animateFloatAsState(scrollAmount)
+    val headerBorderColor = Color.Transparent
 
     DisposableEffect(Unit) {
         onDispose {
@@ -603,15 +603,4 @@ fun Modifier.whiteGlowPill(headerBgColor: Color, headerBorderColor: Color, heade
                 headerBgColor.copy(alpha = headerBgColor.alpha * 0.05f)
             )
         )
-    )
-    .border(
-        width = 1.dp,
-        brush = androidx.compose.ui.graphics.Brush.horizontalGradient(
-            colors = listOf(
-                headerBorderColor.copy(alpha = headerBorderColor.alpha * 0.05f),
-                headerBorderColor,
-                headerBorderColor.copy(alpha = headerBorderColor.alpha * 0.05f)
-            )
-        ),
-        shape = RoundedCornerShape(percent = 50)
     )
