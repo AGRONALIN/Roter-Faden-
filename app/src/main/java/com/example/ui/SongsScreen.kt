@@ -154,8 +154,7 @@ fun SongsScreen(
                         enter = fadeIn(),
                         exit = fadeOut(),
                         clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(0.dp)),
-                        resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
-                        boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 200f) }
+                        resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
                     )
             ) {
                 Row(
@@ -183,8 +182,7 @@ fun SongsScreen(
                             animatedVisibilityScope = animatedVisibilityScope,
                             enter = fadeIn(),
                             exit = fadeOut(),
-                            resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
-                            boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 200f) }
+                            resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
                         ),
                         style = MaterialTheme.typography.displaySmall.copy(
                             fontWeight = FontWeight.Black,

@@ -64,10 +64,10 @@ fun PullToDismissContainer(
                     return available
                 } else {
                     coroutineScope.launch {
-                        offsetY.animateTo(0f, spring(stiffness = Spring.StiffnessMediumLow))
+                        offsetY.animateTo(0f, spring(stiffness = Spring.StiffnessVeryLow))
                     }
                     coroutineScope.launch {
-                        offsetX.animateTo(0f, spring(stiffness = Spring.StiffnessMediumLow))
+                        offsetX.animateTo(0f, spring(stiffness = Spring.StiffnessVeryLow))
                     }
                 }
                 return Velocity.Zero
@@ -87,20 +87,20 @@ fun PullToDismissContainer(
                             onDismiss()
                         } else {
                             coroutineScope.launch {
-                                offsetY.animateTo(0f, spring(stiffness = Spring.StiffnessMediumLow))
+                                offsetY.animateTo(0f, spring(stiffness = Spring.StiffnessVeryLow))
                             }
                             coroutineScope.launch {
-                                offsetX.animateTo(0f, spring(stiffness = Spring.StiffnessMediumLow))
+                                offsetX.animateTo(0f, spring(stiffness = Spring.StiffnessVeryLow))
                             }
                         }
                     },
                     onDragCancel = {
                         isDragging = false
                         coroutineScope.launch {
-                            offsetY.animateTo(0f, spring(stiffness = Spring.StiffnessMediumLow))
+                            offsetY.animateTo(0f, spring(stiffness = Spring.StiffnessVeryLow))
                         }
                         coroutineScope.launch {
-                            offsetX.animateTo(0f, spring(stiffness = Spring.StiffnessMediumLow))
+                            offsetX.animateTo(0f, spring(stiffness = Spring.StiffnessVeryLow))
                         }
                     },
                     onDrag = { change, dragAmount ->

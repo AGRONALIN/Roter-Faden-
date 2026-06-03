@@ -244,9 +244,9 @@ fun CollectionScreen(
                     transitionSpec = {
                         val springSpec = androidx.compose.animation.core.spring<androidx.compose.ui.unit.IntOffset>(
                             dampingRatio = 0.8f,
-                            stiffness = 380f
+                            stiffness = 50f
                         )
-                        val fadeSpec = tween<Float>(300)
+                        val fadeSpec = tween<Float>(800)
 
                         if (targetState > initialState) {
                             (slideInHorizontally(

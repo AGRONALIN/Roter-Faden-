@@ -60,7 +60,7 @@ fun LiteratureDetailScreen(
                         exit = fadeOut(),
                         clipInOverlayDuringTransition = OverlayClip(androidx.compose.foundation.shape.RoundedCornerShape(cornerSize)),
                         resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
-                        boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 200f) }
+                        boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 100f) }
                     )
                     .clip(androidx.compose.foundation.shape.RoundedCornerShape(cornerSize))
                     .nestedScroll(nestedScrollConnection)
