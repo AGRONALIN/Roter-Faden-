@@ -122,7 +122,7 @@ fun ArgumentDetailScreen(
                             exit = fadeOut(),
                             clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(cornerSize)),
                             resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
-                            boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 380f) }
+                            boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 200f) }
                         )
                         .clip(RoundedCornerShape(cornerSize))
                         .nestedScroll(nestedScrollConnection)

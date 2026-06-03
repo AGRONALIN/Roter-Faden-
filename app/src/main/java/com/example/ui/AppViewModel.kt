@@ -21,7 +21,25 @@ data class TooltipState(
     val wordBounds: Rect = Rect.Zero
 )
 
+sealed class AppOverlay {
+    object None : AppOverlay()
+    data class ArgumentDetail(val argId: Int) : AppOverlay()
+    data class GlossaryDetail(val termId: Int) : AppOverlay()
+    data class LiteratureDetail(val litId: Int) : AppOverlay()
+    object Mediathek : AppOverlay()
+}
+
 class AppViewModel(private val repository: AppRepository) : ViewModel() {
+    private val _appOverlay = MutableStateFlow<AppOverlay>(AppOverlay.None)
+    val appOverlay: StateFlow<AppOverlay> = _appOverlay.asStateFlow()
+
+    fun setOverlay(overlay: AppOverlay) {
+        _appOverlay.value = overlay
+    }
+    
+    fun closeOverlay() {
+        _appOverlay.value = AppOverlay.None
+    }
     val isDarkTheme: MutableStateFlow<Boolean> = MutableStateFlow(false)
 
     fun toggleTheme() {

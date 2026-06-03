@@ -224,7 +224,8 @@ fun HomeScreen(
                                 animatedVisibilityScope = animatedVisibilityScope,
                                 enter = fadeIn(),
                                 exit = fadeOut(),
-                                resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
+                                resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
+                                boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 200f) }
                             )
                             .whiteGlowPill(headerBgColor, headerBorderColor, headerGlowAlpha)
                             .clip(RoundedCornerShape(percent = 50))
@@ -241,7 +242,8 @@ fun HomeScreen(
                             animatedVisibilityScope = animatedVisibilityScope,
                             enter = fadeIn(),
                             exit = fadeOut(),
-                            resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
+                            resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
+                            boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 200f) }
                         ),
                         style = MaterialTheme.typography.displayLarge.copy(
                             fontWeight = FontWeight.Black,
@@ -300,7 +302,7 @@ fun HomeScreen(
                                         exit = fadeOut(),
                                         clipInOverlayDuringTransition = OverlayClip(androidx.compose.foundation.shape.CircleShape),
                                         resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
-                                        boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 380f) }
+                                        boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 200f) }
                                     )
                                     .clip(androidx.compose.foundation.shape.CircleShape)
                                     .background(ImmersiveGreen)
@@ -349,7 +351,7 @@ fun ArgumentCard(
                     exit = fadeOut(),
                     clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(12.dp)),
                     resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
-                    boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 380f) }
+                    boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 200f) }
                 )
                 .background(if (isSelected) ImmersiveGreen.copy(alpha = 0.2f) else CreamRed, RoundedCornerShape(12.dp))
                 .clip(RoundedCornerShape(12.dp))
@@ -403,7 +405,7 @@ fun GlossaryCard(
                     exit = fadeOut(),
                     clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(12.dp)),
                     resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
-                    boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 380f) }
+                    boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 200f) }
                 )
                 .background(ImmersivePillBg, RoundedCornerShape(12.dp))
                 .clip(RoundedCornerShape(12.dp))
@@ -454,7 +456,7 @@ fun LiteratureCard(
                     exit = fadeOut(),
                     clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(12.dp)),
                     resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
-                    boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 380f) }
+                    boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 200f) }
                 )
                 .background(ImmersivePillBg, RoundedCornerShape(12.dp))
                 .clip(RoundedCornerShape(12.dp))

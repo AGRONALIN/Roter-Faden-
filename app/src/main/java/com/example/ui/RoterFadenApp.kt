@@ -63,6 +63,10 @@ import kotlinx.coroutines.launch
 import com.example.data.Argument
 import com.example.data.GlossaryItem
 import com.example.ui.theme.*
+import androidx.compose.animation.core.SeekableTransitionState
+import androidx.compose.animation.core.rememberTransition
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import kotlinx.coroutines.delay
 
 fun getTabIndex(route: String): Int {
@@ -79,6 +83,8 @@ fun getTabIndex(route: String): Int {
 fun RoterFadenApp(viewModel: AppViewModel) {
     val navController = rememberNavController()
     var currentTab by remember { mutableIntStateOf(0) }
+    val transitionState = remember { SeekableTransitionState(currentTab) }
+    val transition = rememberTransition(transitionState, label = "TabTransition")
     val coroutineScope = rememberCoroutineScope()
 
     SharedTransitionLayout {
@@ -99,32 +105,87 @@ fun RoterFadenApp(viewModel: AppViewModel) {
                     navController = navController,
                     startDestination = "main",
                     enterTransition = {
-                        fadeIn(animationSpec = tween(200))
+                        fadeIn(animationSpec = tween(400))
                     },
                     exitTransition = {
-                        fadeOut(animationSpec = tween(200))
+                        fadeOut(animationSpec = tween(400))
                     },
                     popEnterTransition = {
-                        fadeIn(animationSpec = tween(200))
+                        fadeIn(animationSpec = tween(400))
                     },
                     popExitTransition = {
-                        fadeOut(animationSpec = tween(200))
+                        fadeOut(animationSpec = tween(400))
                     }
                 ) {
                     composable("main") {
-                        AnimatedContent(
-                            targetState = currentTab,
+                        val screenWidth = with(LocalDensity.current) { LocalConfiguration.current.screenWidthDp.dp.toPx() }
+                        
+                        LaunchedEffect(currentTab) {
+                            if (transitionState.currentState != currentTab) {
+                                transitionState.animateTo(currentTab, animationSpec = tween(400))
+                            }
+                        }
+
+                        transition.AnimatedContent<Int>(
                             transitionSpec = {
                                 if (targetState > initialState) {
-                                    (slideInHorizontally(animationSpec = tween(300)) { width -> width } + fadeIn(animationSpec = tween(300))).togetherWith(
-                                        slideOutHorizontally(animationSpec = tween(300)) { width -> -width } + fadeOut(animationSpec = tween(300)))
+                                    (slideInHorizontally(animationSpec = tween(400)) { width -> width } + fadeIn(animationSpec = tween(400))).togetherWith(
+                                        slideOutHorizontally(animationSpec = tween(400)) { width -> -width } + fadeOut(animationSpec = tween(400)))
                                 } else {
-                                    (slideInHorizontally(animationSpec = tween(300)) { width -> -width } + fadeIn(animationSpec = tween(300))).togetherWith(
-                                        slideOutHorizontally(animationSpec = tween(300)) { width -> width } + fadeOut(animationSpec = tween(300)))
+                                    (slideInHorizontally(animationSpec = tween(400)) { width -> -width } + fadeIn(animationSpec = tween(400))).togetherWith(
+                                        slideOutHorizontally(animationSpec = tween(400)) { width -> width } + fadeOut(animationSpec = tween(400)))
                                 }
                             },
-                            label = "tab_animation"
-                        ) { page ->
+                            contentKey = { it },
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .pointerInput(Unit) {
+                                    var dragOffset = 0f
+                                    var target = currentTab
+                                    detectHorizontalDragGestures(
+                                        onDragStart = { dragOffset = 0f },
+                                        onDragEnd = {
+                                            val fraction = Math.abs(dragOffset) / screenWidth
+                                            coroutineScope.launch {
+                                                if (fraction > 0.3f && target != currentTab) {
+                                                    currentTab = target
+                                                    transitionState.animateTo(target, tween(400))
+                                                } else {
+                                                    transitionState.animateTo(currentTab, tween(400))
+                                                }
+                                            }
+                                        },
+                                        onDragCancel = {
+                                            coroutineScope.launch {
+                                                transitionState.animateTo(currentTab, tween(400))
+                                            }
+                                        },
+                                        onHorizontalDrag = { change, dragAmount -> 
+                                            // do not consume horizontally completely when inside forms/lists but it's ok for tabs here
+                                            dragOffset += dragAmount
+                                            
+                                            if (dragOffset < 0 && currentTab < 2) {
+                                                target = currentTab + 1
+                                            } else if (dragOffset > 0 && currentTab > 0) {
+                                                target = currentTab - 1
+                                            } else {
+                                                target = currentTab
+                                            }
+                                            
+                                            if (target != currentTab) {
+                                                val fraction = (Math.abs(dragOffset) / screenWidth).coerceIn(0f, 1f)
+                                                coroutineScope.launch {
+                                                    transitionState.seekTo(fraction = fraction, targetState = target)
+                                                }
+                                            } else {
+                                                 coroutineScope.launch {
+                                                    transitionState.snapTo(currentTab)
+                                                }
+                                            }
+                                        }
+                                    )
+                                }
+                        ) { page: Int ->
                             when (page) {
                                 0 -> HomeScreen(viewModel, navController, this@SharedTransitionLayout, this@AnimatedContent, onNavigateToSearch = { currentTab = 2 })
                                 1 -> CollectionScreen(viewModel, navController, this@SharedTransitionLayout, this@AnimatedContent)
