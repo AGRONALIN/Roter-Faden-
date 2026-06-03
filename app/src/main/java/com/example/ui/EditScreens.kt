@@ -157,7 +157,7 @@ fun EditArgumentScreen(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 8.dp)
+                .padding(top = padding.calculateTopPadding() + 8.dp)
                 .padding(horizontal = 8.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
@@ -344,7 +344,7 @@ fun EditGlossaryScreen(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 8.dp)
+                .padding(top = padding.calculateTopPadding() + 8.dp)
                 .padding(horizontal = 8.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
