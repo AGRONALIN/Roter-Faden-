@@ -254,7 +254,7 @@ fun HomeScreen(
                         .padding(start = 18.dp, end = 16.dp, top = 6.dp, bottom = 6.dp)
                 ) {
                     Text(
-                        text = "Setzt alle Herzen in Brand!",
+                        text = "Setzt eure Herzen in Brand!",
                         style = MaterialTheme.typography.titleMedium.copy(
                             color = ImmersiveTextSecondary,
                             fontWeight = FontWeight.Medium

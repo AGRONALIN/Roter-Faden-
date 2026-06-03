@@ -154,7 +154,7 @@ fun SongsScreen(
                                 exit = fadeOut(),
                                 resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds()
                             ).weight(1f),
-                            style = MaterialTheme.typography.displayLarge.copy(
+                            style = MaterialTheme.typography.headlineLarge.copy(
                                 fontWeight = FontWeight.Black,
                                 color = ImmersiveGreen
                             )

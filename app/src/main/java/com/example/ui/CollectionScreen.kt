@@ -138,117 +138,108 @@ fun CollectionScreen(
                 modifier = Modifier
                     .fillMaxSize()
             ) {
-                with(sharedTransitionScope) {
-                    Column(
-                        modifier = Modifier
-                            .renderInSharedTransitionScopeOverlay(zIndexInOverlay = 10f)
-                            .zIndex(10f)
-                            .background(ImmersiveBackground)
-                    ) {
-                        Spacer(modifier = Modifier.height(WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 24.dp))
-                        
-                        // Top header - Title and settings icon
-                        Row(
-                            modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                Spacer(modifier = Modifier.height(WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 24.dp))
+                
+                // Top header - Title and settings icon
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Alle Einträge", // Like Library
+                        style = MaterialTheme.typography.displayMedium.copy(
+                            fontWeight = FontWeight.Black,
+                            color = ImmersiveTextPrimary,
+                            letterSpacing = (-1).sp
+                        )
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Tabs / Chips
+                Row(
+                    modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 24.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    tabs.forEachIndexed { index, title ->
+                        val isSelected = selectedTabIndex == index
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(percent = 50))
+                                .background(if (isSelected) ImmersiveGreen else CreamRed)
+                                .bounceClick { selectedTabIndex = index }
+                                .padding(horizontal = 20.dp, vertical = 12.dp)
                         ) {
                             Text(
-                                text = "Alle Einträge", // Like Library
-                                style = MaterialTheme.typography.displayMedium.copy(
-                                    fontWeight = FontWeight.Black,
-                                    color = ImmersiveTextPrimary,
-                                    letterSpacing = (-1).sp
-                                )
+                                text = title.uppercase(),
+                                style = MaterialTheme.typography.labelLarge.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    letterSpacing = 1.sp
+                                ),
+                                color = if (isSelected) Color.White else ImmersiveGreen
                             )
                         }
-
-                        Spacer(modifier = Modifier.height(24.dp))
-
-                        // Tabs / Chips
-                        Row(
-                            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 24.dp),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            tabs.forEachIndexed { index, title ->
-                                val isSelected = selectedTabIndex == index
-                                Box(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(percent = 50))
-                                        .background(if (isSelected) ImmersiveGreen else CreamRed)
-                                        .bounceClick { selectedTabIndex = index }
-                                        .padding(horizontal = 20.dp, vertical = 12.dp)
-                                ) {
-                                    Text(
-                                        text = title.uppercase(),
-                                        style = MaterialTheme.typography.labelLarge.copy(
-                                            fontWeight = FontWeight.Bold,
-                                            letterSpacing = 1.sp
-                                        ),
-                                        color = if (isSelected) Color.White else ImmersiveGreen
-                                    )
-                                }
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        AnimatedVisibility(visible = isSelectionMode) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                // Left action button (Shuffle style used for Export)
-                                Box(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(percent = 50))
-                                        .background(ImmersiveGreen)
-                                        .bounceClick {
-                                            val dateFormat = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault())
-                                            val fileName = "debattenbank_export_${dateFormat.format(Date())}.json"
-                                            exportLauncher.launch(fileName)
-                                        }
-                                        .padding(horizontal = 16.dp, vertical = 12.dp)
-                                ) {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Icon(Icons.Filled.Upload, contentDescription = "Export", modifier = Modifier.size(20.dp), tint = ImmersiveOnGreen)
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Text("Export", fontWeight = FontWeight.Bold, color = ImmersiveOnGreen)
-                                    }
-                                }
-                                
-                                // Right icons
-                                Row(
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .clip(RoundedCornerShape(12.dp))
-                                            .background(Color.Red.copy(alpha = 0.2f))
-                                            .bounceClick { showDeleteDialog = true }
-                                            .padding(12.dp),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Icon(Icons.Filled.Delete, contentDescription = "Delete", modifier = Modifier.size(24.dp), tint = Color.Red)
-                                    }
-                                    Box(
-                                        modifier = Modifier
-                                            .clip(RoundedCornerShape(12.dp))
-                                            .background(ImmersiveDarkNav)
-                                            .bounceClick { selectedArgumentIds = emptySet() }
-                                            .padding(12.dp),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Icon(Icons.Filled.Close, contentDescription = "Cancel", modifier = Modifier.size(24.dp), tint = Color.White)
-                                    }
-                                }
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(24.dp))
                     }
                 }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                AnimatedVisibility(visible = isSelectionMode) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // Left action button (Shuffle style used for Export)
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(percent = 50))
+                                .background(ImmersiveGreen)
+                                .bounceClick {
+                                    val dateFormat = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault())
+                                    val fileName = "debattenbank_export_${dateFormat.format(Date())}.json"
+                                    exportLauncher.launch(fileName)
+                                }
+                                .padding(horizontal = 16.dp, vertical = 12.dp)
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Filled.Upload, contentDescription = "Export", modifier = Modifier.size(20.dp), tint = ImmersiveOnGreen)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Export", fontWeight = FontWeight.Bold, color = ImmersiveOnGreen)
+                            }
+                        }
+                        
+                        // Right icons
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(Color.Red.copy(alpha = 0.2f))
+                                    .bounceClick { showDeleteDialog = true }
+                                    .padding(12.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(Icons.Filled.Delete, contentDescription = "Delete", modifier = Modifier.size(24.dp), tint = Color.Red)
+                            }
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(ImmersiveDarkNav)
+                                    .bounceClick { selectedArgumentIds = emptySet() }
+                                    .padding(12.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(Icons.Filled.Close, contentDescription = "Cancel", modifier = Modifier.size(24.dp), tint = Color.White)
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
 
                 AnimatedContent(
                     modifier = Modifier.fillMaxSize().weight(1f).padding(horizontal = 24.dp).clipToBounds().verticalFadingEdge(topEdge = 20.dp, bottomEdge = 40.dp),
