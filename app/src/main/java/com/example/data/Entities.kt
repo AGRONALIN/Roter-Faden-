@@ -3,13 +3,6 @@ package com.example.data
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "songs")
-data class SongEntity(
-    @PrimaryKey val uriString: String,
-    val title: String,
-    val artist: String
-)
-
 @Entity(tableName = "arguments")
 data class Argument(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,

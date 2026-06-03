@@ -116,17 +116,17 @@ fun ArgumentDetailScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .sharedBounds(
-                            sharedContentState = rememberSharedContentState(key = "${sourceKey}-${argument.id}"),
+                            sharedContentState = rememberSharedContentState(key = "argument_${argument.id}"),
                             animatedVisibilityScope = animatedVisibilityScope,
                             enter = fadeIn(),
                             exit = fadeOut(),
                             clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(cornerSize)),
-                            resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(),
-                            boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 200f) }
+                            resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
+                            boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 380f) }
                         )
                         .clip(RoundedCornerShape(cornerSize))
                         .nestedScroll(nestedScrollConnection)
-                        .background(ImmersiveSurface)
+                        .background(Color.White)
                     .padding(horizontal = 24.dp)
                     .padding(top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 16.dp)
                     .verticalFadingEdge(topEdge = 20.dp, bottomEdge = 40.dp)

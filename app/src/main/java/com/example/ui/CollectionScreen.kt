@@ -43,9 +43,6 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 
-import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.zIndex
-
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun CollectionScreen(
@@ -242,12 +239,12 @@ fun CollectionScreen(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 AnimatedContent(
-                    modifier = Modifier.fillMaxSize().weight(1f).padding(horizontal = 24.dp).clipToBounds().verticalFadingEdge(topEdge = 20.dp, bottomEdge = 40.dp),
+                    modifier = Modifier.fillMaxSize().weight(1f).padding(horizontal = 24.dp).verticalFadingEdge(topEdge = 20.dp, bottomEdge = 40.dp),
                     targetState = selectedTabIndex,
                     transitionSpec = {
                         val springSpec = androidx.compose.animation.core.spring<androidx.compose.ui.unit.IntOffset>(
                             dampingRatio = 0.8f,
-                            stiffness = 300f
+                            stiffness = 380f
                         )
                         val fadeSpec = tween<Float>(300)
 
@@ -305,7 +302,7 @@ fun CollectionScreen(
                                                         }
                                                     } else {
                                                         viewModel.updateArgumentLastAccessed(argument)
-                                                        navController.navigate("argument_detail/${argument.id}")
+                                                        navController.navigate("argument_detail/${argument.id}?source=collection")
                                                     }
                                                 },
                                                 onLongClick = {
@@ -317,7 +314,8 @@ fun CollectionScreen(
                                                 },
                                                 isSelected = isSelected,
                                                 sharedTransitionScope = sharedTransitionScope,
-                                                animatedVisibilityScope = animatedVisibilityScope
+                                                animatedVisibilityScope = animatedVisibilityScope,
+                                                sourceKey = "collection"
                                             )
                                         }
                                     }
@@ -345,10 +343,11 @@ fun CollectionScreen(
                                                 item = item,
                                                 onClick = {
                                                     viewModel.updateGlossaryLastAccessed(item)
-                                                    navController.navigate("glossary_detail/${item.id}")
+                                                    navController.navigate("glossary_detail/${item.id}?source=collection")
                                                 },
                                                 sharedTransitionScope = sharedTransitionScope,
-                                                animatedVisibilityScope = animatedVisibilityScope
+                                                animatedVisibilityScope = animatedVisibilityScope,
+                                                sourceKey = "collection"
                                             )
                                         }
                                     }
@@ -375,10 +374,11 @@ fun CollectionScreen(
                                             LiteratureCard(
                                                 item = item,
                                                 onClick = {
-                                                    navController.navigate("literature_detail/${item.id}")
+                                                    navController.navigate("literature_detail/${item.id}?source=collection")
                                                 },
                                                 sharedTransitionScope = sharedTransitionScope,
-                                                animatedVisibilityScope = animatedVisibilityScope
+                                                animatedVisibilityScope = animatedVisibilityScope,
+                                                sourceKey = "collection"
                                             )
                                         }
                                     }

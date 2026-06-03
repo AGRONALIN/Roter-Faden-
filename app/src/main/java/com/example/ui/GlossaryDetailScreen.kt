@@ -119,13 +119,13 @@ fun GlossaryDetailScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .sharedBounds(
-                        sharedContentState = rememberSharedContentState(key = "gloss_${sourceKey}-${glossaryItem.id}"),
+                        sharedContentState = rememberSharedContentState(key = "glossary_${glossaryItem.id}"),
                         animatedVisibilityScope = animatedVisibilityScope,
                         enter = fadeIn(),
                         exit = fadeOut(),
                         clipInOverlayDuringTransition = OverlayClip(androidx.compose.foundation.shape.RoundedCornerShape(cornerSize)),
-                        resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(),
-                        boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 200f) }
+                        resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
+                        boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 380f) }
                     )
                     .clip(androidx.compose.foundation.shape.RoundedCornerShape(cornerSize))
                     .nestedScroll(nestedScrollConnection)

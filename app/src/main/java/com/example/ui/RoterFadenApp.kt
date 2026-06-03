@@ -99,24 +99,38 @@ fun RoterFadenApp(viewModel: AppViewModel) {
                     navController = navController,
                     startDestination = "main",
                     enterTransition = {
-                        fadeIn(animationSpec = tween(300)) + scaleIn(initialScale = 0.9f, animationSpec = spring(dampingRatio = 0.85f, stiffness = Spring.StiffnessMediumLow))
+                        fadeIn(animationSpec = tween(200))
                     },
                     exitTransition = {
-                        fadeOut(animationSpec = tween(300)) + scaleOut(targetScale = 1.1f, animationSpec = spring(dampingRatio = 0.85f, stiffness = Spring.StiffnessMediumLow))
+                        fadeOut(animationSpec = tween(200))
                     },
                     popEnterTransition = {
-                        fadeIn(animationSpec = tween(300)) + scaleIn(initialScale = 1.1f, animationSpec = spring(dampingRatio = 0.85f, stiffness = Spring.StiffnessMediumLow))
+                        fadeIn(animationSpec = tween(200))
                     },
                     popExitTransition = {
-                        fadeOut(animationSpec = tween(300)) + scaleOut(targetScale = 0.9f, animationSpec = spring(dampingRatio = 0.85f, stiffness = Spring.StiffnessMediumLow))
+                        fadeOut(animationSpec = tween(200))
                     }
                 ) {
                     composable("main") {
-                        HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize()) { page ->
+                        val currentTab = pagerState.currentPage
+                        
+                        AnimatedContent(
+                            targetState = currentTab,
+                            transitionSpec = {
+                                if (targetState > initialState) {
+                                    (slideInHorizontally(animationSpec = tween(300)) { width -> width } + fadeIn(animationSpec = tween(300))).togetherWith(
+                                        slideOutHorizontally(animationSpec = tween(300)) { width -> -width } + fadeOut(animationSpec = tween(300)))
+                                } else {
+                                    (slideInHorizontally(animationSpec = tween(300)) { width -> -width } + fadeIn(animationSpec = tween(300))).togetherWith(
+                                        slideOutHorizontally(animationSpec = tween(300)) { width -> width } + fadeOut(animationSpec = tween(300)))
+                                }
+                            },
+                            label = "tab_animation"
+                        ) { page ->
                             when (page) {
-                                0 -> HomeScreen(viewModel, navController, this@SharedTransitionLayout, this@composable)
-                                1 -> CollectionScreen(viewModel, navController, this@SharedTransitionLayout, this@composable)
-                                2 -> SearchScreen(viewModel, navController, this@SharedTransitionLayout, this@composable)
+                                0 -> HomeScreen(viewModel, navController, this@SharedTransitionLayout, this@AnimatedContent, onNavigateToSearch = { coroutineScope.launch { pagerState.animateScrollToPage(2) } })
+                                1 -> CollectionScreen(viewModel, navController, this@SharedTransitionLayout, this@AnimatedContent)
+                                2 -> SearchScreen(viewModel, navController, this@SharedTransitionLayout, this@AnimatedContent)
                             }
                         }
                     }
@@ -169,7 +183,7 @@ fun RoterFadenApp(viewModel: AppViewModel) {
                         }
                     }
                     composable("songs") {
-                        SongsScreen(viewModel, navController, this@SharedTransitionLayout, this@composable)
+                        SongsScreen(navController, this@SharedTransitionLayout, this@composable)
                     }
                     composable(
                         route = "literature_detail/{litId}?source={source}",
@@ -297,8 +311,8 @@ fun SharedTransitionScope.RoterFadenBottomNav(
     AnimatedVisibility(
         visible = isVisible,
         modifier = Modifier.zIndex(100f),
-        enter = androidx.compose.animation.slideInVertically(initialOffsetY = { it }, animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMediumLow)) + fadeIn(animationSpec = tween(300)),
-        exit = androidx.compose.animation.slideOutVertically(targetOffsetY = { it }, animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMediumLow)) + fadeOut(animationSpec = tween(300))
+        enter = androidx.compose.animation.slideInVertically(initialOffsetY = { it }, animationSpec = spring(dampingRatio = 0.8f, stiffness = 380f)) + fadeIn(animationSpec = tween(200)),
+        exit = androidx.compose.animation.slideOutVertically(targetOffsetY = { it }, animationSpec = spring(dampingRatio = 0.8f, stiffness = 380f)) + fadeOut(animationSpec = tween(200))
     ) {
         val animatedVisibilityScope = this
         Box(
@@ -316,7 +330,7 @@ fun SharedTransitionScope.RoterFadenBottomNav(
                 val navBarOffset by androidx.compose.animation.core.animateDpAsState(
                     targetValue = if (isFabVisible && !expanded) (-44).dp else 0.dp,
                     label = "navBarOffset",
-                    animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMediumLow)
+                    animationSpec = spring(dampingRatio = 0.8f, stiffness = 380f)
                 )
 
             // Nav Bar
@@ -376,8 +390,8 @@ fun SharedTransitionScope.RoterFadenBottomNav(
             AnimatedVisibility(
                 visible = pagerState.currentPage != 2,
                 modifier = Modifier.align(Alignment.BottomEnd),
-                enter = androidx.compose.animation.slideInHorizontally(initialOffsetX = { -150 }, animationSpec = spring(stiffness = Spring.StiffnessLow, dampingRatio = Spring.DampingRatioNoBouncy)) + fadeIn(animationSpec = tween(300)),
-                exit = androidx.compose.animation.slideOutHorizontally(targetOffsetX = { -150 }, animationSpec = spring(stiffness = Spring.StiffnessLow, dampingRatio = Spring.DampingRatioNoBouncy)) + fadeOut(animationSpec = tween(300))
+                enter = androidx.compose.animation.slideInHorizontally(initialOffsetX = { -150 }, animationSpec = spring(stiffness = 380f, dampingRatio = 0.8f)) + fadeIn(animationSpec = tween(200)),
+                exit = androidx.compose.animation.slideOutHorizontally(targetOffsetX = { -150 }, animationSpec = spring(stiffness = 380f, dampingRatio = 0.8f)) + fadeOut(animationSpec = tween(200))
             ) {
                 val fabVisibilityScope = this
                 Column(
@@ -387,7 +401,7 @@ fun SharedTransitionScope.RoterFadenBottomNav(
                     AnimatedVisibility(
                         visible = expanded,
                         enter = scaleIn(initialScale = 0.8f, animationSpec = spring(dampingRatio = 0.6f, stiffness = 500f)) + fadeIn(animationSpec = tween(200)),
-                        exit = scaleOut(targetScale = 0.8f, animationSpec = tween(200)) + fadeOut(animationSpec = tween(200))
+                        exit = scaleOut(targetScale = 0.8f, animationSpec = spring(dampingRatio = 0.8f, stiffness = 500f)) + fadeOut(animationSpec = tween(200))
                     ) {
                         Column(
                             verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -400,8 +414,8 @@ fun SharedTransitionScope.RoterFadenBottomNav(
                                         animatedVisibilityScope = animatedVisibilityScope,
                                         enter = fadeIn(),
                                         exit = fadeOut(),
-                                        resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(),
-                                        boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 200f) }
+                                        resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
+                                        boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 380f) }
                                     )
                                     .shadow(16.dp, RoundedCornerShape(percent = 50), ambientColor = Color.Black.copy(alpha = 0.15f), spotColor = Color.Black.copy(alpha = 0.3f))
                                     .clip(RoundedCornerShape(percent = 50))
@@ -435,8 +449,8 @@ fun SharedTransitionScope.RoterFadenBottomNav(
                                         animatedVisibilityScope = animatedVisibilityScope,
                                         enter = fadeIn(),
                                         exit = fadeOut(),
-                                        resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(),
-                                        boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 200f) }
+                                        resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
+                                        boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 380f) }
                                     )
                                     .shadow(16.dp, RoundedCornerShape(percent = 50), ambientColor = Color.Black.copy(alpha = 0.15f), spotColor = Color.Black.copy(alpha = 0.3f))
                                     .clip(RoundedCornerShape(percent = 50))
@@ -468,8 +482,8 @@ fun SharedTransitionScope.RoterFadenBottomNav(
                     Box(modifier = Modifier.size(64.dp), contentAlignment = Alignment.Center) {
                         androidx.compose.animation.AnimatedVisibility(
                             visible = !expanded,
-                            enter = scaleIn(animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMediumLow)) + fadeIn(),
-                            exit = scaleOut(animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMediumLow)) + fadeOut()
+                            enter = scaleIn(animationSpec = spring(dampingRatio = 0.8f, stiffness = 380f)) + fadeIn(),
+                            exit = scaleOut(animationSpec = spring(dampingRatio = 0.8f, stiffness = 380f)) + fadeOut()
                         ) {
                             val innerVisibilityScope = this
                             Box(
@@ -511,7 +525,7 @@ fun NavItem(
 ) {
     val backgroundColor by animateColorAsState(
         targetValue = if (isSelected) ImmersiveGreen else Color.Transparent,
-        animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
+        animationSpec = spring(dampingRatio = 0.8f, stiffness = 380f)
     )
     val contentColor by animateColorAsState(
         targetValue = if (isSelected) ImmersiveOnGreen else ImmersiveTextSecondary,
@@ -529,8 +543,8 @@ fun NavItem(
         Icon(icon, contentDescription = label, tint = contentColor)
         AnimatedVisibility(
             visible = isSelected,
-            enter = expandHorizontally(expandFrom = Alignment.Start, animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMediumLow)) + fadeIn(),
-            exit = shrinkHorizontally(shrinkTowards = Alignment.Start, animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMediumLow)) + fadeOut()
+            enter = expandHorizontally(expandFrom = Alignment.Start, animationSpec = spring(dampingRatio = 0.8f, stiffness = 380f)) + fadeIn(),
+            exit = shrinkHorizontally(shrinkTowards = Alignment.Start, animationSpec = spring(dampingRatio = 0.8f, stiffness = 380f)) + fadeOut()
         ) {
             Text(
                 text = label,

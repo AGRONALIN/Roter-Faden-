@@ -1,9 +1,8 @@
 package com.example.ui
 
-import android.content.Intent
+import android.media.MediaMetadataRetriever
 import android.media.MediaPlayer
 import android.net.Uri
-import android.provider.OpenableColumns
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
@@ -31,81 +30,112 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.example.data.SongEntity
 import com.example.ui.theme.*
 import kotlinx.coroutines.delay
+import java.util.UUID
+
+data class SongItem(val id: String, val title: String, val artist: String, val durationMs: Long, val uri: Uri)
 
 @OptIn(ExperimentalAnimationApi::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun SongsScreen(
-    viewModel: AppViewModel,
     navController: NavController,
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope
 ) {
     val context = LocalContext.current
-    val songs by viewModel.allSongs.collectAsState()
-
-    var currentlyPlaying by remember { mutableStateOf<SongEntity?>(null) }
+    var songs by remember { mutableStateOf<List<SongItem>>(emptyList()) }
+    var currentlyPlaying by remember { mutableStateOf<SongItem?>(null) }
     var isPlaying by remember { mutableStateOf(false) }
     var currentProgress by remember { mutableIntStateOf(0) }
-    var duration by remember { mutableIntStateOf(1) }
+    var isSeeking by remember { mutableStateOf(false) }
 
-    var mediaPlayer by remember { mutableStateOf<MediaPlayer?>(null) }
+    val mediaPlayer = remember { MediaPlayer() }
 
-    val filePickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.OpenDocument()
-    ) { uri: Uri? ->
-        uri?.let {
-            try {
-                context.contentResolver.takePersistableUriPermission(it, Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                var title = "Unknown Song"
-                context.contentResolver.query(it, null, null, null, null)?.use { cursor ->
-                    if (cursor.moveToFirst()) {
-                        val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
-                        if (nameIndex != -1) {
-                            title = cursor.getString(nameIndex)
-                        }
-                    }
-                }
-                viewModel.insertSong(SongEntity(it.toString(), title, "Lied"))
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
+    DisposableEffect(Unit) {
+        onDispose {
+            mediaPlayer.release()
         }
     }
 
-    DisposableEffect(currentlyPlaying) {
-        mediaPlayer?.release()
-        val mp = MediaPlayer()
+    LaunchedEffect(currentlyPlaying) {
         if (currentlyPlaying != null) {
             try {
-                mp.setDataSource(context, Uri.parse(currentlyPlaying!!.uriString))
-                mp.prepareAsync()
-                mp.setOnPreparedListener {
-                    duration = it.duration
-                    it.start()
-                    isPlaying = true
+                mediaPlayer.reset()
+                mediaPlayer.setDataSource(context, currentlyPlaying!!.uri)
+                mediaPlayer.prepare()
+                mediaPlayer.start()
+                isPlaying = true
+            } catch (e: Exception) {
+                e.printStackTrace()
+                isPlaying = false
+            }
+        } else {
+            mediaPlayer.reset()
+            isPlaying = false
+        }
+    }
+
+    LaunchedEffect(isPlaying, isSeeking) {
+        if (isPlaying && !isSeeking) {
+            try {
+                mediaPlayer.start()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+            while (isPlaying && !isSeeking) {
+                delay(200L)
+                try {
+                    if (mediaPlayer.isPlaying) {
+                        currentProgress = mediaPlayer.currentPosition
+                    }
+                } catch (e: Exception) {
+                    // Ignore illegal state
                 }
-                mp.setOnCompletionListener {
-                    isPlaying = false
-                    currentProgress = duration
+            }
+        } else if (!isPlaying && !isSeeking) {
+            try {
+                if (mediaPlayer.isPlaying) {
+                    mediaPlayer.pause()
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
             }
         }
-        mediaPlayer = mp
-
+    }
+    
+    DisposableEffect(mediaPlayer) {
+        mediaPlayer.setOnCompletionListener {
+            isPlaying = false
+            currentProgress = mediaPlayer.duration
+        }
         onDispose {
-            mp.release()
+            mediaPlayer.setOnCompletionListener(null)
         }
     }
 
-    LaunchedEffect(isPlaying) {
-        while (isPlaying) {
-            currentProgress = mediaPlayer?.currentPosition ?: 0
-            delay(100L)
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        if (uri != null) {
+            try {
+                val retriever = MediaMetadataRetriever()
+                retriever.setDataSource(context, uri)
+                val title = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE) ?: "Unbekannter Titel"
+                val artist = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST) ?: "Unbekannter Künstler"
+                val durationStr = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
+                val duration = durationStr?.toLongOrNull() ?: 0L
+                retriever.release()
+                
+                val newSong = SongItem(
+                    id = UUID.randomUUID().toString(),
+                    title = title,
+                    artist = artist,
+                    durationMs = duration,
+                    uri = uri
+                )
+                songs = songs + newSong
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
     }
 
@@ -118,123 +148,125 @@ fun SongsScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(ImmersivePillBg)
-                    .padding(top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 16.dp)
+                    .sharedBounds(
+                        sharedContentState = rememberSharedContentState(key = "roter_faden_header"),
+                        animatedVisibilityScope = animatedVisibilityScope,
+                        enter = fadeIn(),
+                        exit = fadeOut(),
+                        clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(0.dp)),
+                        resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
+                    )
             ) {
-                Box(
-                    modifier = Modifier.fillMaxWidth().padding(start = 12.dp, end = 24.dp)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(
+                            top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 24.dp,
+                            start = 12.dp, 
+                            end = 24.dp,
+                            bottom = 16.dp
+                        ),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .sharedBounds(
-                                sharedContentState = rememberSharedContentState(key = "roter_faden_header"),
-                                animatedVisibilityScope = animatedVisibilityScope,
-                                enter = fadeIn(),
-                                exit = fadeOut(),
-                                clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(50)),
-                                resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds()
-                            )
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                    BounceIconButton(
+                        onClick = { navController.popBackStack() },
+                        modifier = Modifier.size(48.dp).clip(CircleShape)
                     ) {
-                        BounceIconButton(
-                            onClick = { navController.popBackStack() },
-                            modifier = Modifier.clip(CircleShape).background(ImmersivePillBg)
-                        ) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Zurück", tint = ImmersiveTextPrimary)
-                        }
-                        Spacer(modifier = Modifier.width(16.dp))
-                        Text(
-                            text = "Mediathek",
-                            modifier = Modifier.sharedBounds(
-                                sharedContentState = rememberSharedContentState(key = "roter_faden_title"),
-                                animatedVisibilityScope = animatedVisibilityScope,
-                                enter = fadeIn(),
-                                exit = fadeOut(),
-                                resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds()
-                            ).weight(1f),
-                            style = MaterialTheme.typography.headlineLarge.copy(
-                                fontWeight = FontWeight.Black,
-                                color = ImmersiveGreen
-                            )
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Zurück", tint = ImmersiveTextPrimary)
+                    }
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "Mediathek",
+                        modifier = Modifier.sharedBounds(
+                            sharedContentState = rememberSharedContentState(key = "roter_faden_title"),
+                            animatedVisibilityScope = animatedVisibilityScope,
+                            enter = fadeIn(),
+                            exit = fadeOut(),
+                            resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
+                        ),
+                        style = MaterialTheme.typography.displaySmall.copy(
+                            fontWeight = FontWeight.Black,
+                            color = ImmersiveGreen
                         )
-                        BounceIconButton(
-                            onClick = { filePickerLauncher.launch(arrayOf("audio/*")) },
-                            modifier = Modifier.clip(CircleShape).background(ImmersiveGreen)
-                        ) {
-                            Icon(Icons.Filled.Add, contentDescription = "Hinzufügen", tint = ImmersiveOnGreen)
-                        }
+                    )
+                    Spacer(modifier = Modifier.weight(1f))
+                    BounceIconButton(
+                        onClick = { launcher.launch("audio/*") },
+                        modifier = Modifier.size(48.dp).clip(CircleShape).background(ImmersiveGreen)
+                    ) {
+                        Icon(Icons.Filled.Add, contentDescription = "Lied hinzufügen", tint = Color.White)
                     }
                 }
 
-                if (songs.isEmpty()) {
-                    Box(modifier = Modifier.fillMaxSize().padding(bottom = 120.dp), contentAlignment = Alignment.Center) {
-                        Text("Noch keine Lieder hinzugefügt.", color = ImmersiveTextSecondary)
-                    }
-                } else {
-                    LazyColumn(
-                        modifier = Modifier.weight(1f).padding(horizontal = 24.dp),
-                        contentPadding = PaddingValues(bottom = 120.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        item { Spacer(modifier = Modifier.height(8.dp)) }
-                        itemsIndexed(songs) { _, song ->
-                            val isThisPlaying = currentlyPlaying == song
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .background(if (isThisPlaying) ImmersiveSurface else Color.Transparent)
-                                    .bounceClick {
-                                        if (currentlyPlaying == song) {
-                                            if (isPlaying) mediaPlayer?.pause() else mediaPlayer?.start()
-                                            isPlaying = !isPlaying
-                                        } else {
-                                            currentlyPlaying = song
-                                        }
-                                    }
-                                    .padding(16.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(48.dp)
-                                        .clip(CircleShape)
-                                        .background(CreamRed),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    if (isThisPlaying && isPlaying) {
-                                        Icon(Icons.Filled.Pause, contentDescription = "Pause", tint = ImmersiveGreen)
+                LazyColumn(
+                    modifier = Modifier.weight(1f).padding(horizontal = 24.dp),
+                    contentPadding = PaddingValues(bottom = 120.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    item { Spacer(modifier = Modifier.height(8.dp)) }
+                    itemsIndexed(songs) { _, song ->
+                        val isThisPlaying = currentlyPlaying == song
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(if (isThisPlaying) ImmersiveSurface else Color.Transparent)
+                                .bounceClick {
+                                    if (currentlyPlaying == song) {
+                                        isPlaying = !isPlaying
                                     } else {
-                                        Icon(Icons.Filled.PlayArrow, contentDescription = "Play", tint = ImmersiveGreen)
+                                        currentlyPlaying = song
+                                        currentProgress = 0
+                                        isPlaying = true
                                     }
                                 }
-                                Spacer(modifier = Modifier.width(16.dp))
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        text = song.title,
-                                        style = MaterialTheme.typography.bodyLarge.copy(
-                                            fontWeight = FontWeight.Bold,
-                                            color = ImmersiveTextPrimary
-                                        )
-                                    )
-                                    Text(
-                                        text = song.artist,
-                                        style = MaterialTheme.typography.bodyMedium.copy(
-                                            color = ImmersiveTextSecondary
-                                        )
-                                    )
+                                .padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(48.dp)
+                                    .clip(CircleShape)
+                                    .background(CreamRed),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                if (isThisPlaying && isPlaying) {
+                                    Icon(Icons.Filled.Pause, contentDescription = "Pause", tint = ImmersiveGreen)
+                                } else {
+                                    Icon(Icons.Filled.PlayArrow, contentDescription = "Play", tint = ImmersiveGreen)
                                 }
-                                IconButton(onClick = { viewModel.deleteSong(song) }) {
-                                    Icon(Icons.Filled.Delete, contentDescription = "Löschen", tint = Color.Red.copy(alpha = 0.5f))
+                            }
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                val displayTitle = if (song.artist.isNotEmpty() && song.artist != "Unbekannter Künstler") "${song.artist} - ${song.title}" else song.title
+                                Text(
+                                    text = displayTitle,
+                                    style = MaterialTheme.typography.bodyLarge.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        color = ImmersiveTextPrimary
+                                    )
+                                )
+                                Text(
+                                    text = "Lied",
+                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                        color = ImmersiveTextSecondary
+                                    )
+                                )
+                            }
+                            IconButton(onClick = {
+                                if (currentlyPlaying == song) {
+                                    currentlyPlaying = null
+                                    isPlaying = false
                                 }
+                                songs = songs.filter { it.id != song.id }
+                            }) {
+                                Icon(Icons.Filled.Delete, contentDescription = "Löschen", tint = ImmersiveGreen.copy(alpha = 0.6f))
                             }
                         }
                     }
                 }
             }
-
+            
             // Player bar at bottom
             Box(modifier = Modifier.align(Alignment.BottomCenter)) {
                 AnimatedVisibility(
@@ -276,45 +308,41 @@ fun SongsScreen(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     IconButton(
-                                        onClick = {
+                                        onClick = { 
                                             val idx = songs.indexOf(song)
                                             if (idx > 0) {
                                                 currentlyPlaying = songs[idx - 1]
+                                                currentProgress = 0
+                                                isPlaying = true
                                             }
                                         }
                                     ) {
                                         Icon(Icons.Filled.SkipPrevious, contentDescription = "Previous", tint = ImmersiveTextPrimary)
                                     }
-
+                                    
                                     Box(
                                         modifier = Modifier
                                             .size(56.dp)
                                             .clip(CircleShape)
                                             .background(CreamRed)
-                                            .bounceClick {
-                                                if (isPlaying) {
-                                                    mediaPlayer?.pause()
-                                                    isPlaying = false
-                                                } else {
-                                                    mediaPlayer?.start()
-                                                    isPlaying = true
-                                                }
-                                            },
+                                            .bounceClick { isPlaying = !isPlaying },
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Icon(
-                                            if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
-                                            contentDescription = "Play/Pause",
+                                            if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow, 
+                                            contentDescription = "Play/Pause", 
                                             tint = ImmersiveGreen,
                                             modifier = Modifier.size(32.dp)
                                         )
                                     }
 
                                     IconButton(
-                                        onClick = {
+                                        onClick = { 
                                             val idx = songs.indexOf(song)
                                             if (idx < songs.size - 1) {
                                                 currentlyPlaying = songs[idx + 1]
+                                                currentProgress = 0
+                                                isPlaying = true
                                             }
                                         }
                                     ) {
@@ -323,14 +351,24 @@ fun SongsScreen(
                                 }
                             }
                             Spacer(modifier = Modifier.height(16.dp))
-                            // Progress bar / Slider
+                            // Progress bar slider
+                            val durationFloat = if (song.durationMs > 0) song.durationMs.toFloat() else 1f
+                            val progressFloat = (currentProgress.toFloat() / durationFloat).coerceIn(0f, 1f)
+                            
                             Slider(
-                                value = currentProgress.toFloat(),
-                                onValueChange = { newVal ->
-                                    currentProgress = newVal.toInt()
-                                    mediaPlayer?.seekTo(newVal.toInt())
+                                value = progressFloat,
+                                onValueChange = { newValue ->
+                                    isSeeking = true
+                                    currentProgress = (newValue * durationFloat).toInt()
                                 },
-                                valueRange = 0f..(duration.toFloat().coerceAtLeast(1f)),
+                                onValueChangeFinished = {
+                                    isSeeking = false
+                                    try {
+                                        mediaPlayer.seekTo(currentProgress)
+                                    } catch (e: Exception) {
+                                        e.printStackTrace()
+                                    }
+                                },
                                 modifier = Modifier.fillMaxWidth().height(24.dp),
                                 colors = SliderDefaults.colors(
                                     thumbColor = ImmersiveGreen,

@@ -54,7 +54,8 @@ fun HomeScreen(
     viewModel: AppViewModel,
     navController: NavController,
     sharedTransitionScope: SharedTransitionScope,
-    animatedVisibilityScope: AnimatedVisibilityScope
+    animatedVisibilityScope: AnimatedVisibilityScope,
+    onNavigateToSearch: () -> Unit = {}
 ) {
     val recentArguments by viewModel.recentArguments.collectAsState()
     val topRecentArguments = recentArguments.take(3)
@@ -131,7 +132,7 @@ fun HomeScreen(
                                             .background(ImmersiveGreen.copy(alpha = 0.15f))
                                             .bounceClick { 
                                                 viewModel.updateSearchQuery(category)
-                                                navController.navigate("search") 
+                                                onNavigateToSearch()
                                             }
                                             .padding(horizontal = 20.dp, vertical = 12.dp),
                                         contentAlignment = Alignment.Center
@@ -164,10 +165,11 @@ fun HomeScreen(
                                     argument = argument,
                                     onClick = {
                                         viewModel.updateArgumentLastAccessed(argument)
-                                        navController.navigate("argument_detail/${argument.id}")
+                                        navController.navigate("argument_detail/${argument.id}?source=home")
                                     },
                                     sharedTransitionScope = sharedTransitionScope,
-                                    animatedVisibilityScope = animatedVisibilityScope
+                                    animatedVisibilityScope = animatedVisibilityScope,
+                                    sourceKey = "home"
                                 )
                             }
                         }
@@ -189,10 +191,11 @@ fun HomeScreen(
                                     item = item,
                                     onClick = {
                                         viewModel.updateGlossaryLastAccessed(item)
-                                        navController.navigate("glossary_detail/${item.id}")
+                                        navController.navigate("glossary_detail/${item.id}?source=home")
                                     },
                                     sharedTransitionScope = sharedTransitionScope,
-                                    animatedVisibilityScope = animatedVisibilityScope
+                                    animatedVisibilityScope = animatedVisibilityScope,
+                                    sourceKey = "home"
                                 )
                             }
                         }
@@ -221,7 +224,7 @@ fun HomeScreen(
                                 animatedVisibilityScope = animatedVisibilityScope,
                                 enter = fadeIn(),
                                 exit = fadeOut(),
-                                resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds()
+                                resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
                             )
                             .whiteGlowPill(headerBgColor, headerBorderColor, headerGlowAlpha)
                             .clip(RoundedCornerShape(percent = 50))
@@ -238,7 +241,7 @@ fun HomeScreen(
                             animatedVisibilityScope = animatedVisibilityScope,
                             enter = fadeIn(),
                             exit = fadeOut(),
-                            resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds()
+                            resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
                         ),
                         style = MaterialTheme.typography.displayLarge.copy(
                             fontWeight = FontWeight.Black,
@@ -296,8 +299,8 @@ fun HomeScreen(
                                         enter = fadeIn(),
                                         exit = fadeOut(),
                                         clipInOverlayDuringTransition = OverlayClip(androidx.compose.foundation.shape.CircleShape),
-                                        resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(),
-                                        boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 200f) }
+                                        resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
+                                        boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 380f) }
                                     )
                                     .clip(androidx.compose.foundation.shape.CircleShape)
                                     .background(ImmersiveGreen)
@@ -340,13 +343,13 @@ fun ArgumentCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .sharedBounds(
-                    sharedContentState = rememberSharedContentState(key = "${sourceKey}-${argument.id}"),
+                    sharedContentState = rememberSharedContentState(key = "argument_${argument.id}"),
                     animatedVisibilityScope = animatedVisibilityScope,
                     enter = fadeIn(),
                     exit = fadeOut(),
                     clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(12.dp)),
-                    resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(),
-                    boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 200f) }
+                    resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
+                    boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 380f) }
                 )
                 .background(if (isSelected) ImmersiveGreen.copy(alpha = 0.2f) else CreamRed, RoundedCornerShape(12.dp))
                 .clip(RoundedCornerShape(12.dp))
@@ -394,13 +397,13 @@ fun GlossaryCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .sharedBounds(
-                    sharedContentState = rememberSharedContentState(key = "gloss_${sourceKey}-${item.id}"),
+                    sharedContentState = rememberSharedContentState(key = "glossary_${item.id}"),
                     animatedVisibilityScope = animatedVisibilityScope,
                     enter = fadeIn(),
                     exit = fadeOut(),
                     clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(12.dp)),
-                    resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(),
-                    boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 200f) }
+                    resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
+                    boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 380f) }
                 )
                 .background(ImmersivePillBg, RoundedCornerShape(12.dp))
                 .clip(RoundedCornerShape(12.dp))
@@ -445,13 +448,13 @@ fun LiteratureCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .sharedBounds(
-                    sharedContentState = rememberSharedContentState(key = "lit_${sourceKey}-${item.id}"),
+                    sharedContentState = rememberSharedContentState(key = "literature_${item.id}"),
                     animatedVisibilityScope = animatedVisibilityScope,
                     enter = fadeIn(),
                     exit = fadeOut(),
                     clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(12.dp)),
-                    resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(),
-                    boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 200f) }
+                    resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
+                    boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 380f) }
                 )
                 .background(ImmersivePillBg, RoundedCornerShape(12.dp))
                 .clip(RoundedCornerShape(12.dp))
@@ -603,9 +606,10 @@ fun SearchScreen(
                                 Column {
                                     ArgumentCard(
                                         argument = argument,
-                                        onClick = { navController.navigate("argument_detail/${argument.id}") },
+                                        onClick = { navController.navigate("argument_detail/${argument.id}?source=search") },
                                         sharedTransitionScope = sharedTransitionScope,
-                                        animatedVisibilityScope = animatedVisibilityScope
+                                        animatedVisibilityScope = animatedVisibilityScope,
+                                        sourceKey = "search"
                                     )
                                 }
                             }
@@ -622,10 +626,11 @@ fun SearchScreen(
                                         item = item,
                                         onClick = {
                                             viewModel.updateGlossaryLastAccessed(item)
-                                            navController.navigate("glossary_detail/${item.id}")
+                                            navController.navigate("glossary_detail/${item.id}?source=search")
                                         },
                                         sharedTransitionScope = sharedTransitionScope,
-                                        animatedVisibilityScope = animatedVisibilityScope
+                                        animatedVisibilityScope = animatedVisibilityScope,
+                                        sourceKey = "search"
                                     )
                                 }
                             }

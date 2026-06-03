@@ -46,7 +46,7 @@ fun Modifier.bounceClick(
         targetValue = if (isPressed) 0.92f else 1f,
         animationSpec = spring(
             dampingRatio = 0.6f,
-            stiffness = 300f
+            stiffness = 380f
         ),
         label = "bounceScale"
     )
