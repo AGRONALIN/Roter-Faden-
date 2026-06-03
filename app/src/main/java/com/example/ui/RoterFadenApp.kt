@@ -78,7 +78,7 @@ fun getTabIndex(route: String): Int {
 @Composable
 fun RoterFadenApp(viewModel: AppViewModel) {
     val navController = rememberNavController()
-    val pagerState = rememberPagerState(initialPage = 0, pageCount = { 3 })
+    var currentTab by remember { mutableIntStateOf(0) }
     val coroutineScope = rememberCoroutineScope()
 
     SharedTransitionLayout {
@@ -112,8 +112,6 @@ fun RoterFadenApp(viewModel: AppViewModel) {
                     }
                 ) {
                     composable("main") {
-                        val currentTab = pagerState.currentPage
-                        
                         AnimatedContent(
                             targetState = currentTab,
                             transitionSpec = {
@@ -128,7 +126,7 @@ fun RoterFadenApp(viewModel: AppViewModel) {
                             label = "tab_animation"
                         ) { page ->
                             when (page) {
-                                0 -> HomeScreen(viewModel, navController, this@SharedTransitionLayout, this@AnimatedContent, onNavigateToSearch = { coroutineScope.launch { pagerState.animateScrollToPage(2) } })
+                                0 -> HomeScreen(viewModel, navController, this@SharedTransitionLayout, this@AnimatedContent, onNavigateToSearch = { currentTab = 2 })
                                 1 -> CollectionScreen(viewModel, navController, this@SharedTransitionLayout, this@AnimatedContent)
                                 2 -> SearchScreen(viewModel, navController, this@SharedTransitionLayout, this@AnimatedContent)
                             }
@@ -277,7 +275,8 @@ fun RoterFadenApp(viewModel: AppViewModel) {
                 Box(modifier = Modifier.align(Alignment.BottomCenter).renderInSharedTransitionScopeOverlay(zIndexInOverlay = 100f).zIndex(100f)) {
                     this@SharedTransitionLayout.RoterFadenBottomNav(
                         navController = navController, 
-                        pagerState = pagerState,
+                        currentTab = currentTab,
+                        onTabSelected = { currentTab = it },
                         coroutineScope = coroutineScope,
                         viewModel = viewModel,
                         expanded = fabExpanded,
@@ -293,7 +292,8 @@ fun RoterFadenApp(viewModel: AppViewModel) {
 @Composable
 fun SharedTransitionScope.RoterFadenBottomNav(
     navController: NavController, 
-    pagerState: PagerState,
+    currentTab: Int,
+    onTabSelected: (Int) -> Unit,
     coroutineScope: kotlinx.coroutines.CoroutineScope,
     viewModel: AppViewModel,
     expanded: Boolean,
@@ -326,7 +326,7 @@ fun SharedTransitionScope.RoterFadenBottomNav(
                     onExpandedChange(false)
                 }
 
-                val isFabVisible = pagerState.currentPage != 2
+                val isFabVisible = currentTab != 2
                 val navBarOffset by androidx.compose.animation.core.animateDpAsState(
                     targetValue = if (isFabVisible && !expanded) (-44).dp else 0.dp,
                     label = "navBarOffset",
@@ -346,9 +346,9 @@ fun SharedTransitionScope.RoterFadenBottomNav(
                     .padding(horizontal = 4.dp, vertical = 4.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                val isHome = pagerState.currentPage == 0
-                val isSearch = pagerState.currentPage == 2
-                val isCollection = pagerState.currentPage == 1
+                val isHome = currentTab == 0
+                val isSearch = currentTab == 2
+                val isCollection = currentTab == 1
 
                 NavItem(
                     icon = Icons.Filled.Home,
@@ -356,7 +356,7 @@ fun SharedTransitionScope.RoterFadenBottomNav(
                     isSelected = isHome,
                     onClick = {
                         if (!isHome) {
-                            coroutineScope.launch { pagerState.animateScrollToPage(0) }
+                            onTabSelected(0)
                         }
                     }
                 )
@@ -367,7 +367,7 @@ fun SharedTransitionScope.RoterFadenBottomNav(
                     isSelected = isCollection,
                     onClick = {
                         if (!isCollection) {
-                            coroutineScope.launch { pagerState.animateScrollToPage(1) }
+                            onTabSelected(1)
                         }
                     }
                 )
@@ -378,7 +378,7 @@ fun SharedTransitionScope.RoterFadenBottomNav(
                     isSelected = isSearch,
                     onClick = {
                         if (!isSearch) {
-                            coroutineScope.launch { pagerState.animateScrollToPage(2) }
+                            onTabSelected(2)
                         } else {
                             viewModel.triggerSearchFocus()
                         }
@@ -388,7 +388,7 @@ fun SharedTransitionScope.RoterFadenBottomNav(
         
             // Expandable FAB on the right
             AnimatedVisibility(
-                visible = pagerState.currentPage != 2,
+                visible = currentTab != 2,
                 modifier = Modifier.align(Alignment.BottomEnd),
                 enter = androidx.compose.animation.slideInHorizontally(initialOffsetX = { -150 }, animationSpec = spring(stiffness = 380f, dampingRatio = 0.8f)) + fadeIn(animationSpec = tween(200)),
                 exit = androidx.compose.animation.slideOutHorizontally(targetOffsetX = { -150 }, animationSpec = spring(stiffness = 380f, dampingRatio = 0.8f)) + fadeOut(animationSpec = tween(200))
