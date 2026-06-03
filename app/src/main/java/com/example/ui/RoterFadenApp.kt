@@ -169,7 +169,7 @@ fun RoterFadenApp(viewModel: AppViewModel) {
                         }
                     }
                     composable("songs") {
-                        SongsScreen(navController, this@SharedTransitionLayout, this@composable)
+                        SongsScreen(viewModel, navController, this@SharedTransitionLayout, this@composable)
                     }
                     composable(
                         route = "literature_detail/{litId}?source={source}",

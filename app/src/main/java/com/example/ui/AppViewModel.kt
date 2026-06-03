@@ -37,6 +37,17 @@ class AppViewModel(private val repository: AppRepository) : ViewModel() {
     val recentGlossaryItems: StateFlow<List<GlossaryItem>> = repository.recentGlossaryItems
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    val allSongs: StateFlow<List<com.example.data.SongEntity>> = repository.allSongs
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    fun insertSong(song: com.example.data.SongEntity) = viewModelScope.launch {
+        repository.insertSong(song)
+    }
+
+    fun deleteSong(song: com.example.data.SongEntity) = viewModelScope.launch {
+        repository.deleteSong(song)
+    }
+
     private val _isBottomBarVisible = MutableStateFlow(true)
     val isBottomBarVisible: StateFlow<Boolean> = _isBottomBarVisible.asStateFlow()
 

@@ -5,6 +5,17 @@ import kotlinx.coroutines.flow.Flow
 class AppRepository(private val database: AppDatabase) {
     private val argumentDao = database.argumentDao()
     private val glossaryDao = database.glossaryDao()
+    private val songDao = database.songDao()
+
+    val allSongs: Flow<List<SongEntity>> = songDao.getAllSongs()
+
+    suspend fun insertSong(song: SongEntity) {
+        songDao.insertSong(song)
+    }
+
+    suspend fun deleteSong(song: SongEntity) {
+        songDao.deleteSong(song)
+    }
 
     // Arguments
     val recentArguments: Flow<List<Argument>> = argumentDao.getRecentArguments()
