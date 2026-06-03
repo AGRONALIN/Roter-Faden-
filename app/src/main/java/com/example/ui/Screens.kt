@@ -15,6 +15,9 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.material.icons.filled.AutoStories
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -45,7 +48,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.with
 import androidx.compose.animation.ExperimentalAnimationApi
 
-@OptIn(ExperimentalSharedTransitionApi::class, ExperimentalAnimationApi::class)
+@OptIn(ExperimentalSharedTransitionApi::class, ExperimentalAnimationApi::class, androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 fun HomeScreen(
     viewModel: AppViewModel,
@@ -198,25 +201,45 @@ fun HomeScreen(
             }
 
             // Floating Header
-            Column(
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .fillMaxWidth()
-                    .padding(
-                        top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 16.dp, 
-                        start = 12.dp,
-                        end = 24.dp
-                    ),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                // Main Header Pill
-                Box(
+            with(sharedTransitionScope) {
+                Column(
                     modifier = Modifier
-                        .whiteGlowPill(headerBgColor, headerBorderColor, headerGlowAlpha)
-                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                        .align(Alignment.TopStart)
+                        .fillMaxWidth()
+                        .padding(
+                            top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 16.dp, 
+                            start = 12.dp,
+                            end = 24.dp
+                        ),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
+                    // Main Header Pill
+                    Box(
+                        modifier = Modifier
+                            .sharedBounds(
+                                sharedContentState = rememberSharedContentState(key = "roter_faden_header"),
+                                animatedVisibilityScope = animatedVisibilityScope,
+                                enter = fadeIn(),
+                                exit = fadeOut(),
+                                resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds()
+                            )
+                            .whiteGlowPill(headerBgColor, headerBorderColor, headerGlowAlpha)
+                            .clip(RoundedCornerShape(percent = 50))
+                            .combinedClickable(
+                                onLongClick = { navController.navigate("songs") },
+                                onClick = {}
+                            )
+                            .padding(horizontal = 16.dp, vertical = 8.dp)
+                    ) {
                     Text(
                         text = "Roter Faden",
+                        modifier = Modifier.sharedBounds(
+                            sharedContentState = rememberSharedContentState(key = "roter_faden_title"),
+                            animatedVisibilityScope = animatedVisibilityScope,
+                            enter = fadeIn(),
+                            exit = fadeOut(),
+                            resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds()
+                        ),
                         style = MaterialTheme.typography.displayLarge.copy(
                             fontWeight = FontWeight.Black,
                             color = ImmersiveGreen
@@ -231,7 +254,7 @@ fun HomeScreen(
                         .padding(start = 18.dp, end = 16.dp, top = 6.dp, bottom = 6.dp)
                 ) {
                     Text(
-                        text = "Setzt eure Herzen in Brannt",
+                        text = "Setzt alle Herzen in Brand!",
                         style = MaterialTheme.typography.titleMedium.copy(
                             color = ImmersiveTextSecondary,
                             fontWeight = FontWeight.Medium
@@ -296,9 +319,9 @@ fun HomeScreen(
                     }
                 }
             }
-
         }
     }
+}
 }
 
 @OptIn(ExperimentalSharedTransitionApi::class, androidx.compose.foundation.ExperimentalFoundationApi::class)
@@ -408,6 +431,66 @@ fun GlossaryCard(
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class, androidx.compose.foundation.ExperimentalFoundationApi::class)
+@Composable
+fun LiteratureCard(
+    item: com.example.data.LiteratureItem,
+    onClick: () -> Unit,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedVisibilityScope: AnimatedVisibilityScope,
+    sourceKey: String = "card"
+) {
+    with(sharedTransitionScope) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .sharedBounds(
+                    sharedContentState = rememberSharedContentState(key = "lit_${sourceKey}-${item.id}"),
+                    animatedVisibilityScope = animatedVisibilityScope,
+                    enter = fadeIn(),
+                    exit = fadeOut(),
+                    clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(12.dp)),
+                    resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(),
+                    boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 200f) }
+                )
+                .background(ImmersivePillBg, RoundedCornerShape(12.dp))
+                .clip(RoundedCornerShape(12.dp))
+                .bounceClick(onClick = onClick)
+                .padding(vertical = 12.dp, horizontal = 12.dp)
+        ) {
+            Text(
+                text = item.title,
+                style = MaterialTheme.typography.titleLarge.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = ImmersiveTextPrimary,
+                    lineHeight = 28.sp
+                ),
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = item.author,
+                style = MaterialTheme.typography.labelMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = ImmersiveGreen,
+                    letterSpacing = 1.5.sp
+                )
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = item.summary,
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    color = ImmersiveTextSecondary,
+                    lineHeight = 20.sp
+                ),
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun SearchScreen(
@@ -466,25 +549,46 @@ fun SearchScreen(
                     .fillMaxSize()
                     .verticalFadingEdge(topEdge = 20.dp, bottomEdge = 40.dp)
                     .padding(horizontal = 24.dp),
-                contentPadding = PaddingValues(top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 90.dp, bottom = 120.dp),
+                contentPadding = PaddingValues(top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 160.dp, bottom = 120.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 item {
+                    val interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+                    val isFocused by interactionSource.collectIsFocusedAsState()
+                    val elevation by androidx.compose.animation.core.animateDpAsState(
+                        targetValue = if (isFocused) 16.dp else 4.dp,
+                        label = "search_elevation"
+                    )
+
                     OutlinedTextField(
                         value = searchQuery,
                         onValueChange = { viewModel.updateSearchQuery(it) },
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(bottom = 8.dp)
+                            .shadow(elevation, RoundedCornerShape(percent = 50), ambientColor = Color.Black.copy(alpha = 0.08f), spotColor = Color.Black.copy(alpha = 0.15f))
                             .focusRequester(focusRequester),
-                        placeholder = { Text("Argumente oder Glossar durchsuchen...") },
+                        placeholder = { Text("Argumente oder Glossar durchsuchen...", color = ImmersiveTextPrimary) },
                         singleLine = true,
-                        shape = RoundedCornerShape(16.dp),
+                        interactionSource = interactionSource,
+                        shape = RoundedCornerShape(percent = 50),
+                        leadingIcon = {
+                            Icon(Icons.Filled.Search, contentDescription = "Suchen", tint = ImmersiveTextPrimary)
+                        },
+                        trailingIcon = {
+                            if (searchQuery.isNotEmpty()) {
+                                IconButton(onClick = { viewModel.updateSearchQuery("") }) {
+                                    Icon(Icons.Filled.Close, contentDescription = "Suchen leeren", tint = ImmersiveTextPrimary)
+                                }
+                            }
+                        },
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = Color.Transparent,
                             unfocusedBorderColor = Color.Transparent,
-                            focusedContainerColor = ImmersiveSurface,
-                            unfocusedContainerColor = ImmersiveSurface
+                            focusedContainerColor = CreamRed,
+                            unfocusedContainerColor = CreamRed,
+                            focusedTextColor = ImmersiveTextPrimary,
+                            unfocusedTextColor = ImmersiveTextPrimary
                         )
                     )
                 }

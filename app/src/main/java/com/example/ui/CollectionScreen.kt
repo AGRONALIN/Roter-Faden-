@@ -37,6 +37,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.data.staticLiteratures
 import com.example.ui.theme.*
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -51,7 +52,7 @@ fun CollectionScreen(
     animatedVisibilityScope: AnimatedVisibilityScope
 ) {
     var selectedTabIndex by remember { mutableIntStateOf(0) }
-    val tabs = listOf("Argumente", "Glossar")
+    val tabs = listOf("Argumente", "Glossar", "Literatur")
 
     val allArguments by viewModel.recentArguments.collectAsState()
     val allGlossaryItems by viewModel.glossaryItems.collectAsState()
@@ -342,6 +343,36 @@ fun CollectionScreen(
                                                 onClick = {
                                                     viewModel.updateGlossaryLastAccessed(item)
                                                     navController.navigate("glossary_detail/${item.id}")
+                                                },
+                                                sharedTransitionScope = sharedTransitionScope,
+                                                animatedVisibilityScope = animatedVisibilityScope
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        2 -> {
+                            LazyColumn(
+                                state = listState,
+                                modifier = Modifier.fillMaxSize(),
+                                contentPadding = PaddingValues(bottom = 120.dp),
+                                verticalArrangement = Arrangement.spacedBy(16.dp)
+                            ) {
+                                if (staticLiteratures.isEmpty()) {
+                                    item {
+                                        EmptyStateMessage("Noch keine Literatur vorhanden.")
+                                    }
+                                } else {
+                                    itemsIndexed(
+                                        items = staticLiteratures,
+                                        key = { _, item -> "lit_${item.id}" }
+                                    ) { index, item ->
+                                        Column {
+                                            LiteratureCard(
+                                                item = item,
+                                                onClick = {
+                                                    navController.navigate("literature_detail/${item.id}")
                                                 },
                                                 sharedTransitionScope = sharedTransitionScope,
                                                 animatedVisibilityScope = animatedVisibilityScope

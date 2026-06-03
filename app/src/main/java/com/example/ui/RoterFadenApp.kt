@@ -56,6 +56,10 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerState
+import androidx.compose.foundation.pager.rememberPagerState
+import kotlinx.coroutines.launch
 import com.example.data.Argument
 import com.example.data.GlossaryItem
 import com.example.ui.theme.*
@@ -74,6 +78,8 @@ fun getTabIndex(route: String): Int {
 @Composable
 fun RoterFadenApp(viewModel: AppViewModel) {
     val navController = rememberNavController()
+    val pagerState = rememberPagerState(initialPage = 0, pageCount = { 3 })
+    val coroutineScope = rememberCoroutineScope()
 
     SharedTransitionLayout {
         val immersiveBg = ImmersiveBackground
@@ -91,80 +97,28 @@ fun RoterFadenApp(viewModel: AppViewModel) {
             ) {
                 NavHost(
                     navController = navController,
-                    startDestination = "home",
+                    startDestination = "main",
                     enterTransition = {
-                        val initial = initialState.destination.route ?: ""
-                        val target = targetState.destination.route ?: ""
-                        val initialTab = getTabIndex(initial)
-                        val targetTab = getTabIndex(target)
-
-                        if (initialTab != -1 && targetTab != -1 && initialTab != targetTab) {
-                            if (targetTab > initialTab) {
-                                slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start, animationSpec = spring(dampingRatio = 0.85f, stiffness = Spring.StiffnessMediumLow))
-                            } else {
-                                slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.End, animationSpec = spring(dampingRatio = 0.85f, stiffness = Spring.StiffnessMediumLow))
-                            }
-                        } else {
-                            fadeIn(animationSpec = tween(300)) + scaleIn(initialScale = 0.9f, animationSpec = spring(dampingRatio = 0.85f, stiffness = Spring.StiffnessMediumLow))
-                        }
+                        fadeIn(animationSpec = tween(300)) + scaleIn(initialScale = 0.9f, animationSpec = spring(dampingRatio = 0.85f, stiffness = Spring.StiffnessMediumLow))
                     },
                     exitTransition = {
-                        val initial = initialState.destination.route ?: ""
-                        val target = targetState.destination.route ?: ""
-                        val initialTab = getTabIndex(initial)
-                        val targetTab = getTabIndex(target)
-
-                        if (initialTab != -1 && targetTab != -1 && initialTab != targetTab) {
-                            if (targetTab > initialTab) {
-                                slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Start, animationSpec = spring(dampingRatio = 0.85f, stiffness = Spring.StiffnessMediumLow))
-                            } else {
-                                slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End, animationSpec = spring(dampingRatio = 0.85f, stiffness = Spring.StiffnessMediumLow))
-                            }
-                        } else {
-                            fadeOut(animationSpec = tween(300)) + scaleOut(targetScale = 1.1f, animationSpec = spring(dampingRatio = 0.85f, stiffness = Spring.StiffnessMediumLow))
-                        }
+                        fadeOut(animationSpec = tween(300)) + scaleOut(targetScale = 1.1f, animationSpec = spring(dampingRatio = 0.85f, stiffness = Spring.StiffnessMediumLow))
                     },
                     popEnterTransition = {
-                        val initial = initialState.destination.route ?: ""
-                        val target = targetState.destination.route ?: ""
-                        val initialTab = getTabIndex(initial)
-                        val targetTab = getTabIndex(target)
-
-                        if (initialTab != -1 && targetTab != -1 && initialTab != targetTab) {
-                            if (targetTab > initialTab) {
-                                slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start, animationSpec = spring(dampingRatio = 0.85f, stiffness = Spring.StiffnessMediumLow))
-                            } else {
-                                slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.End, animationSpec = spring(dampingRatio = 0.85f, stiffness = Spring.StiffnessMediumLow))
-                            }
-                        } else {
-                            fadeIn(animationSpec = tween(300)) + scaleIn(initialScale = 1.1f, animationSpec = spring(dampingRatio = 0.85f, stiffness = Spring.StiffnessMediumLow))
-                        }
+                        fadeIn(animationSpec = tween(300)) + scaleIn(initialScale = 1.1f, animationSpec = spring(dampingRatio = 0.85f, stiffness = Spring.StiffnessMediumLow))
                     },
                     popExitTransition = {
-                        val initial = initialState.destination.route ?: ""
-                        val target = targetState.destination.route ?: ""
-                        val initialTab = getTabIndex(initial)
-                        val targetTab = getTabIndex(target)
-
-                        if (initialTab != -1 && targetTab != -1 && initialTab != targetTab) {
-                            if (targetTab > initialTab) {
-                                slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Start, animationSpec = spring(dampingRatio = 0.85f, stiffness = Spring.StiffnessMediumLow))
-                            } else {
-                                slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End, animationSpec = spring(dampingRatio = 0.85f, stiffness = Spring.StiffnessMediumLow))
-                            }
-                        } else {
-                            fadeOut(animationSpec = tween(300)) + scaleOut(targetScale = 0.9f, animationSpec = spring(dampingRatio = 0.85f, stiffness = Spring.StiffnessMediumLow))
-                        }
+                        fadeOut(animationSpec = tween(300)) + scaleOut(targetScale = 0.9f, animationSpec = spring(dampingRatio = 0.85f, stiffness = Spring.StiffnessMediumLow))
                     }
                 ) {
-                    composable("home") {
-                        HomeScreen(viewModel, navController, this@SharedTransitionLayout, this@composable)
-                    }
-                    composable("search") {
-                        SearchScreen(viewModel, navController, this@SharedTransitionLayout, this@composable)
-                    }
-                    composable("collection") {
-                        CollectionScreen(viewModel, navController, this@SharedTransitionLayout, this@composable)
+                    composable("main") {
+                        HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize()) { page ->
+                            when (page) {
+                                0 -> HomeScreen(viewModel, navController, this@SharedTransitionLayout, this@composable)
+                                1 -> CollectionScreen(viewModel, navController, this@SharedTransitionLayout, this@composable)
+                                2 -> SearchScreen(viewModel, navController, this@SharedTransitionLayout, this@composable)
+                            }
+                        }
                     }
                     composable("edit_argument") {
                         EditArgumentScreen(viewModel, navController, this@SharedTransitionLayout, this@composable, -1)
@@ -212,6 +166,37 @@ fun RoterFadenApp(viewModel: AppViewModel) {
                             )
                         } else {
                             Text("Begriff nicht gefunden", modifier = Modifier.fillMaxSize().wrapContentSize(Alignment.Center))
+                        }
+                    }
+                    composable("songs") {
+                        SongsScreen(navController, this@SharedTransitionLayout, this@composable)
+                    }
+                    composable(
+                        route = "literature_detail/{litId}?source={source}",
+                        arguments = listOf(
+                            navArgument("litId") { type = NavType.IntType },
+                            navArgument("source") { 
+                                type = NavType.StringType
+                                defaultValue = "card"
+                            }
+                        )
+                    ) { backStackEntry ->
+                        val litId = backStackEntry.arguments?.getInt("litId") ?: 0
+                        val sourceKey = backStackEntry.arguments?.getString("source") ?: "card"
+                        
+                        val itemToDisplay = com.example.data.staticLiteratures.find { it.id == litId }
+
+                        if (itemToDisplay != null) {
+                            LiteratureDetailScreen(
+                                literatureItem = itemToDisplay,
+                                viewModel = viewModel,
+                                navController = navController,
+                                sharedTransitionScope = this@SharedTransitionLayout,
+                                animatedVisibilityScope = this@composable,
+                                sourceKey = sourceKey
+                            )
+                        } else {
+                            Text("Literatur nicht gefunden", modifier = Modifier.fillMaxSize().wrapContentSize(Alignment.Center))
                         }
                     }
                     composable(
@@ -278,6 +263,8 @@ fun RoterFadenApp(viewModel: AppViewModel) {
                 Box(modifier = Modifier.align(Alignment.BottomCenter).renderInSharedTransitionScopeOverlay(zIndexInOverlay = 100f).zIndex(100f)) {
                     this@SharedTransitionLayout.RoterFadenBottomNav(
                         navController = navController, 
+                        pagerState = pagerState,
+                        coroutineScope = coroutineScope,
                         viewModel = viewModel,
                         expanded = fabExpanded,
                         onExpandedChange = { fabExpanded = it }
@@ -292,6 +279,8 @@ fun RoterFadenApp(viewModel: AppViewModel) {
 @Composable
 fun SharedTransitionScope.RoterFadenBottomNav(
     navController: NavController, 
+    pagerState: PagerState,
+    coroutineScope: kotlinx.coroutines.CoroutineScope,
     viewModel: AppViewModel,
     expanded: Boolean,
     onExpandedChange: (Boolean) -> Unit
@@ -300,7 +289,7 @@ fun SharedTransitionScope.RoterFadenBottomNav(
     val currentRoute = navBackStackEntry?.destination?.route
 
     val isBottomBarVisible by viewModel.isBottomBarVisible.collectAsState()
-    val isVisible = (currentRoute == "home" || currentRoute == "search" || currentRoute == "collection") && isBottomBarVisible
+    val isVisible = currentRoute == "main" && isBottomBarVisible
     
     val navBarColor = CreamRed
     val navBarBorderColor = ImmersiveBorder.copy(alpha = 0.4f)
@@ -323,7 +312,7 @@ fun SharedTransitionScope.RoterFadenBottomNav(
                     onExpandedChange(false)
                 }
 
-                val isFabVisible = currentRoute != "search"
+                val isFabVisible = pagerState.currentPage != 2
                 val navBarOffset by androidx.compose.animation.core.animateDpAsState(
                     targetValue = if (isFabVisible && !expanded) (-44).dp else 0.dp,
                     label = "navBarOffset",
@@ -343,9 +332,9 @@ fun SharedTransitionScope.RoterFadenBottomNav(
                     .padding(horizontal = 4.dp, vertical = 4.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                val isHome = currentRoute == "home"
-                val isSearch = currentRoute == "search"
-                val isCollection = currentRoute == "collection"
+                val isHome = pagerState.currentPage == 0
+                val isSearch = pagerState.currentPage == 2
+                val isCollection = pagerState.currentPage == 1
 
                 NavItem(
                     icon = Icons.Filled.Home,
@@ -353,9 +342,7 @@ fun SharedTransitionScope.RoterFadenBottomNav(
                     isSelected = isHome,
                     onClick = {
                         if (!isHome) {
-                            navController.navigate("home") {
-                                popUpTo("home") { inclusive = true }
-                            }
+                            coroutineScope.launch { pagerState.animateScrollToPage(0) }
                         }
                     }
                 )
@@ -366,9 +353,7 @@ fun SharedTransitionScope.RoterFadenBottomNav(
                     isSelected = isCollection,
                     onClick = {
                         if (!isCollection) {
-                            navController.navigate("collection") {
-                                popUpTo("home")
-                            }
+                            coroutineScope.launch { pagerState.animateScrollToPage(1) }
                         }
                     }
                 )
@@ -379,7 +364,7 @@ fun SharedTransitionScope.RoterFadenBottomNav(
                     isSelected = isSearch,
                     onClick = {
                         if (!isSearch) {
-                            navController.navigate("search")
+                            coroutineScope.launch { pagerState.animateScrollToPage(2) }
                         } else {
                             viewModel.triggerSearchFocus()
                         }
@@ -389,7 +374,7 @@ fun SharedTransitionScope.RoterFadenBottomNav(
         
             // Expandable FAB on the right
             AnimatedVisibility(
-                visible = currentRoute != "search",
+                visible = pagerState.currentPage != 2,
                 modifier = Modifier.align(Alignment.BottomEnd),
                 enter = androidx.compose.animation.slideInHorizontally(initialOffsetX = { -150 }, animationSpec = spring(stiffness = Spring.StiffnessLow, dampingRatio = Spring.DampingRatioNoBouncy)) + fadeIn(animationSpec = tween(300)),
                 exit = androidx.compose.animation.slideOutHorizontally(targetOffsetX = { -150 }, animationSpec = spring(stiffness = Spring.StiffnessLow, dampingRatio = Spring.DampingRatioNoBouncy)) + fadeOut(animationSpec = tween(300))
