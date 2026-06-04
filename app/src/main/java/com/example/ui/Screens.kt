@@ -62,7 +62,7 @@ fun HomeScreen(
 ) {
     val recentArguments by viewModel.recentArguments.collectAsState()
     val topRecentArguments = recentArguments.take(3)
-    val recentCategories = recentArguments.map { it.category }.filter { it.isNotBlank() }.distinct().take(3)
+    val recentCategories = recentArguments.map { it.category }.filter { it.isNotBlank() }.distinct()
     val recentGlossaries by viewModel.recentGlossaryItems.collectAsState()
     val topRecentGlossaries = recentGlossaries.take(3)
     
@@ -134,6 +134,7 @@ fun HomeScreen(
                                             .clip(RoundedCornerShape(percent = 50))
                                             .background(ImmersiveGreen.copy(alpha = 0.15f))
                                             .bounceClick { 
+                                                viewModel.updateCategoryLastAccessed(category)
                                                 viewModel.updateSearchQuery(category)
                                                 onNavigateToSearch()
                                             }

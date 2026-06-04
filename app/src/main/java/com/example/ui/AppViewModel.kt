@@ -120,6 +120,17 @@ class AppViewModel(private val repository: AppRepository) : ViewModel() {
             repository.insertArgument(argument.copy(lastAccessed = System.currentTimeMillis()))
         }
     }
+
+    fun updateCategoryLastAccessed(category: String) {
+        viewModelScope.launch {
+            val mostRecentArg = recentArguments.value
+                .filter { it.category == category }
+                .maxByOrNull { it.lastAccessed }
+            if (mostRecentArg != null) {
+                repository.insertArgument(mostRecentArg.copy(lastAccessed = System.currentTimeMillis()))
+            }
+        }
+    }
     
     fun updateArgument(argument: Argument) {
         viewModelScope.launch {
