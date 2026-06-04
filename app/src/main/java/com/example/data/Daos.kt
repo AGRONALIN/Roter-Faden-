@@ -60,3 +60,18 @@ interface LiteratureSummaryDao {
     suspend fun insertSummary(summary: LiteratureSummary)
 }
 
+@Dao
+interface LiteratureDao {
+    @Query("SELECT * FROM literature_items ORDER BY lastAccessed DESC")
+    fun getAllLiterature(): Flow<List<LiteratureItem>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertLiterature(item: LiteratureItem)
+
+    @Delete
+    suspend fun deleteLiterature(item: LiteratureItem)
+
+    @Query("SELECT * FROM literature_items WHERE id = :id")
+    suspend fun getLiteratureItemById(id: Int): LiteratureItem?
+}
+

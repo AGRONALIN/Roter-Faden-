@@ -400,3 +400,175 @@ fun EditGlossaryScreen(
     }
 }
 }
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
+@Composable
+fun EditLiteratureScreen(
+    viewModel: AppViewModel,
+    navController: NavController,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedVisibilityScope: AnimatedVisibilityScope,
+    litId: Int = -1
+) {
+    val literatureList by viewModel.literatureList.collectAsState()
+    val existingLit = remember(literatureList, litId) { literatureList.find { it.id == litId } }
+
+    var title by remember(existingLit) { mutableStateOf(existingLit?.title ?: "") }
+    var author by remember(existingLit) { mutableStateOf(existingLit?.author ?: "") }
+    var summary by remember(existingLit) { mutableStateOf(existingLit?.summary ?: "") }
+
+    PullToDismissContainer(
+        onDismiss = { navController.popBackStack() }
+    ) { nestedScrollConnection ->
+        Scaffold(
+            modifier = Modifier.fillMaxSize(),
+            containerColor = ImmersiveBackground
+        ) { padding ->
+            Box(modifier = Modifier.fillMaxSize().nestedScroll(nestedScrollConnection)) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalFadingEdge(topEdge = 20.dp, bottomEdge = 100.dp)
+                        .verticalScroll(rememberScrollState())
+                        .padding(top = padding.calculateTopPadding() + 80.dp)
+                        .padding(horizontal = 24.dp, vertical = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(24.dp)
+                ) {
+                    OutlinedTextField(
+                        value = title,
+                        onValueChange = { title = it },
+                        label = { Text("Titel") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        shape = RoundedCornerShape(16.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = ImmersiveTextPrimary,
+                            unfocusedTextColor = ImmersiveTextPrimary,
+                            focusedBorderColor = ImmersiveGreen,
+                            focusedLabelColor = ImmersiveGreen,
+                            unfocusedBorderColor = ImmersiveBorder,
+                            focusedContainerColor = ImmersiveSurface,
+                            unfocusedContainerColor = ImmersiveSurface
+                        )
+                    )
+
+                    OutlinedTextField(
+                        value = author,
+                        onValueChange = { author = it },
+                        label = { Text("Autor(en)") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        shape = RoundedCornerShape(16.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = ImmersiveTextPrimary,
+                            unfocusedTextColor = ImmersiveTextPrimary,
+                            focusedBorderColor = ImmersiveGreen,
+                            focusedLabelColor = ImmersiveGreen,
+                            unfocusedBorderColor = ImmersiveBorder,
+                            focusedContainerColor = ImmersiveSurface,
+                            unfocusedContainerColor = ImmersiveSurface
+                        )
+                    )
+
+                    OutlinedTextField(
+                        value = summary,
+                        onValueChange = { summary = it },
+                        label = { Text("Zusammenfassung / Inhalt") },
+                        modifier = Modifier.fillMaxWidth(),
+                        minLines = 8,
+                        shape = RoundedCornerShape(16.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = ImmersiveTextPrimary,
+                            unfocusedTextColor = ImmersiveTextPrimary,
+                            focusedBorderColor = ImmersiveGreen,
+                            focusedLabelColor = ImmersiveGreen,
+                            unfocusedBorderColor = ImmersiveBorder,
+                            focusedContainerColor = ImmersiveSurface,
+                            unfocusedContainerColor = ImmersiveSurface
+                        )
+                    )
+
+                    Spacer(modifier = Modifier.height(100.dp))
+                }
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 16.dp)
+                        .padding(horizontal = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                ) {
+                    val closeInteractionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+                    IconButton(
+                        onClick = { navController.popBackStack() },
+                        modifier = Modifier
+                            .bounceScale(closeInteractionSource)
+                            .background(ImmersiveSurface, androidx.compose.foundation.shape.CircleShape),
+                        interactionSource = closeInteractionSource
+                    ) {
+                        Icon(Icons.Filled.Close, contentDescription = "Abbrechen", tint = ImmersiveTextPrimary)
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(50))
+                            .background(ImmersiveSurface)
+                            .border(1.dp, ImmersiveBorder, RoundedCornerShape(50))
+                            .padding(horizontal = 24.dp, vertical = 12.dp)
+                    ) {
+                        Text(
+                            text = if (existingLit != null) "Literatur bearbeiten" else "Neue Literatur",
+                            fontWeight = FontWeight.Bold,
+                            color = ImmersiveTextPrimary
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.size(48.dp))
+                }
+
+                Box(
+                    modifier = Modifier
+                        .align(androidx.compose.ui.Alignment.BottomCenter)
+                        .padding(bottom = 24.dp)
+                        .padding(horizontal = 24.dp)
+                        .imePadding()
+                ) {
+                    val btnInteractionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+                    Button(
+                        onClick = {
+                            if (title.isNotBlank() && author.isNotBlank() && summary.isNotBlank()) {
+                                if (existingLit != null) {
+                                    viewModel.updateLiterature(existingLit.copy(
+                                        title = title,
+                                        author = author,
+                                        summary = summary
+                                    ))
+                                } else {
+                                    viewModel.insertLiterature(title, author, summary)
+                                }
+                                navController.popBackStack()
+                            }
+                        },
+                        modifier = Modifier
+                            .wrapContentWidth()
+                            .height(56.dp)
+                            .bounceScale(btnInteractionSource)
+                            .clip(androidx.compose.foundation.shape.CircleShape),
+                        interactionSource = btnInteractionSource,
+                        colors = ButtonDefaults.buttonColors(containerColor = ImmersiveGreen),
+                        enabled = title.isNotBlank() && author.isNotBlank() && summary.isNotBlank()
+                    ) {
+                        Text(
+                            "Speichern",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = ImmersiveOnGreen,
+                            modifier = Modifier.padding(horizontal = 24.dp)
+                        )
+                    }
+                }
+            }
+        }
+    }
+}

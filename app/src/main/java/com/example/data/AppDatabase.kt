@@ -5,12 +5,13 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 
-@Database(entities = [Argument::class, GlossaryItem::class, SongEntity::class, LiteratureSummary::class], version = 4, exportSchema = false)
+@Database(entities = [Argument::class, GlossaryItem::class, SongEntity::class, LiteratureSummary::class, LiteratureItem::class], version = 5, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun argumentDao(): ArgumentDao
     abstract fun glossaryDao(): GlossaryDao
     abstract fun songDao(): SongDao
     abstract fun literatureSummaryDao(): LiteratureSummaryDao
+    abstract fun literatureDao(): LiteratureDao
 
     companion object {
         @Volatile

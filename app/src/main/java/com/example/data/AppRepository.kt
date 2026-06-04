@@ -7,6 +7,22 @@ class AppRepository(private val database: AppDatabase) {
     private val glossaryDao = database.glossaryDao()
     private val songDao = database.songDao()
     private val literatureSummaryDao = database.literatureSummaryDao()
+    private val literatureDao = database.literatureDao()
+
+    // Literature items
+    val allLiteratureItems: Flow<List<LiteratureItem>> = literatureDao.getAllLiterature()
+
+    suspend fun insertLiterature(item: LiteratureItem) {
+        literatureDao.insertLiterature(item)
+    }
+
+    suspend fun deleteLiterature(item: LiteratureItem) {
+        literatureDao.deleteLiterature(item)
+    }
+
+    suspend fun getLiteratureItemById(id: Int): LiteratureItem? {
+        return literatureDao.getLiteratureItemById(id)
+    }
 
     // Songs
     val allSongs: Flow<List<SongEntity>> = songDao.getAllSongs()

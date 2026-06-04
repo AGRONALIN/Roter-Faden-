@@ -38,12 +38,6 @@ fun LiteratureDetailScreen(
     animatedVisibilityScope: AnimatedVisibilityScope,
     sourceKey: String = "card"
 ) {
-    val customSummaries by viewModel.literatureSummaries.collectAsState()
-    val currentSummary = remember(customSummaries, literatureItem) {
-        customSummaries.find { it.id == literatureItem.id }?.summary ?: literatureItem.summary
-    }
-    var showEditDialog by remember { mutableStateOf(false) }
-
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -91,7 +85,7 @@ fun LiteratureDetailScreen(
                     }
 
                     BounceIconButton(
-                        onClick = { showEditDialog = true },
+                        onClick = { navController.navigate("edit_literature/${literatureItem.id}") },
                         modifier = Modifier.size(48.dp).clip(CircleShape).background(Color.Red.copy(alpha = 0.15f))
                     ) {
                         Text("☭", color = Color.Red, fontSize = 26.sp)
@@ -118,7 +112,7 @@ fun LiteratureDetailScreen(
                 Spacer(modifier = Modifier.height(16.dp))
                 
                 Text(
-                    text = currentSummary,
+                    text = literatureItem.summary,
                     style = MaterialTheme.typography.bodyLarge.copy(
                         fontWeight = FontWeight.Normal,
                         color = ImmersiveTextSecondary,
@@ -130,46 +124,6 @@ fun LiteratureDetailScreen(
                 Spacer(modifier = Modifier.height(120.dp))
             }
             }
-        }
-
-        if (showEditDialog) {
-            var textVal by remember { mutableStateOf(currentSummary) }
-            AlertDialog(
-                onDismissRequest = { showEditDialog = false },
-                title = { Text("Zusammenfassung bearbeiten", color = ImmersiveTextPrimary, fontWeight = FontWeight.Bold) },
-                text = {
-                    OutlinedTextField(
-                        value = textVal,
-                        onValueChange = { textVal = it },
-                        modifier = Modifier.fillMaxWidth().heightIn(min = 120.dp, max = 240.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = ImmersiveTextPrimary,
-                            unfocusedTextColor = ImmersiveTextPrimary,
-                            focusedContainerColor = ImmersiveSurface,
-                            unfocusedContainerColor = ImmersiveSurface,
-                            focusedBorderColor = ImmersiveGreen,
-                            unfocusedBorderColor = ImmersiveBorder
-                        )
-                    )
-                },
-                confirmButton = {
-                    Button(
-                        onClick = {
-                            viewModel.updateLiteratureSummary(literatureItem.id, textVal)
-                            showEditDialog = false
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = ImmersiveGreen)
-                    ) {
-                        Text("Speichern", color = Color.White)
-                    }
-                },
-                dismissButton = {
-                    TextButton(onClick = { showEditDialog = false }) {
-                        Text("Abbrechen", color = ImmersiveTextSecondary)
-                    }
-                },
-                containerColor = ImmersivePillBg
-            )
         }
     }
 }

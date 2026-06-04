@@ -37,7 +37,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.example.data.staticLiteratures
 import com.example.ui.theme.*
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -57,6 +56,7 @@ fun CollectionScreen(
 
     val allArguments by viewModel.recentArguments.collectAsState()
     val allGlossaryItems by viewModel.glossaryItems.collectAsState()
+    val allLiteratureItems by viewModel.literatureList.collectAsState()
 
     var selectedArgumentIds by remember { mutableStateOf(setOf<Int>()) }
     val isSelectionMode = selectedArgumentIds.isNotEmpty()
@@ -364,19 +364,20 @@ fun CollectionScreen(
                                 contentPadding = PaddingValues(bottom = 120.dp),
                                 verticalArrangement = Arrangement.spacedBy(16.dp)
                             ) {
-                                if (staticLiteratures.isEmpty()) {
+                                if (allLiteratureItems.isEmpty()) {
                                     item {
                                         EmptyStateMessage("Noch keine Literatur vorhanden.")
                                     }
                                 } else {
                                     itemsIndexed(
-                                        items = staticLiteratures,
+                                        items = allLiteratureItems,
                                         key = { _, item -> "lit_${item.id}" }
                                     ) { index, item ->
                                         Column {
                                             LiteratureCard(
                                                 item = item,
                                                 onClick = {
+                                                    viewModel.updateLiteratureLastAccessed(item)
                                                     navController.navigate("literature_detail/${item.id}?source=card")
                                                 },
                                                 sharedTransitionScope = sharedTransitionScope,

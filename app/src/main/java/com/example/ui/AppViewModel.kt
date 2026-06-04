@@ -268,6 +268,49 @@ class AppViewModel(private val repository: AppRepository) : ViewModel() {
             repository.insertLiteratureSummary(com.example.data.LiteratureSummary(id, summary))
         }
     }
+
+    val literatureList: StateFlow<List<com.example.data.LiteratureItem>> = repository.allLiteratureItems
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    init {
+        viewModelScope.launch {
+            repository.allLiteratureItems.first().let { items ->
+                if (items.isEmpty()) {
+                    com.example.data.staticLiteratures.forEach {
+                        repository.insertLiterature(it)
+                    }
+                }
+            }
+        }
+    }
+
+    fun insertLiterature(title: String, author: String, summary: String) {
+        viewModelScope.launch {
+            repository.insertLiterature(com.example.data.LiteratureItem(
+                title = title,
+                author = author,
+                summary = summary
+            ))
+        }
+    }
+
+    fun updateLiterature(item: com.example.data.LiteratureItem) {
+        viewModelScope.launch {
+            repository.insertLiterature(item)
+        }
+    }
+
+    fun deleteLiterature(item: com.example.data.LiteratureItem) {
+        viewModelScope.launch {
+            repository.deleteLiterature(item)
+        }
+    }
+
+    fun updateLiteratureLastAccessed(item: com.example.data.LiteratureItem) {
+        viewModelScope.launch {
+            repository.insertLiterature(item.copy(lastAccessed = System.currentTimeMillis()))
+        }
+    }
 }
 
 class AppViewModelFactory(private val repository: AppRepository) : ViewModelProvider.Factory {

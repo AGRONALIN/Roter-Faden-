@@ -250,6 +250,26 @@ fun RoterFadenApp(viewModel: AppViewModel) {
                         EditGlossaryScreen(viewModel, navController, this@SharedTransitionLayout, this@composable)
                     }
                     composable(
+                        "edit_literature",
+                        enterTransition = slideUpEnter,
+                        exitTransition = slideDownExit,
+                        popEnterTransition = slideUpEnter,
+                        popExitTransition = slideDownExit
+                    ) {
+                        EditLiteratureScreen(viewModel, navController, this@SharedTransitionLayout, this@composable, -1)
+                    }
+                    composable(
+                        route = "edit_literature/{litId}",
+                        arguments = listOf(navArgument("litId") { type = NavType.IntType }),
+                        enterTransition = slideUpEnter,
+                        exitTransition = slideDownExit,
+                        popEnterTransition = slideUpEnter,
+                        popExitTransition = slideDownExit
+                    ) { backStackEntry ->
+                        val litId = backStackEntry.arguments?.getInt("litId") ?: -1
+                        EditLiteratureScreen(viewModel, navController, this@SharedTransitionLayout, this@composable, litId)
+                    }
+                    composable(
                         route = "glossary_detail/{termId}?source={source}",
                         arguments = listOf(
                             navArgument("termId") { type = NavType.IntType },
@@ -314,7 +334,14 @@ fun RoterFadenApp(viewModel: AppViewModel) {
                         val litId = backStackEntry.arguments?.getInt("litId") ?: 0
                         val sourceKey = backStackEntry.arguments?.getString("source") ?: "card"
                         
-                        val itemToDisplay = com.example.data.staticLiteratures.find { it.id == litId }
+                        val literatureList by viewModel.literatureList.collectAsState()
+                        var lastValidItem by remember { mutableStateOf<com.example.data.LiteratureItem?>(null) }
+                        val currentItem = literatureList.find { it.id == litId }
+                        if (currentItem != null) {
+                            lastValidItem = currentItem
+                        }
+
+                        val itemToDisplay = lastValidItem
 
                         if (itemToDisplay != null) {
                             LiteratureDetailScreen(
@@ -561,6 +588,41 @@ fun SharedTransitionScope.RoterFadenBottomNav(
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Icon(Icons.Filled.AutoStories, contentDescription = "Begriff", modifier = Modifier.size(20.dp), tint = ImmersiveOnGreen)
+                                }
+                            }
+
+                            Row(
+                                modifier = Modifier
+                                    .sharedBounds(
+                                        sharedContentState = rememberSharedContentState(key = "fab_neue_literatur"),
+                                        animatedVisibilityScope = animatedVisibilityScope,
+                                        enter = fadeIn(),
+                                        exit = fadeOut(),
+                                        resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(contentScale = androidx.compose.ui.layout.ContentScale.Crop),
+                                        boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 100f) }
+                                    )
+                                    .shadow(16.dp, RoundedCornerShape(percent = 50), ambientColor = Color.Black.copy(alpha = 0.15f), spotColor = Color.Black.copy(alpha = 0.3f))
+                                    .clip(RoundedCornerShape(percent = 50))
+                                    .background(navBarColor)
+                                    .border(1.dp, navBarBorderColor, RoundedCornerShape(percent = 50))
+                                    .bounceClick {
+                                        onExpandedChange(false)
+                                        navController.navigate("edit_literature")
+                                    }
+                                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "Neue Literatur",
+                                    color = ImmersiveTextPrimary,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Box(
+                                    modifier = Modifier.size(40.dp).clip(CircleShape).background(ImmersiveGreen),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(Icons.Filled.AutoStories, contentDescription = "Literatur", modifier = Modifier.size(20.dp), tint = ImmersiveOnGreen)
                                 }
                             }
                             
