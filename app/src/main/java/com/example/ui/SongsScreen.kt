@@ -142,7 +142,6 @@ fun SongsScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(ImmersiveBackground)
     ) {
         with(sharedTransitionScope) {
             Column(
@@ -154,8 +153,10 @@ fun SongsScreen(
                         enter = fadeIn(),
                         exit = fadeOut(),
                         clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(0.dp)),
-                        resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
+                        resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
+                        boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 100f) }
                     )
+                    .background(ImmersiveBackground)
             ) {
                 Row(
                     modifier = Modifier
@@ -182,7 +183,8 @@ fun SongsScreen(
                             animatedVisibilityScope = animatedVisibilityScope,
                             enter = fadeIn(),
                             exit = fadeOut(),
-                            resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
+                            resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
+                            boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 100f) }
                         ),
                         style = MaterialTheme.typography.displaySmall.copy(
                             fontWeight = FontWeight.Black,

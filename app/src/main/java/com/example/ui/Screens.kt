@@ -224,7 +224,8 @@ fun HomeScreen(
                                 animatedVisibilityScope = animatedVisibilityScope,
                                 enter = fadeIn(),
                                 exit = fadeOut(),
-                                resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
+                                resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
+                                boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 100f) }
                             )
                             .whiteGlowPill(headerBgColor, headerBorderColor, headerGlowAlpha)
                             .clip(RoundedCornerShape(percent = 50))
@@ -241,7 +242,8 @@ fun HomeScreen(
                             animatedVisibilityScope = animatedVisibilityScope,
                             enter = fadeIn(),
                             exit = fadeOut(),
-                            resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
+                            resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
+                            boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 100f) }
                         ),
                         style = MaterialTheme.typography.displayLarge.copy(
                             fontWeight = FontWeight.Black,
@@ -294,7 +296,7 @@ fun HomeScreen(
                                 modifier = Modifier
                                     .size(80.dp)
                                     .sharedBounds(
-                                        sharedContentState = rememberSharedContentState(key = "random-${randomArgument!!.id}"),
+                                        sharedContentState = rememberSharedContentState(key = "argument_${randomArgument!!.id}_random"),
                                         animatedVisibilityScope = animatedVisibilityScope,
                                         enter = fadeIn(),
                                         exit = fadeOut(),
@@ -343,13 +345,13 @@ fun ArgumentCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .sharedBounds(
-                    sharedContentState = rememberSharedContentState(key = "argument_${argument.id}"),
+                    sharedContentState = rememberSharedContentState(key = "argument_${argument.id}_${sourceKey}"),
                     animatedVisibilityScope = animatedVisibilityScope,
-                    enter = fadeIn(),
-                    exit = fadeOut(),
+                    enter = fadeIn(animationSpec = androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 380f)),
+                    exit = fadeOut(animationSpec = androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 380f)),
                     clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(12.dp)),
                     resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
-                    boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 100f) }
+                    boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 380f) }
                 )
                 .background(if (isSelected) ImmersiveGreen.copy(alpha = 0.2f) else CreamRed, RoundedCornerShape(12.dp))
                 .clip(RoundedCornerShape(12.dp))
@@ -397,13 +399,13 @@ fun GlossaryCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .sharedBounds(
-                    sharedContentState = rememberSharedContentState(key = "glossary_${item.id}"),
+                    sharedContentState = rememberSharedContentState(key = "glossary_${item.id}_${sourceKey}"),
                     animatedVisibilityScope = animatedVisibilityScope,
-                    enter = fadeIn(),
-                    exit = fadeOut(),
+                    enter = fadeIn(animationSpec = androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 380f)),
+                    exit = fadeOut(animationSpec = androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 380f)),
                     clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(12.dp)),
                     resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
-                    boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 100f) }
+                    boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 380f) }
                 )
                 .background(ImmersivePillBg, RoundedCornerShape(12.dp))
                 .clip(RoundedCornerShape(12.dp))
@@ -448,13 +450,13 @@ fun LiteratureCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .sharedBounds(
-                    sharedContentState = rememberSharedContentState(key = "literature_${item.id}"),
+                    sharedContentState = rememberSharedContentState(key = "literature_${item.id}_${sourceKey}"),
                     animatedVisibilityScope = animatedVisibilityScope,
-                    enter = fadeIn(),
-                    exit = fadeOut(),
+                    enter = fadeIn(animationSpec = androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 380f)),
+                    exit = fadeOut(animationSpec = androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 380f)),
                     clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(12.dp)),
                     resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
-                    boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 100f) }
+                    boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 380f) }
                 )
                 .background(ImmersivePillBg, RoundedCornerShape(12.dp))
                 .clip(RoundedCornerShape(12.dp))

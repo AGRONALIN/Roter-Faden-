@@ -1,5 +1,7 @@
 package com.example.ui
 
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
@@ -104,36 +106,32 @@ fun RoterFadenApp(viewModel: AppViewModel) {
                 NavHost(
                     navController = navController,
                     startDestination = "main",
-                    enterTransition = {
-                        fadeIn(animationSpec = tween(600))
-                    },
-                    exitTransition = {
-                        fadeOut(animationSpec = tween(600))
-                    },
-                    popEnterTransition = {
-                        fadeIn(animationSpec = tween(600))
-                    },
-                    popExitTransition = {
-                        fadeOut(animationSpec = tween(600))
-                    }
+                    enterTransition = { fadeIn(animationSpec = spring(dampingRatio = 0.8f, stiffness = 380f)) },
+                    exitTransition = { fadeOut(animationSpec = spring(dampingRatio = 0.8f, stiffness = 380f)) },
+                    popEnterTransition = { fadeIn(animationSpec = spring(dampingRatio = 0.8f, stiffness = 380f)) },
+                    popExitTransition = { fadeOut(animationSpec = spring(dampingRatio = 0.8f, stiffness = 380f)) }
                 ) {
                     composable("main") {
+                        val transitionState = remember { SeekableTransitionState(currentTab) }
+                        val transition = rememberTransition(transitionState, label = "tab transition")
                         val screenWidth = with(LocalDensity.current) { LocalConfiguration.current.screenWidthDp.dp.toPx() }
-                        
+
                         LaunchedEffect(currentTab) {
-                            if (transitionState.currentState != currentTab) {
-                                transitionState.animateTo(currentTab, animationSpec = tween(1000))
+                            if (transitionState.currentState != currentTab && transitionState.targetState != currentTab) {
+                                transitionState.animateTo(currentTab, animationSpec = spring(stiffness = Spring.StiffnessLow))
                             }
                         }
 
-                        transition.AnimatedContent<Int>(
+                        transition.AnimatedContent(
                             transitionSpec = {
                                 if (targetState > initialState) {
-                                    (slideInHorizontally(animationSpec = tween(1000)) { width -> width } + fadeIn(animationSpec = tween(1000))).togetherWith(
-                                        slideOutHorizontally(animationSpec = tween(1000)) { width -> -width } + fadeOut(animationSpec = tween(1000)))
+                                    slideInHorizontally(animationSpec = spring(stiffness = Spring.StiffnessLow)) { width -> width }.togetherWith(
+                                        slideOutHorizontally(animationSpec = spring(stiffness = Spring.StiffnessLow)) { width -> -width }
+                                    ).using(SizeTransform(clip = false))
                                 } else {
-                                    (slideInHorizontally(animationSpec = tween(1000)) { width -> -width } + fadeIn(animationSpec = tween(1000))).togetherWith(
-                                        slideOutHorizontally(animationSpec = tween(1000)) { width -> width } + fadeOut(animationSpec = tween(1000)))
+                                    slideInHorizontally(animationSpec = spring(stiffness = Spring.StiffnessLow)) { width -> -width }.togetherWith(
+                                        slideOutHorizontally(animationSpec = spring(stiffness = Spring.StiffnessLow)) { width -> width }
+                                    ).using(SizeTransform(clip = false))
                                 }
                             },
                             contentKey = { it },
@@ -145,23 +143,23 @@ fun RoterFadenApp(viewModel: AppViewModel) {
                                     detectHorizontalDragGestures(
                                         onDragStart = { dragOffset = 0f },
                                         onDragEnd = {
-                                            val fraction = Math.abs(dragOffset) / screenWidth
+                                            val fraction = (Math.abs(dragOffset) / screenWidth).coerceIn(0f, 1f)
                                             coroutineScope.launch {
-                                                if (fraction > 0.3f && target != currentTab) {
-                                                    currentTab = target
-                                                    transitionState.animateTo(target, tween(1000))
+                                                if (fraction > 0.2f && target != currentTab) {
+                                                    val newTab = target
+                                                    transitionState.animateTo(newTab, spring(stiffness = Spring.StiffnessLow))
+                                                    currentTab = newTab
                                                 } else {
-                                                    transitionState.animateTo(currentTab, tween(1000))
+                                                    transitionState.animateTo(currentTab, spring(stiffness = Spring.StiffnessLow))
                                                 }
                                             }
                                         },
                                         onDragCancel = {
                                             coroutineScope.launch {
-                                                transitionState.animateTo(currentTab, tween(1000))
+                                                transitionState.animateTo(currentTab, spring(stiffness = Spring.StiffnessLow))
                                             }
                                         },
-                                        onHorizontalDrag = { change, dragAmount -> 
-                                            // do not consume horizontally completely when inside forms/lists but it's ok for tabs here
+                                        onHorizontalDrag = { change, dragAmount ->
                                             dragOffset += dragAmount
                                             
                                             if (dragOffset < 0 && currentTab < 2) {
@@ -178,14 +176,14 @@ fun RoterFadenApp(viewModel: AppViewModel) {
                                                     transitionState.seekTo(fraction = fraction, targetState = target)
                                                 }
                                             } else {
-                                                 coroutineScope.launch {
-                                                    transitionState.snapTo(currentTab)
+                                                coroutineScope.launch {
+                                                    transitionState.seekTo(0f, currentTab)
                                                 }
                                             }
                                         }
                                     )
                                 }
-                        ) { page: Int ->
+                        ) { page ->
                             when (page) {
                                 0 -> HomeScreen(viewModel, navController, this@SharedTransitionLayout, this@AnimatedContent, onNavigateToSearch = { currentTab = 2 })
                                 1 -> CollectionScreen(viewModel, navController, this@SharedTransitionLayout, this@AnimatedContent)
