@@ -56,11 +56,11 @@ fun LiteratureDetailScreen(
                     .sharedBounds(
                         sharedContentState = rememberSharedContentState(key = "literature_${literatureItem.id}_${sourceKey}"),
                         animatedVisibilityScope = animatedVisibilityScope,
-                        enter = fadeIn(animationSpec = androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 380f)),
-                        exit = fadeOut(animationSpec = androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 380f)),
+                        enter = fadeIn(),
+                        exit = fadeOut(),
                         clipInOverlayDuringTransition = OverlayClip(androidx.compose.foundation.shape.RoundedCornerShape(cornerSize)),
-                        resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
-                        boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 380f) }
+                        resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(contentScale = androidx.compose.ui.layout.ContentScale.Crop),
+                        boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 300f) }
                     )
                     .clip(androidx.compose.foundation.shape.RoundedCornerShape(cornerSize))
                     .nestedScroll(nestedScrollConnection)

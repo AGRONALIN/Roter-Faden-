@@ -286,7 +286,7 @@ fun HomeScreen(
                                         enter = fadeIn(),
                                         exit = fadeOut(),
                                         clipInOverlayDuringTransition = OverlayClip(androidx.compose.foundation.shape.CircleShape),
-                                        resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
+                                        resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(contentScale = androidx.compose.ui.layout.ContentScale.Crop),
                                         boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 100f) }
                                     )
                                     .clip(androidx.compose.foundation.shape.CircleShape)
@@ -332,11 +332,11 @@ fun ArgumentCard(
                 .sharedBounds(
                     sharedContentState = rememberSharedContentState(key = "argument_${argument.id}_${sourceKey}"),
                     animatedVisibilityScope = animatedVisibilityScope,
-                    enter = fadeIn(animationSpec = androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 380f)),
-                    exit = fadeOut(animationSpec = androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 380f)),
+                    enter = fadeIn(),
+                    exit = fadeOut(),
                     clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(12.dp)),
-                    resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
-                    boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 380f) }
+                    resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(contentScale = androidx.compose.ui.layout.ContentScale.Crop),
+                    boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 300f) }
                 )
                 .background(if (isSelected) ImmersiveGreen.copy(alpha = 0.2f) else CreamRed, RoundedCornerShape(12.dp))
                 .clip(RoundedCornerShape(12.dp))
@@ -386,11 +386,11 @@ fun GlossaryCard(
                 .sharedBounds(
                     sharedContentState = rememberSharedContentState(key = "glossary_${item.id}_${sourceKey}"),
                     animatedVisibilityScope = animatedVisibilityScope,
-                    enter = fadeIn(animationSpec = androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 380f)),
-                    exit = fadeOut(animationSpec = androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 380f)),
+                    enter = fadeIn(),
+                    exit = fadeOut(),
                     clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(12.dp)),
-                    resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
-                    boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 380f) }
+                    resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(contentScale = androidx.compose.ui.layout.ContentScale.Crop),
+                    boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 300f) }
                 )
                 .background(ImmersivePillBg, RoundedCornerShape(12.dp))
                 .clip(RoundedCornerShape(12.dp))
@@ -437,11 +437,11 @@ fun LiteratureCard(
                 .sharedBounds(
                     sharedContentState = rememberSharedContentState(key = "literature_${item.id}_${sourceKey}"),
                     animatedVisibilityScope = animatedVisibilityScope,
-                    enter = fadeIn(animationSpec = androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 380f)),
-                    exit = fadeOut(animationSpec = androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 380f)),
+                    enter = fadeIn(),
+                    exit = fadeOut(),
                     clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(12.dp)),
-                    resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
-                    boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 380f) }
+                    resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(contentScale = androidx.compose.ui.layout.ContentScale.Crop),
+                    boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 300f) }
                 )
                 .background(ImmersivePillBg, RoundedCornerShape(12.dp))
                 .clip(RoundedCornerShape(12.dp))

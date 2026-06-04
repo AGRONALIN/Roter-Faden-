@@ -77,7 +77,7 @@ fun EditArgumentScreen(
                         enter = fadeIn(),
                         exit = fadeOut(),
                         clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(0.dp)),
-                        resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
+                        resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(contentScale = androidx.compose.ui.layout.ContentScale.Crop),
                         boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 100f) }
                     )
                 } else m
@@ -291,7 +291,7 @@ fun EditGlossaryScreen(
                 enter = fadeIn(),
                 exit = fadeOut(),
                 clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(0.dp)),
-                resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
+                resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(contentScale = androidx.compose.ui.layout.ContentScale.Crop),
                 boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 100f) }
             ),
             containerColor = ImmersiveBackground

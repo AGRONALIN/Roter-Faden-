@@ -142,7 +142,7 @@ fun RoterFadenApp(viewModel: AppViewModel) {
                                         onDragEnd = {
                                             val fraction = (Math.abs(dragOffset) / screenWidth).coerceIn(0f, 1f)
                                             coroutineScope.launch {
-                                                if (fraction > 0.2f && target != currentTab) {
+                                                if (fraction > 0.15f && target != currentTab) {
                                                     transitionState.animateTo(target, spring(stiffness = Spring.StiffnessLow))
                                                     currentTab = target
                                                 } else {
@@ -156,7 +156,7 @@ fun RoterFadenApp(viewModel: AppViewModel) {
                                             }
                                         },
                                         onHorizontalDrag = { _, dragAmount ->
-                                            dragOffset += dragAmount
+                                            dragOffset += dragAmount * 1.6f // Lower resistance
                                             if (dragOffset < 0 && currentTab < 2) {
                                                 target = currentTab + 1
                                             } else if (dragOffset > 0 && currentTab > 0) {
@@ -479,7 +479,7 @@ fun SharedTransitionScope.RoterFadenBottomNav(
                                         animatedVisibilityScope = animatedVisibilityScope,
                                         enter = fadeIn(),
                                         exit = fadeOut(),
-                                        resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
+                                        resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(contentScale = androidx.compose.ui.layout.ContentScale.Crop),
                                         boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 100f) }
                                     )
                                     .shadow(16.dp, RoundedCornerShape(percent = 50), ambientColor = Color.Black.copy(alpha = 0.15f), spotColor = Color.Black.copy(alpha = 0.3f))
@@ -514,7 +514,7 @@ fun SharedTransitionScope.RoterFadenBottomNav(
                                         animatedVisibilityScope = animatedVisibilityScope,
                                         enter = fadeIn(),
                                         exit = fadeOut(),
-                                        resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
+                                        resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(contentScale = androidx.compose.ui.layout.ContentScale.Crop),
                                         boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 100f) }
                                     )
                                     .shadow(16.dp, RoundedCornerShape(percent = 50), ambientColor = Color.Black.copy(alpha = 0.15f), spotColor = Color.Black.copy(alpha = 0.3f))
