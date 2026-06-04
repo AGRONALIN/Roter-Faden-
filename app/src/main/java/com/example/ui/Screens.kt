@@ -321,8 +321,7 @@ fun ArgumentCard(
     sourceKey: String = "card"
 ) {
     with(sharedTransitionScope) {
-        var cardModifier = Modifier
-            .fillMaxWidth()
+        val tabSharedBoundsModifier = Modifier
             .sharedBounds(
                 sharedContentState = rememberSharedContentState(key = "tab_argument_${argument.id}_${sourceKey}"),
                 animatedVisibilityScope = animatedVisibilityScope,
@@ -339,52 +338,92 @@ fun ArgumentCard(
             )
 
         if (navAnimatedVisibilityScope != null) {
-            cardModifier = cardModifier.sharedBounds(
-                sharedContentState = rememberSharedContentState(key = "argument_${argument.id}_${sourceKey}"),
-                animatedVisibilityScope = navAnimatedVisibilityScope,
-                enter = fadeIn(animationSpec = tween(200)),
-                exit = fadeOut(animationSpec = tween(150)),
-                clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(12.dp)),
-                resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(contentScale = androidx.compose.ui.layout.ContentScale.Crop),
-                boundsTransform = { _, _ ->
-                    spring(
-                        dampingRatio = Spring.DampingRatioNoBouncy,
-                        stiffness = Spring.StiffnessMedium
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .sharedBounds(
+                        sharedContentState = rememberSharedContentState(key = "argument_${argument.id}_${sourceKey}"),
+                        animatedVisibilityScope = navAnimatedVisibilityScope,
+                        enter = fadeIn(animationSpec = tween(200)),
+                        exit = fadeOut(animationSpec = tween(150)),
+                        clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(12.dp)),
+                        resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(contentScale = androidx.compose.ui.layout.ContentScale.Crop),
+                        boundsTransform = { _, _ ->
+                            spring(
+                                dampingRatio = Spring.DampingRatioNoBouncy,
+                                stiffness = Spring.StiffnessMedium
+                            )
+                        }
+                    )
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .then(tabSharedBoundsModifier)
+                        .background(if (isSelected) ImmersiveGreen.copy(alpha = 0.2f) else CreamRed, RoundedCornerShape(12.dp))
+                        .clip(RoundedCornerShape(12.dp))
+                        .bounceClick(
+                            onClick = onClick,
+                            onLongClick = onLongClick
+                        )
+                        .padding(vertical = 12.dp, horizontal = 12.dp)
+                ) {
+                    Text(
+                        text = argument.antiMarxistStatement,
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = ImmersiveTextPrimary,
+                            lineHeight = 28.sp
+                        ),
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = argument.marxistCounterArgument,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            color = ImmersiveTextSecondary,
+                            lineHeight = 20.sp
+                        ),
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
-            )
-        }
-
-        Column(
-            modifier = cardModifier
-                .background(if (isSelected) ImmersiveGreen.copy(alpha = 0.2f) else CreamRed, RoundedCornerShape(12.dp))
-                .clip(RoundedCornerShape(12.dp))
-                .bounceClick(
-                    onClick = onClick,
-                    onLongClick = onLongClick
+            }
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .then(tabSharedBoundsModifier)
+                    .background(if (isSelected) ImmersiveGreen.copy(alpha = 0.2f) else CreamRed, RoundedCornerShape(12.dp))
+                    .clip(RoundedCornerShape(12.dp))
+                    .bounceClick(
+                        onClick = onClick,
+                        onLongClick = onLongClick
+                    )
+                    .padding(vertical = 12.dp, horizontal = 12.dp)
+            ) {
+                Text(
+                    text = argument.antiMarxistStatement,
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = ImmersiveTextPrimary,
+                        lineHeight = 28.sp
+                    ),
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
                 )
-                .padding(vertical = 12.dp, horizontal = 12.dp)
-        ) {
-            Text(
-                text = argument.antiMarxistStatement,
-                style = MaterialTheme.typography.titleLarge.copy(
-                    fontWeight = FontWeight.Bold,
-                    color = ImmersiveTextPrimary,
-                    lineHeight = 28.sp
-                ),
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = argument.marxistCounterArgument,
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    color = ImmersiveTextSecondary,
-                    lineHeight = 20.sp
-                ),
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = argument.marxistCounterArgument,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        color = ImmersiveTextSecondary,
+                        lineHeight = 20.sp
+                    ),
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
         }
     }
 }
@@ -400,8 +439,7 @@ fun GlossaryCard(
     sourceKey: String = "card"
 ) {
     with(sharedTransitionScope) {
-        var cardModifier = Modifier
-            .fillMaxWidth()
+        val tabSharedBoundsModifier = Modifier
             .sharedBounds(
                 sharedContentState = rememberSharedContentState(key = "tab_glossary_${item.id}_${sourceKey}"),
                 animatedVisibilityScope = animatedVisibilityScope,
@@ -418,54 +456,89 @@ fun GlossaryCard(
             )
 
         if (navAnimatedVisibilityScope != null) {
-            cardModifier = cardModifier.sharedBounds(
-                sharedContentState = rememberSharedContentState(key = "glossary_${item.id}_${sourceKey}"),
-                animatedVisibilityScope = navAnimatedVisibilityScope,
-                enter = fadeIn(animationSpec = tween(200)),
-                exit = fadeOut(animationSpec = tween(150)),
-                clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(12.dp)),
-                resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(contentScale = androidx.compose.ui.layout.ContentScale.Crop),
-                boundsTransform = { _, _ ->
-                    spring(
-                        dampingRatio = Spring.DampingRatioNoBouncy,
-                        stiffness = Spring.StiffnessMedium
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .sharedBounds(
+                        sharedContentState = rememberSharedContentState(key = "glossary_${item.id}_${sourceKey}"),
+                        animatedVisibilityScope = navAnimatedVisibilityScope,
+                        enter = fadeIn(animationSpec = tween(200)),
+                        exit = fadeOut(animationSpec = tween(150)),
+                        clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(12.dp)),
+                        resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(contentScale = androidx.compose.ui.layout.ContentScale.Crop),
+                        boundsTransform = { _, _ ->
+                            spring(
+                                dampingRatio = Spring.DampingRatioNoBouncy,
+                                stiffness = Spring.StiffnessMedium
+                            )
+                        }
+                    )
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .then(tabSharedBoundsModifier)
+                        .background(ImmersivePillBg, RoundedCornerShape(12.dp))
+                        .clip(RoundedCornerShape(12.dp))
+                        .bounceClick(onClick = onClick)
+                        .padding(vertical = 12.dp, horizontal = 12.dp)
+                ) {
+                    Text(
+                        text = item.term,
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = ImmersiveTextPrimary,
+                            lineHeight = 28.sp
+                        ),
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = item.definition,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            color = ImmersiveTextSecondary,
+                            lineHeight = 20.sp
+                        ),
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
-            )
-        }
-
-        Column(
-            modifier = cardModifier
-                .background(ImmersivePillBg, RoundedCornerShape(12.dp))
-                .clip(RoundedCornerShape(12.dp))
-                .bounceClick(onClick = onClick)
-                .padding(vertical = 12.dp, horizontal = 12.dp)
-        ) {
-            Text(
-                text = item.term,
-                style = MaterialTheme.typography.titleLarge.copy(
-                    fontWeight = FontWeight.Bold,
-                    color = ImmersiveTextPrimary,
-                    lineHeight = 28.sp
-                ),
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = item.definition,
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    color = ImmersiveTextSecondary,
-                    lineHeight = 20.sp
-                ),
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
+            }
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .then(tabSharedBoundsModifier)
+                    .background(ImmersivePillBg, RoundedCornerShape(12.dp))
+                    .clip(RoundedCornerShape(12.dp))
+                    .bounceClick(onClick = onClick)
+                    .padding(vertical = 12.dp, horizontal = 12.dp)
+            ) {
+                Text(
+                    text = item.term,
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = ImmersiveTextPrimary,
+                        lineHeight = 28.sp
+                    ),
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = item.definition,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        color = ImmersiveTextSecondary,
+                        lineHeight = 20.sp
+                    ),
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
         }
     }
-}
-
-@OptIn(ExperimentalSharedTransitionApi::class, androidx.compose.foundation.ExperimentalFoundationApi::class)
+}@OptIn(ExperimentalSharedTransitionApi::class, androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 fun LiteratureCard(
     item: com.example.data.LiteratureItem,
@@ -476,8 +549,7 @@ fun LiteratureCard(
     sourceKey: String = "card"
 ) {
     with(sharedTransitionScope) {
-        var cardModifier = Modifier
-            .fillMaxWidth()
+        val tabSharedBoundsModifier = Modifier
             .sharedBounds(
                 sharedContentState = rememberSharedContentState(key = "tab_literature_${item.id}_${sourceKey}"),
                 animatedVisibilityScope = animatedVisibilityScope,
@@ -494,58 +566,104 @@ fun LiteratureCard(
             )
 
         if (navAnimatedVisibilityScope != null) {
-            cardModifier = cardModifier.sharedBounds(
-                sharedContentState = rememberSharedContentState(key = "literature_${item.id}_${sourceKey}"),
-                animatedVisibilityScope = navAnimatedVisibilityScope,
-                enter = fadeIn(animationSpec = tween(200)),
-                exit = fadeOut(animationSpec = tween(150)),
-                clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(12.dp)),
-                resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(contentScale = androidx.compose.ui.layout.ContentScale.Crop),
-                boundsTransform = { _, _ ->
-                    spring(
-                        dampingRatio = Spring.DampingRatioNoBouncy,
-                        stiffness = Spring.StiffnessMedium
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .sharedBounds(
+                        sharedContentState = rememberSharedContentState(key = "literature_${item.id}_${sourceKey}"),
+                        animatedVisibilityScope = navAnimatedVisibilityScope,
+                        enter = fadeIn(animationSpec = tween(200)),
+                        exit = fadeOut(animationSpec = tween(150)),
+                        clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(12.dp)),
+                        resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(contentScale = androidx.compose.ui.layout.ContentScale.Crop),
+                        boundsTransform = { _, _ ->
+                            spring(
+                                dampingRatio = Spring.DampingRatioNoBouncy,
+                                stiffness = Spring.StiffnessMedium
+                            )
+                        }
+                    )
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .then(tabSharedBoundsModifier)
+                        .background(ImmersivePillBg, RoundedCornerShape(12.dp))
+                        .clip(RoundedCornerShape(12.dp))
+                        .bounceClick(onClick = onClick)
+                        .padding(vertical = 12.dp, horizontal = 12.dp)
+                ) {
+                    Text(
+                        text = item.title,
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = ImmersiveTextPrimary,
+                            lineHeight = 28.sp
+                        ),
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = item.author,
+                        style = MaterialTheme.typography.labelMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = ImmersiveGreen,
+                            letterSpacing = 1.5.sp
+                        )
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = item.summary,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            color = ImmersiveTextSecondary,
+                            lineHeight = 20.sp
+                        ),
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
-            )
-        }
-
-        Column(
-            modifier = cardModifier
-                .background(ImmersivePillBg, RoundedCornerShape(12.dp))
-                .clip(RoundedCornerShape(12.dp))
-                .bounceClick(onClick = onClick)
-                .padding(vertical = 12.dp, horizontal = 12.dp)
-        ) {
-            Text(
-                text = item.title,
-                style = MaterialTheme.typography.titleLarge.copy(
-                    fontWeight = FontWeight.Bold,
-                    color = ImmersiveTextPrimary,
-                    lineHeight = 28.sp
-                ),
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = item.author,
-                style = MaterialTheme.typography.labelMedium.copy(
-                    fontWeight = FontWeight.Bold,
-                    color = ImmersiveGreen,
-                    letterSpacing = 1.5.sp
+            }
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .then(tabSharedBoundsModifier)
+                    .background(ImmersivePillBg, RoundedCornerShape(12.dp))
+                    .clip(RoundedCornerShape(12.dp))
+                    .bounceClick(onClick = onClick)
+                    .padding(vertical = 12.dp, horizontal = 12.dp)
+            ) {
+                Text(
+                    text = item.title,
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = ImmersiveTextPrimary,
+                        lineHeight = 28.sp
+                    ),
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
                 )
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = item.summary,
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    color = ImmersiveTextSecondary,
-                    lineHeight = 20.sp
-                ),
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = item.author,
+                    style = MaterialTheme.typography.labelMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = ImmersiveGreen,
+                        letterSpacing = 1.5.sp
+                    )
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = item.summary,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        color = ImmersiveTextSecondary,
+                        lineHeight = 20.sp
+                    ),
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
         }
     }
 }
