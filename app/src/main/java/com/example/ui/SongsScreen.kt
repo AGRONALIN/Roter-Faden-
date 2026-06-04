@@ -39,12 +39,24 @@ data class SongItem(val id: String, val title: String, val artist: String, val d
 @OptIn(ExperimentalAnimationApi::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun SongsScreen(
+    viewModel: AppViewModel,
     navController: NavController,
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope
 ) {
     val context = LocalContext.current
-    var songs by remember { mutableStateOf<List<SongItem>>(emptyList()) }
+    val savedSongs by viewModel.songsList.collectAsState()
+    val songs = remember(savedSongs) {
+        savedSongs.map {
+            SongItem(
+                id = it.id,
+                title = it.title,
+                artist = it.artist,
+                durationMs = it.durationMs,
+                uri = Uri.parse(it.uriString)
+            )
+        }
+    }
     var currentlyPlaying by remember { mutableStateOf<SongItem?>(null) }
     var isPlaying by remember { mutableStateOf(false) }
     var currentProgress by remember { mutableIntStateOf(0) }
@@ -125,14 +137,24 @@ fun SongsScreen(
                 val duration = durationStr?.toLongOrNull() ?: 0L
                 retriever.release()
                 
-                val newSong = SongItem(
-                    id = UUID.randomUUID().toString(),
+                val songId = UUID.randomUUID().toString()
+                
+                // Copy MP3 file to application internal directory for persistent local play
+                val inputStream = context.contentResolver.openInputStream(uri)
+                val destFile = java.io.File(context.filesDir, "$songId.mp3")
+                inputStream?.use { input ->
+                    destFile.outputStream().use { output ->
+                        input.copyTo(output)
+                    }
+                }
+                
+                viewModel.insertSong(
+                    id = songId,
                     title = title,
                     artist = artist,
                     durationMs = duration,
-                    uri = uri
+                    uriString = Uri.fromFile(destFile).toString()
                 )
-                songs = songs + newSong
             } catch (e: Exception) {
                 e.printStackTrace()
             }
@@ -243,7 +265,18 @@ fun SongsScreen(
                                     currentlyPlaying = null
                                     isPlaying = false
                                 }
-                                songs = songs.filter { it.id != song.id }
+                                try {
+                                    val uriStr = song.uri.toString()
+                                    if (uriStr.startsWith("file://")) {
+                                        val path = song.uri.path
+                                        if (path != null) {
+                                            java.io.File(path).delete()
+                                        }
+                                    }
+                                } catch (e: Exception) {
+                                    e.printStackTrace()
+                                }
+                                viewModel.deleteSong(song.id)
                             }) {
                                 Icon(Icons.Filled.Delete, contentDescription = "Löschen", tint = ImmersiveGreen.copy(alpha = 0.6f))
                             }

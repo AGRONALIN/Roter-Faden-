@@ -233,6 +233,30 @@ class AppViewModel(private val repository: AppRepository) : ViewModel() {
             e.printStackTrace()
         }
     }
+
+    val songsList: StateFlow<List<com.example.data.SongEntity>> = repository.allSongs
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    fun insertSong(id: String, title: String, artist: String, durationMs: Long, uriString: String) {
+        viewModelScope.launch {
+            repository.insertSong(com.example.data.SongEntity(id, title, artist, durationMs, uriString))
+        }
+    }
+
+    fun deleteSong(id: String) {
+        viewModelScope.launch {
+            repository.deleteSong(id)
+        }
+    }
+
+    val literatureSummaries: StateFlow<List<com.example.data.LiteratureSummary>> = repository.allLiteratureSummaries
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    fun updateLiteratureSummary(id: Int, summary: String) {
+        viewModelScope.launch {
+            repository.insertLiteratureSummary(com.example.data.LiteratureSummary(id, summary))
+        }
+    }
 }
 
 class AppViewModelFactory(private val repository: AppRepository) : ViewModelProvider.Factory {

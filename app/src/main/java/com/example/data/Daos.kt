@@ -38,3 +38,25 @@ interface GlossaryDao {
     @Query("SELECT * FROM glossary_items WHERE term LIKE '%' || :query || '%' OR definition LIKE '%' || :query || '%' ORDER BY term ASC")
     fun searchGlossary(query: String): Flow<List<GlossaryItem>>
 }
+
+@Dao
+interface SongDao {
+    @Query("SELECT * FROM songs")
+    fun getAllSongs(): Flow<List<SongEntity>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertSong(song: SongEntity)
+
+    @Query("DELETE FROM songs WHERE id = :id")
+    suspend fun deleteSongById(id: String)
+}
+
+@Dao
+interface LiteratureSummaryDao {
+    @Query("SELECT * FROM literature_summaries")
+    fun getAllSummaries(): Flow<List<LiteratureSummary>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertSummary(summary: LiteratureSummary)
+}
+

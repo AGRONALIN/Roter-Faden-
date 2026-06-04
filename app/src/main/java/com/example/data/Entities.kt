@@ -19,3 +19,18 @@ data class GlossaryItem(
     val definition: String,
     val lastAccessed: Long = System.currentTimeMillis()
 )
+
+@Entity(tableName = "songs")
+data class SongEntity(
+    @PrimaryKey val id: String,
+    val title: String,
+    val artist: String,
+    val durationMs: Long,
+    val uriString: String
+)
+
+@Entity(tableName = "literature_summaries")
+data class LiteratureSummary(
+    @PrimaryKey val id: Int,
+    val summary: String
+)

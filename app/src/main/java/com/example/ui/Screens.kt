@@ -280,15 +280,16 @@ fun HomeScreen(
                         )
                     }
                     
-                    if (randomArgument != null) {
+                    if (recentArguments.isNotEmpty()) {
                         Box(
                             modifier = Modifier
                                 .size(80.dp)
                                 .clip(androidx.compose.foundation.shape.CircleShape)
                                 .background(ImmersiveGreen)
                                 .bounceClick {
-                                    viewModel.updateArgumentLastAccessed(randomArgument!!)
-                                    navController.navigate("argument_detail/${randomArgument!!.id}?source=random")
+                                    val randomArg = recentArguments.random()
+                                    viewModel.updateArgumentLastAccessed(randomArg)
+                                    navController.navigate("argument_detail/${randomArg.id}?source=random")
                                 },
                             contentAlignment = Alignment.Center
                         ) {
