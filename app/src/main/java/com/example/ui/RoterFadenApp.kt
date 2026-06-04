@@ -208,7 +208,11 @@ fun RoterFadenApp(viewModel: AppViewModel) {
                                 type = NavType.StringType
                                 defaultValue = "card"
                             }
-                        )
+                        ),
+                        enterTransition = { fadeIn(animationSpec = tween(150)) },
+                        exitTransition = { fadeOut(animationSpec = tween(150)) },
+                        popEnterTransition = { fadeIn(animationSpec = tween(150)) },
+                        popExitTransition = { fadeOut(animationSpec = tween(150)) }
                     ) { backStackEntry ->
                         val termId = backStackEntry.arguments?.getInt("termId") ?: 0
                         val sourceKey = backStackEntry.arguments?.getString("source") ?: "card"
@@ -237,10 +241,10 @@ fun RoterFadenApp(viewModel: AppViewModel) {
                     }
                     composable(
                         "songs",
-                        enterTransition = { EnterTransition.None },
-                        exitTransition = { ExitTransition.None },
-                        popEnterTransition = { EnterTransition.None },
-                        popExitTransition = { ExitTransition.None }
+                        enterTransition = { fadeIn(animationSpec = tween(150)) },
+                        exitTransition = { fadeOut(animationSpec = tween(150)) },
+                        popEnterTransition = { fadeIn(animationSpec = tween(150)) },
+                        popExitTransition = { fadeOut(animationSpec = tween(150)) }
                     ) {
                         SongsScreen(navController, this@SharedTransitionLayout, this@composable)
                     }
@@ -252,7 +256,11 @@ fun RoterFadenApp(viewModel: AppViewModel) {
                                 type = NavType.StringType
                                 defaultValue = "card"
                             }
-                        )
+                        ),
+                        enterTransition = { fadeIn(animationSpec = tween(150)) },
+                        exitTransition = { fadeOut(animationSpec = tween(150)) },
+                        popEnterTransition = { fadeIn(animationSpec = tween(150)) },
+                        popExitTransition = { fadeOut(animationSpec = tween(150)) }
                     ) { backStackEntry ->
                         val litId = backStackEntry.arguments?.getInt("litId") ?: 0
                         val sourceKey = backStackEntry.arguments?.getString("source") ?: "card"
@@ -281,10 +289,10 @@ fun RoterFadenApp(viewModel: AppViewModel) {
                                 defaultValue = "card"
                             }
                         ),
-                        enterTransition = { EnterTransition.None },
-                        exitTransition = { ExitTransition.None },
-                        popEnterTransition = { EnterTransition.None },
-                        popExitTransition = { ExitTransition.None }
+                        enterTransition = { fadeIn(animationSpec = tween(150)) },
+                        exitTransition = { fadeOut(animationSpec = tween(150)) },
+                        popEnterTransition = { fadeIn(animationSpec = tween(150)) },
+                        popExitTransition = { fadeOut(animationSpec = tween(150)) }
                     ) { backStackEntry ->
                         val argId = backStackEntry.arguments?.getInt("argId") ?: 0
                         val sourceKey = backStackEntry.arguments?.getString("source") ?: "card"

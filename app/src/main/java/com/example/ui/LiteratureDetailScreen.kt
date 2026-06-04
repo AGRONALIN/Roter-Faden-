@@ -40,12 +40,6 @@ fun LiteratureDetailScreen(
             .fillMaxSize()
             .background(ImmersiveBackground)
     ) {
-        val cornerSize by animatedVisibilityScope.transition.animateDp(
-            label = "cornerSize"
-        ) { state ->
-            if (state == androidx.compose.animation.EnterExitState.Visible) 0.dp else 12.dp
-        }
-        
     PullToDismissContainer(
         onDismiss = { navController.popBackStack() }
     ) { nestedScrollConnection ->
@@ -58,11 +52,11 @@ fun LiteratureDetailScreen(
                         animatedVisibilityScope = animatedVisibilityScope,
                         enter = fadeIn(),
                         exit = fadeOut(),
-                        clipInOverlayDuringTransition = OverlayClip(androidx.compose.foundation.shape.RoundedCornerShape(cornerSize)),
+                        clipInOverlayDuringTransition = OverlayClip(androidx.compose.foundation.shape.RoundedCornerShape(0.dp)),
                         resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(contentScale = androidx.compose.ui.layout.ContentScale.Crop),
-                        boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 300f) }
+                        boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = androidx.compose.animation.core.Spring.DampingRatioNoBouncy, stiffness = androidx.compose.animation.core.Spring.StiffnessMediumLow) }
                     )
-                    .clip(androidx.compose.foundation.shape.RoundedCornerShape(cornerSize))
+                    .clip(androidx.compose.foundation.shape.RoundedCornerShape(0.dp))
                     .nestedScroll(nestedScrollConnection)
                     .background(ImmersivePillBg)
                     .padding(horizontal = 24.dp)
