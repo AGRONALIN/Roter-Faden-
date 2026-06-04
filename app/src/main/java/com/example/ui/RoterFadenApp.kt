@@ -85,8 +85,6 @@ fun getTabIndex(route: String): Int {
 fun RoterFadenApp(viewModel: AppViewModel) {
     val navController = rememberNavController()
     var currentTab by remember { mutableIntStateOf(0) }
-    val transitionState = remember { SeekableTransitionState(currentTab) }
-    val transition = rememberTransition(transitionState, label = "TabTransition")
     val coroutineScope = rememberCoroutineScope()
 
     SharedTransitionLayout {
@@ -113,7 +111,7 @@ fun RoterFadenApp(viewModel: AppViewModel) {
                 ) {
                     composable("main") {
                         val transitionState = remember { SeekableTransitionState(currentTab) }
-                        val transition = rememberTransition(transitionState, label = "tab transition")
+                        val transition = rememberTransition(transitionState, label = "tab_transition")
                         val screenWidth = with(LocalDensity.current) { LocalConfiguration.current.screenWidthDp.dp.toPx() }
 
                         LaunchedEffect(currentTab) {
@@ -134,7 +132,6 @@ fun RoterFadenApp(viewModel: AppViewModel) {
                                     ).using(SizeTransform(clip = false))
                                 }
                             },
-                            contentKey = { it },
                             modifier = Modifier
                                 .fillMaxSize()
                                 .pointerInput(Unit) {
@@ -146,22 +143,20 @@ fun RoterFadenApp(viewModel: AppViewModel) {
                                             val fraction = (Math.abs(dragOffset) / screenWidth).coerceIn(0f, 1f)
                                             coroutineScope.launch {
                                                 if (fraction > 0.2f && target != currentTab) {
-                                                    val newTab = target
-                                                    transitionState.animateTo(newTab, spring(stiffness = Spring.StiffnessLow))
-                                                    currentTab = newTab
+                                                    transitionState.animateTo(target, spring(stiffness = Spring.StiffnessLow))
+                                                    currentTab = target
                                                 } else {
                                                     transitionState.animateTo(currentTab, spring(stiffness = Spring.StiffnessLow))
                                                 }
                                             }
                                         },
-                                        onDragCancel = {
+                                        onDragCancel = { 
                                             coroutineScope.launch {
                                                 transitionState.animateTo(currentTab, spring(stiffness = Spring.StiffnessLow))
                                             }
                                         },
-                                        onHorizontalDrag = { change, dragAmount ->
+                                        onHorizontalDrag = { _, dragAmount ->
                                             dragOffset += dragAmount
-                                            
                                             if (dragOffset < 0 && currentTab < 2) {
                                                 target = currentTab + 1
                                             } else if (dragOffset > 0 && currentTab > 0) {
@@ -182,7 +177,8 @@ fun RoterFadenApp(viewModel: AppViewModel) {
                                             }
                                         }
                                     )
-                                }
+                                },
+                            contentKey = { it }
                         ) { page ->
                             when (page) {
                                 0 -> HomeScreen(viewModel, navController, this@SharedTransitionLayout, this@AnimatedContent, onNavigateToSearch = { currentTab = 2 })
@@ -239,7 +235,13 @@ fun RoterFadenApp(viewModel: AppViewModel) {
                             Text("Begriff nicht gefunden", modifier = Modifier.fillMaxSize().wrapContentSize(Alignment.Center))
                         }
                     }
-                    composable("songs") {
+                    composable(
+                        "songs",
+                        enterTransition = { EnterTransition.None },
+                        exitTransition = { ExitTransition.None },
+                        popEnterTransition = { EnterTransition.None },
+                        popExitTransition = { ExitTransition.None }
+                    ) {
                         SongsScreen(navController, this@SharedTransitionLayout, this@composable)
                     }
                     composable(
@@ -278,7 +280,11 @@ fun RoterFadenApp(viewModel: AppViewModel) {
                                 type = NavType.StringType
                                 defaultValue = "card"
                             }
-                        )
+                        ),
+                        enterTransition = { EnterTransition.None },
+                        exitTransition = { ExitTransition.None },
+                        popEnterTransition = { EnterTransition.None },
+                        popExitTransition = { ExitTransition.None }
                     ) { backStackEntry ->
                         val argId = backStackEntry.arguments?.getInt("argId") ?: 0
                         val sourceKey = backStackEntry.arguments?.getString("source") ?: "card"

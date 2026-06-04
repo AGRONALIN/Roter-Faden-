@@ -165,11 +165,11 @@ fun HomeScreen(
                                     argument = argument,
                                     onClick = {
                                         viewModel.updateArgumentLastAccessed(argument)
-                                        navController.navigate("argument_detail/${argument.id}?source=home")
+                                        navController.navigate("argument_detail/${argument.id}?source=card")
                                     },
                                     sharedTransitionScope = sharedTransitionScope,
                                     animatedVisibilityScope = animatedVisibilityScope,
-                                    sourceKey = "home"
+                                    sourceKey = "card"
                                 )
                             }
                         }
@@ -191,11 +191,11 @@ fun HomeScreen(
                                     item = item,
                                     onClick = {
                                         viewModel.updateGlossaryLastAccessed(item)
-                                        navController.navigate("glossary_detail/${item.id}?source=home")
+                                        navController.navigate("glossary_detail/${item.id}?source=card")
                                     },
                                     sharedTransitionScope = sharedTransitionScope,
                                     animatedVisibilityScope = animatedVisibilityScope,
-                                    sourceKey = "home"
+                                    sourceKey = "card"
                                 )
                             }
                         }
@@ -219,14 +219,6 @@ fun HomeScreen(
                     // Main Header Pill
                     Box(
                         modifier = Modifier
-                            .sharedBounds(
-                                sharedContentState = rememberSharedContentState(key = "roter_faden_header"),
-                                animatedVisibilityScope = animatedVisibilityScope,
-                                enter = fadeIn(),
-                                exit = fadeOut(),
-                                resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
-                                boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 100f) }
-                            )
                             .whiteGlowPill(headerBgColor, headerBorderColor, headerGlowAlpha)
                             .clip(RoundedCornerShape(percent = 50))
                             .combinedClickable(
@@ -237,14 +229,7 @@ fun HomeScreen(
                     ) {
                     Text(
                         text = "Roter Faden",
-                        modifier = Modifier.sharedBounds(
-                            sharedContentState = rememberSharedContentState(key = "roter_faden_title"),
-                            animatedVisibilityScope = animatedVisibilityScope,
-                            enter = fadeIn(),
-                            exit = fadeOut(),
-                            resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
-                            boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 100f) }
-                        ),
+                        modifier = Modifier,
                         style = MaterialTheme.typography.displayLarge.copy(
                             fontWeight = FontWeight.Black,
                             color = ImmersiveGreen
@@ -608,10 +593,10 @@ fun SearchScreen(
                                 Column {
                                     ArgumentCard(
                                         argument = argument,
-                                        onClick = { navController.navigate("argument_detail/${argument.id}?source=search") },
+                                        onClick = { navController.navigate("argument_detail/${argument.id}?source=card") },
                                         sharedTransitionScope = sharedTransitionScope,
                                         animatedVisibilityScope = animatedVisibilityScope,
-                                        sourceKey = "search"
+                                        sourceKey = "card"
                                     )
                                 }
                             }
@@ -628,11 +613,11 @@ fun SearchScreen(
                                         item = item,
                                         onClick = {
                                             viewModel.updateGlossaryLastAccessed(item)
-                                            navController.navigate("glossary_detail/${item.id}?source=search")
+                                            navController.navigate("glossary_detail/${item.id}?source=card")
                                         },
                                         sharedTransitionScope = sharedTransitionScope,
                                         animatedVisibilityScope = animatedVisibilityScope,
-                                        sourceKey = "search"
+                                        sourceKey = "card"
                                     )
                                 }
                             }

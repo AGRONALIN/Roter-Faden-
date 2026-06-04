@@ -147,15 +147,6 @@ fun SongsScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .sharedBounds(
-                        sharedContentState = rememberSharedContentState(key = "roter_faden_header"),
-                        animatedVisibilityScope = animatedVisibilityScope,
-                        enter = fadeIn(),
-                        exit = fadeOut(),
-                        clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(0.dp)),
-                        resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
-                        boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 100f) }
-                    )
                     .background(ImmersiveBackground)
             ) {
                 Row(
@@ -178,14 +169,6 @@ fun SongsScreen(
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
                         text = "Mediathek",
-                        modifier = Modifier.sharedBounds(
-                            sharedContentState = rememberSharedContentState(key = "roter_faden_title"),
-                            animatedVisibilityScope = animatedVisibilityScope,
-                            enter = fadeIn(),
-                            exit = fadeOut(),
-                            resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
-                            boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 100f) }
-                        ),
                         style = MaterialTheme.typography.displaySmall.copy(
                             fontWeight = FontWeight.Black,
                             color = ImmersiveGreen

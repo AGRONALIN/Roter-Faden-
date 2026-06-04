@@ -302,7 +302,7 @@ fun CollectionScreen(
                                                         }
                                                     } else {
                                                         viewModel.updateArgumentLastAccessed(argument)
-                                                        navController.navigate("argument_detail/${argument.id}?source=collection")
+                                                        navController.navigate("argument_detail/${argument.id}?source=card")
                                                     }
                                                 },
                                                 onLongClick = {
@@ -315,7 +315,7 @@ fun CollectionScreen(
                                                 isSelected = isSelected,
                                                 sharedTransitionScope = sharedTransitionScope,
                                                 animatedVisibilityScope = animatedVisibilityScope,
-                                                sourceKey = "collection"
+                                                sourceKey = "card"
                                             )
                                         }
                                     }
@@ -343,11 +343,11 @@ fun CollectionScreen(
                                                 item = item,
                                                 onClick = {
                                                     viewModel.updateGlossaryLastAccessed(item)
-                                                    navController.navigate("glossary_detail/${item.id}?source=collection")
+                                                    navController.navigate("glossary_detail/${item.id}?source=card")
                                                 },
                                                 sharedTransitionScope = sharedTransitionScope,
                                                 animatedVisibilityScope = animatedVisibilityScope,
-                                                sourceKey = "collection"
+                                                sourceKey = "card"
                                             )
                                         }
                                     }
@@ -374,11 +374,11 @@ fun CollectionScreen(
                                             LiteratureCard(
                                                 item = item,
                                                 onClick = {
-                                                    navController.navigate("literature_detail/${item.id}?source=collection")
+                                                    navController.navigate("literature_detail/${item.id}?source=card")
                                                 },
                                                 sharedTransitionScope = sharedTransitionScope,
                                                 animatedVisibilityScope = animatedVisibilityScope,
-                                                sourceKey = "collection"
+                                                sourceKey = "card"
                                             )
                                         }
                                     }
