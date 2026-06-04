@@ -129,19 +129,19 @@ fun RoterFadenApp(viewModel: AppViewModel) {
 
                         LaunchedEffect(currentTab) {
                             if (transitionState.currentState != currentTab && transitionState.targetState != currentTab) {
-                                transitionState.animateTo(currentTab, animationSpec = spring(stiffness = 120f, dampingRatio = 0.9f))
+                                transitionState.animateTo(currentTab, animationSpec = spring(stiffness = 40f, dampingRatio = 0.9f))
                             }
                         }
 
                         transition.AnimatedContent(
                             transitionSpec = {
                                 if (targetState > initialState) {
-                                    slideInHorizontally(animationSpec = spring(stiffness = 120f, dampingRatio = 0.9f)) { width -> width }.togetherWith(
-                                        slideOutHorizontally(animationSpec = spring(stiffness = 120f, dampingRatio = 0.9f)) { width -> -width }
+                                    slideInHorizontally(animationSpec = spring(stiffness = 40f, dampingRatio = 0.9f)) { width -> width }.togetherWith(
+                                        slideOutHorizontally(animationSpec = spring(stiffness = 40f, dampingRatio = 0.9f)) { width -> -width }
                                     ).using(SizeTransform(clip = false))
                                 } else {
-                                    slideInHorizontally(animationSpec = spring(stiffness = 120f, dampingRatio = 0.9f)) { width -> -width }.togetherWith(
-                                        slideOutHorizontally(animationSpec = spring(stiffness = 120f, dampingRatio = 0.9f)) { width -> width }
+                                    slideInHorizontally(animationSpec = spring(stiffness = 40f, dampingRatio = 0.9f)) { width -> -width }.togetherWith(
+                                        slideOutHorizontally(animationSpec = spring(stiffness = 40f, dampingRatio = 0.9f)) { width -> width }
                                     ).using(SizeTransform(clip = false))
                                 }
                             },
@@ -156,16 +156,16 @@ fun RoterFadenApp(viewModel: AppViewModel) {
                                             val fraction = (Math.abs(dragOffset) / screenWidth).coerceIn(0f, 1f)
                                             coroutineScope.launch {
                                                 if (fraction > 0.10f && target != currentTab) {
-                                                    transitionState.animateTo(target, spring(stiffness = 120f, dampingRatio = 0.9f))
+                                                    transitionState.animateTo(target, spring(stiffness = 40f, dampingRatio = 0.9f))
                                                     currentTab = target
                                                 } else {
-                                                    transitionState.animateTo(currentTab, spring(stiffness = 120f, dampingRatio = 0.9f))
+                                                    transitionState.animateTo(currentTab, spring(stiffness = 40f, dampingRatio = 0.9f))
                                                 }
                                             }
                                         },
                                         onDragCancel = { 
                                             coroutineScope.launch {
-                                                transitionState.animateTo(currentTab, spring(stiffness = 120f, dampingRatio = 0.9f))
+                                                transitionState.animateTo(currentTab, spring(stiffness = 40f, dampingRatio = 0.9f))
                                             }
                                         },
                                         onHorizontalDrag = { _, dragAmount ->
