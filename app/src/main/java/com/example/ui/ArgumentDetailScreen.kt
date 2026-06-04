@@ -54,6 +54,8 @@ import java.util.Locale
 
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateDp
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.ui.draw.alpha
 import androidx.compose.animation.animateContentSize
 
@@ -112,29 +114,33 @@ fun ArgumentDetailScreen(
                         .sharedBounds(
                             sharedContentState = rememberSharedContentState(key = "argument_${argument.id}_${sourceKey}"),
                             animatedVisibilityScope = animatedVisibilityScope,
-                            enter = fadeIn(),
-                            exit = fadeOut(),
-                            clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(0.dp)),
+                            enter = fadeIn(animationSpec = tween(200)),
+                            exit = fadeOut(animationSpec = tween(150)),
+                            clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(12.dp)),
                             resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(contentScale = androidx.compose.ui.layout.ContentScale.Crop),
-                            boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = androidx.compose.animation.core.Spring.DampingRatioNoBouncy, stiffness = androidx.compose.animation.core.Spring.StiffnessMediumLow) }
+                            boundsTransform = { _, _ ->
+                                spring(
+                                    dampingRatio = Spring.DampingRatioNoBouncy,
+                                    stiffness = Spring.StiffnessMedium
+                                )
+                            }
                         )
                         .fillMaxSize()
-                        .clip(RoundedCornerShape(0.dp))
                         .nestedScroll(nestedScrollConnection)
-                        .background(Color.White)
-                    .padding(horizontal = 24.dp)
-                    .padding(top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 16.dp)
-                    .verticalFadingEdge(topEdge = 20.dp, bottomEdge = 40.dp)
-                    .verticalScroll(rememberScrollState())
-                    .onGloballyPositioned { coordinates ->
-                        containerPosition = coordinates.positionInWindow()
-                    }
-                    .clickable(
-                        interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
-                        indication = null, // No ripple when clicking background
-                        onClick = { viewModel.hideTooltip() }
-                    )
-            ) {
+                        .background(ImmersiveBackground)
+                        .padding(horizontal = 24.dp)
+                        .padding(top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 16.dp)
+                        .verticalFadingEdge(topEdge = 20.dp, bottomEdge = 40.dp)
+                        .verticalScroll(rememberScrollState())
+                        .onGloballyPositioned { coordinates ->
+                            containerPosition = coordinates.positionInWindow()
+                        }
+                        .clickable(
+                            interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                            indication = null, // No ripple when clicking background
+                            onClick = { viewModel.hideTooltip() }
+                        )
+                ) {
                 // Header (Back button & Delete)
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),

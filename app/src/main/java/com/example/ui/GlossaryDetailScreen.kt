@@ -4,7 +4,10 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
 import androidx.compose.animation.core.animateDp
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -111,17 +114,21 @@ fun GlossaryDetailScreen(
         with(sharedTransitionScope) {
             Column(
                 modifier = Modifier
-                    .fillMaxSize()
                     .sharedBounds(
                         sharedContentState = rememberSharedContentState(key = "glossary_${glossaryItem.id}_${sourceKey}"),
                         animatedVisibilityScope = animatedVisibilityScope,
-                        enter = fadeIn(),
-                        exit = fadeOut(),
-                        clipInOverlayDuringTransition = OverlayClip(androidx.compose.foundation.shape.RoundedCornerShape(0.dp)),
+                        enter = fadeIn(animationSpec = tween(200)),
+                        exit = fadeOut(animationSpec = tween(150)),
+                        clipInOverlayDuringTransition = OverlayClip(androidx.compose.foundation.shape.RoundedCornerShape(12.dp)),
                         resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(contentScale = androidx.compose.ui.layout.ContentScale.Crop),
-                        boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = androidx.compose.animation.core.Spring.DampingRatioNoBouncy, stiffness = androidx.compose.animation.core.Spring.StiffnessMediumLow) }
+                        boundsTransform = { _, _ ->
+                            spring(
+                                dampingRatio = Spring.DampingRatioNoBouncy,
+                                stiffness = Spring.StiffnessMedium
+                            )
+                        }
                     )
-                    .clip(androidx.compose.foundation.shape.RoundedCornerShape(0.dp))
+                    .fillMaxSize()
                     .nestedScroll(nestedScrollConnection)
                     .background(ImmersivePillBg)
                     .padding(horizontal = 24.dp)
@@ -249,7 +256,7 @@ fun GlossaryDetailScreen(
             }
                 Spacer(modifier = Modifier.height(120.dp))
             }
+            }
         }
-    }
     }
 }

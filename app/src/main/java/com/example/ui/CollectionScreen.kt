@@ -49,7 +49,8 @@ fun CollectionScreen(
     viewModel: AppViewModel,
     navController: NavController,
     sharedTransitionScope: SharedTransitionScope,
-    animatedVisibilityScope: AnimatedVisibilityScope
+    animatedVisibilityScope: AnimatedVisibilityScope,
+    navAnimatedVisibilityScope: AnimatedVisibilityScope? = null
 ) {
     var selectedTabIndex by remember { mutableIntStateOf(0) }
     val tabs = listOf("Argumente", "Glossar", "Literatur")
@@ -315,6 +316,7 @@ fun CollectionScreen(
                                                 isSelected = isSelected,
                                                 sharedTransitionScope = sharedTransitionScope,
                                                 animatedVisibilityScope = animatedVisibilityScope,
+                                                navAnimatedVisibilityScope = navAnimatedVisibilityScope,
                                                 sourceKey = "card"
                                             )
                                         }
@@ -347,6 +349,7 @@ fun CollectionScreen(
                                                 },
                                                 sharedTransitionScope = sharedTransitionScope,
                                                 animatedVisibilityScope = animatedVisibilityScope,
+                                                navAnimatedVisibilityScope = navAnimatedVisibilityScope,
                                                 sourceKey = "card"
                                             )
                                         }
@@ -378,6 +381,7 @@ fun CollectionScreen(
                                                 },
                                                 sharedTransitionScope = sharedTransitionScope,
                                                 animatedVisibilityScope = animatedVisibilityScope,
+                                                navAnimatedVisibilityScope = navAnimatedVisibilityScope,
                                                 sourceKey = "card"
                                             )
                                         }

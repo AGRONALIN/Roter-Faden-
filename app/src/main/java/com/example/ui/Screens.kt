@@ -43,6 +43,8 @@ import androidx.compose.material.icons.filled.WbSunny
 import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.with
@@ -55,6 +57,7 @@ fun HomeScreen(
     navController: NavController,
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
+    navAnimatedVisibilityScope: AnimatedVisibilityScope? = null,
     onNavigateToSearch: () -> Unit = {}
 ) {
     val recentArguments by viewModel.recentArguments.collectAsState()
@@ -169,6 +172,7 @@ fun HomeScreen(
                                     },
                                     sharedTransitionScope = sharedTransitionScope,
                                     animatedVisibilityScope = animatedVisibilityScope,
+                                    navAnimatedVisibilityScope = navAnimatedVisibilityScope,
                                     sourceKey = "card"
                                 )
                             }
@@ -195,6 +199,7 @@ fun HomeScreen(
                                     },
                                     sharedTransitionScope = sharedTransitionScope,
                                     animatedVisibilityScope = animatedVisibilityScope,
+                                    navAnimatedVisibilityScope = navAnimatedVisibilityScope,
                                     sourceKey = "card"
                                 )
                             }
@@ -276,35 +281,24 @@ fun HomeScreen(
                     }
                     
                     if (randomArgument != null) {
-                        with(sharedTransitionScope) {
-                            Box(
-                                modifier = Modifier
-                                    .size(80.dp)
-                                    .sharedBounds(
-                                        sharedContentState = rememberSharedContentState(key = "argument_${randomArgument!!.id}_random"),
-                                        animatedVisibilityScope = animatedVisibilityScope,
-                                        enter = fadeIn(),
-                                        exit = fadeOut(),
-                                        clipInOverlayDuringTransition = OverlayClip(androidx.compose.foundation.shape.CircleShape),
-                                        resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(contentScale = androidx.compose.ui.layout.ContentScale.Crop),
-                                        boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = androidx.compose.animation.core.Spring.DampingRatioNoBouncy, stiffness = androidx.compose.animation.core.Spring.StiffnessMediumLow) }
-                                    )
-                                    .clip(androidx.compose.foundation.shape.CircleShape)
-                                    .background(ImmersiveGreen)
-                                    .bounceClick {
-                                        viewModel.updateArgumentLastAccessed(randomArgument!!)
-                                        navController.navigate("argument_detail/${randomArgument!!.id}?source=random")
-                                    },
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = "☭",
-                                    color = Color.White,
-                                    fontSize = 40.sp,
-                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                                    modifier = Modifier.padding(bottom = 4.dp)
-                                )
-                            }
+                        Box(
+                            modifier = Modifier
+                                .size(80.dp)
+                                .clip(androidx.compose.foundation.shape.CircleShape)
+                                .background(ImmersiveGreen)
+                                .bounceClick {
+                                    viewModel.updateArgumentLastAccessed(randomArgument!!)
+                                    navController.navigate("argument_detail/${randomArgument!!.id}?source=random")
+                                },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "☭",
+                                color = Color.White,
+                                fontSize = 40.sp,
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                modifier = Modifier.padding(bottom = 4.dp)
+                            )
                         }
                     }
                 }
@@ -323,21 +317,46 @@ fun ArgumentCard(
     isSelected: Boolean = false,
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
+    navAnimatedVisibilityScope: AnimatedVisibilityScope? = null,
     sourceKey: String = "card"
 ) {
     with(sharedTransitionScope) {
+        var cardModifier = Modifier
+            .fillMaxWidth()
+            .sharedBounds(
+                sharedContentState = rememberSharedContentState(key = "tab_argument_${argument.id}_${sourceKey}"),
+                animatedVisibilityScope = animatedVisibilityScope,
+                enter = fadeIn(animationSpec = tween(200)),
+                exit = fadeOut(animationSpec = tween(150)),
+                clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(12.dp)),
+                resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(contentScale = androidx.compose.ui.layout.ContentScale.Crop),
+                boundsTransform = { _, _ ->
+                    spring(
+                        dampingRatio = Spring.DampingRatioNoBouncy,
+                        stiffness = Spring.StiffnessMedium
+                    )
+                }
+            )
+
+        if (navAnimatedVisibilityScope != null) {
+            cardModifier = cardModifier.sharedBounds(
+                sharedContentState = rememberSharedContentState(key = "argument_${argument.id}_${sourceKey}"),
+                animatedVisibilityScope = navAnimatedVisibilityScope,
+                enter = fadeIn(animationSpec = tween(200)),
+                exit = fadeOut(animationSpec = tween(150)),
+                clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(12.dp)),
+                resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(contentScale = androidx.compose.ui.layout.ContentScale.Crop),
+                boundsTransform = { _, _ ->
+                    spring(
+                        dampingRatio = Spring.DampingRatioNoBouncy,
+                        stiffness = Spring.StiffnessMedium
+                    )
+                }
+            )
+        }
+
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .sharedBounds(
-                    sharedContentState = rememberSharedContentState(key = "argument_${argument.id}_${sourceKey}"),
-                    animatedVisibilityScope = animatedVisibilityScope,
-                    enter = fadeIn(),
-                    exit = fadeOut(),
-                    clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(12.dp)),
-                    resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(contentScale = androidx.compose.ui.layout.ContentScale.Crop),
-                    boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = androidx.compose.animation.core.Spring.DampingRatioNoBouncy, stiffness = androidx.compose.animation.core.Spring.StiffnessMediumLow) }
-                )
+            modifier = cardModifier
                 .background(if (isSelected) ImmersiveGreen.copy(alpha = 0.2f) else CreamRed, RoundedCornerShape(12.dp))
                 .clip(RoundedCornerShape(12.dp))
                 .bounceClick(
@@ -377,21 +396,46 @@ fun GlossaryCard(
     onClick: () -> Unit,
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
+    navAnimatedVisibilityScope: AnimatedVisibilityScope? = null,
     sourceKey: String = "card"
 ) {
     with(sharedTransitionScope) {
+        var cardModifier = Modifier
+            .fillMaxWidth()
+            .sharedBounds(
+                sharedContentState = rememberSharedContentState(key = "tab_glossary_${item.id}_${sourceKey}"),
+                animatedVisibilityScope = animatedVisibilityScope,
+                enter = fadeIn(animationSpec = tween(200)),
+                exit = fadeOut(animationSpec = tween(150)),
+                clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(12.dp)),
+                resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(contentScale = androidx.compose.ui.layout.ContentScale.Crop),
+                boundsTransform = { _, _ ->
+                    spring(
+                        dampingRatio = Spring.DampingRatioNoBouncy,
+                        stiffness = Spring.StiffnessMedium
+                    )
+                }
+            )
+
+        if (navAnimatedVisibilityScope != null) {
+            cardModifier = cardModifier.sharedBounds(
+                sharedContentState = rememberSharedContentState(key = "glossary_${item.id}_${sourceKey}"),
+                animatedVisibilityScope = navAnimatedVisibilityScope,
+                enter = fadeIn(animationSpec = tween(200)),
+                exit = fadeOut(animationSpec = tween(150)),
+                clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(12.dp)),
+                resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(contentScale = androidx.compose.ui.layout.ContentScale.Crop),
+                boundsTransform = { _, _ ->
+                    spring(
+                        dampingRatio = Spring.DampingRatioNoBouncy,
+                        stiffness = Spring.StiffnessMedium
+                    )
+                }
+            )
+        }
+
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .sharedBounds(
-                    sharedContentState = rememberSharedContentState(key = "glossary_${item.id}_${sourceKey}"),
-                    animatedVisibilityScope = animatedVisibilityScope,
-                    enter = fadeIn(),
-                    exit = fadeOut(),
-                    clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(12.dp)),
-                    resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(contentScale = androidx.compose.ui.layout.ContentScale.Crop),
-                    boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = androidx.compose.animation.core.Spring.DampingRatioNoBouncy, stiffness = androidx.compose.animation.core.Spring.StiffnessMediumLow) }
-                )
+            modifier = cardModifier
                 .background(ImmersivePillBg, RoundedCornerShape(12.dp))
                 .clip(RoundedCornerShape(12.dp))
                 .bounceClick(onClick = onClick)
@@ -428,21 +472,46 @@ fun LiteratureCard(
     onClick: () -> Unit,
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
+    navAnimatedVisibilityScope: AnimatedVisibilityScope? = null,
     sourceKey: String = "card"
 ) {
     with(sharedTransitionScope) {
+        var cardModifier = Modifier
+            .fillMaxWidth()
+            .sharedBounds(
+                sharedContentState = rememberSharedContentState(key = "tab_literature_${item.id}_${sourceKey}"),
+                animatedVisibilityScope = animatedVisibilityScope,
+                enter = fadeIn(animationSpec = tween(200)),
+                exit = fadeOut(animationSpec = tween(150)),
+                clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(12.dp)),
+                resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(contentScale = androidx.compose.ui.layout.ContentScale.Crop),
+                boundsTransform = { _, _ ->
+                    spring(
+                        dampingRatio = Spring.DampingRatioNoBouncy,
+                        stiffness = Spring.StiffnessMedium
+                    )
+                }
+            )
+
+        if (navAnimatedVisibilityScope != null) {
+            cardModifier = cardModifier.sharedBounds(
+                sharedContentState = rememberSharedContentState(key = "literature_${item.id}_${sourceKey}"),
+                animatedVisibilityScope = navAnimatedVisibilityScope,
+                enter = fadeIn(animationSpec = tween(200)),
+                exit = fadeOut(animationSpec = tween(150)),
+                clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(12.dp)),
+                resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(contentScale = androidx.compose.ui.layout.ContentScale.Crop),
+                boundsTransform = { _, _ ->
+                    spring(
+                        dampingRatio = Spring.DampingRatioNoBouncy,
+                        stiffness = Spring.StiffnessMedium
+                    )
+                }
+            )
+        }
+
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .sharedBounds(
-                    sharedContentState = rememberSharedContentState(key = "literature_${item.id}_${sourceKey}"),
-                    animatedVisibilityScope = animatedVisibilityScope,
-                    enter = fadeIn(),
-                    exit = fadeOut(),
-                    clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(12.dp)),
-                    resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(contentScale = androidx.compose.ui.layout.ContentScale.Crop),
-                    boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = androidx.compose.animation.core.Spring.DampingRatioNoBouncy, stiffness = androidx.compose.animation.core.Spring.StiffnessMediumLow) }
-                )
+            modifier = cardModifier
                 .background(ImmersivePillBg, RoundedCornerShape(12.dp))
                 .clip(RoundedCornerShape(12.dp))
                 .bounceClick(onClick = onClick)
@@ -487,7 +556,8 @@ fun SearchScreen(
     viewModel: AppViewModel,
     navController: NavController,
     sharedTransitionScope: SharedTransitionScope,
-    animatedVisibilityScope: AnimatedVisibilityScope
+    animatedVisibilityScope: AnimatedVisibilityScope,
+    navAnimatedVisibilityScope: AnimatedVisibilityScope? = null
 ) {
     val searchQuery by viewModel.searchQuery.collectAsState()
     val searchResults by viewModel.searchResults.collectAsState()
@@ -596,6 +666,7 @@ fun SearchScreen(
                                         onClick = { navController.navigate("argument_detail/${argument.id}?source=card") },
                                         sharedTransitionScope = sharedTransitionScope,
                                         animatedVisibilityScope = animatedVisibilityScope,
+                                        navAnimatedVisibilityScope = navAnimatedVisibilityScope,
                                         sourceKey = "card"
                                     )
                                 }
@@ -617,6 +688,7 @@ fun SearchScreen(
                                         },
                                         sharedTransitionScope = sharedTransitionScope,
                                         animatedVisibilityScope = animatedVisibilityScope,
+                                        navAnimatedVisibilityScope = navAnimatedVisibilityScope,
                                         sourceKey = "card"
                                     )
                                 }

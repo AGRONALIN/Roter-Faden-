@@ -64,24 +64,11 @@ fun EditArgumentScreen(
         }
     }
 
-    with(sharedTransitionScope) {
         PullToDismissContainer(
             onDismiss = { navController.popBackStack() }
         ) { nestedScrollConnection ->
         Scaffold(
-            modifier = Modifier.fillMaxSize().let { m ->
-                if (argId == -1) {
-                    m.sharedBounds(
-                        sharedContentState = rememberSharedContentState(key = "fab_neues_argument"),
-                        animatedVisibilityScope = animatedVisibilityScope,
-                        enter = fadeIn(),
-                        exit = fadeOut(),
-                        clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(0.dp)),
-                        resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(contentScale = androidx.compose.ui.layout.ContentScale.Crop),
-                        boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 100f) }
-                    )
-                } else m
-            },
+            modifier = Modifier.fillMaxSize(),
             containerColor = ImmersiveBackground
         ) { padding ->
         Box(modifier = Modifier.fillMaxSize().nestedScroll(nestedScrollConnection)) {
@@ -246,7 +233,6 @@ fun EditArgumentScreen(
         }
     }
     }
-    }
 }
 }
 
@@ -280,20 +266,11 @@ fun EditGlossaryScreen(
         }
     }
 
-    with(sharedTransitionScope) {
         PullToDismissContainer(
             onDismiss = { navController.popBackStack() }
         ) { nestedScrollConnection ->
         Scaffold(
-            modifier = Modifier.fillMaxSize().sharedBounds(
-                sharedContentState = rememberSharedContentState(key = "fab_neuer_begriff"),
-                animatedVisibilityScope = animatedVisibilityScope,
-                enter = fadeIn(),
-                exit = fadeOut(),
-                clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(0.dp)),
-                resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(contentScale = androidx.compose.ui.layout.ContentScale.Crop),
-                boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 100f) }
-            ),
+            modifier = Modifier.fillMaxSize(),
             containerColor = ImmersiveBackground
         ) { padding ->
         Box(modifier = Modifier.fillMaxSize().nestedScroll(nestedScrollConnection)) {
@@ -419,7 +396,6 @@ fun EditGlossaryScreen(
                 )
             }
         }
-    }
     }
     }
 }

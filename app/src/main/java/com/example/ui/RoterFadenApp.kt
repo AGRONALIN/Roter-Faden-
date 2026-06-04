@@ -92,6 +92,19 @@ fun RoterFadenApp(viewModel: AppViewModel) {
         val immersiveGreenColor = ImmersiveGreen
         val immersiveTextSec = ImmersiveTextSecondary
         
+        val slideUpEnter: (AnimatedContentTransitionScope<*>.() -> EnterTransition) = {
+            slideInVertically(
+                initialOffsetY = { it },
+                animationSpec = spring(stiffness = Spring.StiffnessMediumLow, dampingRatio = Spring.DampingRatioNoBouncy)
+            ) + fadeIn(animationSpec = tween(300))
+        }
+        val slideDownExit: (AnimatedContentTransitionScope<*>.() -> ExitTransition) = {
+            slideOutVertically(
+                targetOffsetY = { it },
+                animationSpec = spring(stiffness = Spring.StiffnessMediumLow, dampingRatio = Spring.DampingRatioNoBouncy)
+            ) + fadeOut(animationSpec = tween(250))
+        }
+
         Scaffold(
             containerColor = Color.Transparent,
             modifier = Modifier.fillMaxSize()
@@ -116,19 +129,19 @@ fun RoterFadenApp(viewModel: AppViewModel) {
 
                         LaunchedEffect(currentTab) {
                             if (transitionState.currentState != currentTab && transitionState.targetState != currentTab) {
-                                transitionState.animateTo(currentTab, animationSpec = spring(stiffness = Spring.StiffnessLow))
+                                transitionState.animateTo(currentTab, animationSpec = spring(stiffness = 450f, dampingRatio = 0.9f))
                             }
                         }
 
                         transition.AnimatedContent(
                             transitionSpec = {
                                 if (targetState > initialState) {
-                                    slideInHorizontally(animationSpec = spring(stiffness = Spring.StiffnessLow)) { width -> width }.togetherWith(
-                                        slideOutHorizontally(animationSpec = spring(stiffness = Spring.StiffnessLow)) { width -> -width }
+                                    slideInHorizontally(animationSpec = spring(stiffness = 450f, dampingRatio = 0.9f)) { width -> width }.togetherWith(
+                                        slideOutHorizontally(animationSpec = spring(stiffness = 450f, dampingRatio = 0.9f)) { width -> -width }
                                     ).using(SizeTransform(clip = false))
                                 } else {
-                                    slideInHorizontally(animationSpec = spring(stiffness = Spring.StiffnessLow)) { width -> -width }.togetherWith(
-                                        slideOutHorizontally(animationSpec = spring(stiffness = Spring.StiffnessLow)) { width -> width }
+                                    slideInHorizontally(animationSpec = spring(stiffness = 450f, dampingRatio = 0.9f)) { width -> -width }.togetherWith(
+                                        slideOutHorizontally(animationSpec = spring(stiffness = 450f, dampingRatio = 0.9f)) { width -> width }
                                     ).using(SizeTransform(clip = false))
                                 }
                             },
@@ -142,21 +155,21 @@ fun RoterFadenApp(viewModel: AppViewModel) {
                                         onDragEnd = {
                                             val fraction = (Math.abs(dragOffset) / screenWidth).coerceIn(0f, 1f)
                                             coroutineScope.launch {
-                                                if (fraction > 0.15f && target != currentTab) {
-                                                    transitionState.animateTo(target, spring(stiffness = Spring.StiffnessLow))
+                                                if (fraction > 0.10f && target != currentTab) {
+                                                    transitionState.animateTo(target, spring(stiffness = 450f, dampingRatio = 0.9f))
                                                     currentTab = target
                                                 } else {
-                                                    transitionState.animateTo(currentTab, spring(stiffness = Spring.StiffnessLow))
+                                                    transitionState.animateTo(currentTab, spring(stiffness = 450f, dampingRatio = 0.9f))
                                                 }
                                             }
                                         },
                                         onDragCancel = { 
                                             coroutineScope.launch {
-                                                transitionState.animateTo(currentTab, spring(stiffness = Spring.StiffnessLow))
+                                                transitionState.animateTo(currentTab, spring(stiffness = 450f, dampingRatio = 0.9f))
                                             }
                                         },
                                         onHorizontalDrag = { _, dragAmount ->
-                                            dragOffset += dragAmount * 1.6f // Lower resistance
+                                            dragOffset += dragAmount * 2.2f // Much lower resistance / more sensitive
                                             if (dragOffset < 0 && currentTab < 2) {
                                                 target = currentTab + 1
                                             } else if (dragOffset > 0 && currentTab > 0) {
@@ -180,24 +193,60 @@ fun RoterFadenApp(viewModel: AppViewModel) {
                                 },
                             contentKey = { it }
                         ) { page ->
+                            val mainScope = this@composable
                             when (page) {
-                                0 -> HomeScreen(viewModel, navController, this@SharedTransitionLayout, this@AnimatedContent, onNavigateToSearch = { currentTab = 2 })
-                                1 -> CollectionScreen(viewModel, navController, this@SharedTransitionLayout, this@AnimatedContent)
-                                2 -> SearchScreen(viewModel, navController, this@SharedTransitionLayout, this@AnimatedContent)
+                                0 -> HomeScreen(
+                                    viewModel = viewModel,
+                                    navController = navController,
+                                    sharedTransitionScope = this@SharedTransitionLayout,
+                                    animatedVisibilityScope = this@AnimatedContent,
+                                    navAnimatedVisibilityScope = mainScope,
+                                    onNavigateToSearch = { currentTab = 2 }
+                                )
+                                1 -> CollectionScreen(
+                                    viewModel = viewModel,
+                                    navController = navController,
+                                    sharedTransitionScope = this@SharedTransitionLayout,
+                                    animatedVisibilityScope = this@AnimatedContent,
+                                    navAnimatedVisibilityScope = mainScope
+                                )
+                                2 -> SearchScreen(
+                                    viewModel = viewModel,
+                                    navController = navController,
+                                    sharedTransitionScope = this@SharedTransitionLayout,
+                                    animatedVisibilityScope = this@AnimatedContent,
+                                    navAnimatedVisibilityScope = mainScope
+                                )
                             }
                         }
                     }
-                    composable("edit_argument") {
+                    composable(
+                        "edit_argument",
+                        enterTransition = slideUpEnter,
+                        exitTransition = slideDownExit,
+                        popEnterTransition = slideUpEnter,
+                        popExitTransition = slideDownExit
+                    ) {
                         EditArgumentScreen(viewModel, navController, this@SharedTransitionLayout, this@composable, -1)
                     }
                     composable(
                         route = "edit_argument/{argId}",
-                        arguments = listOf(navArgument("argId") { type = NavType.IntType })
+                        arguments = listOf(navArgument("argId") { type = NavType.IntType }),
+                        enterTransition = slideUpEnter,
+                        exitTransition = slideDownExit,
+                        popEnterTransition = slideUpEnter,
+                        popExitTransition = slideDownExit
                     ) { backStackEntry ->
                         val argId = backStackEntry.arguments?.getInt("argId") ?: -1
                         EditArgumentScreen(viewModel, navController, this@SharedTransitionLayout, this@composable, argId)
                     }
-                    composable("edit_glossary") {
+                    composable(
+                        "edit_glossary",
+                        enterTransition = slideUpEnter,
+                        exitTransition = slideDownExit,
+                        popEnterTransition = slideUpEnter,
+                        popExitTransition = slideDownExit
+                    ) {
                         EditGlossaryScreen(viewModel, navController, this@SharedTransitionLayout, this@composable)
                     }
                     composable(
@@ -241,10 +290,10 @@ fun RoterFadenApp(viewModel: AppViewModel) {
                     }
                     composable(
                         "songs",
-                        enterTransition = { fadeIn(animationSpec = tween(150)) },
-                        exitTransition = { fadeOut(animationSpec = tween(150)) },
-                        popEnterTransition = { fadeIn(animationSpec = tween(150)) },
-                        popExitTransition = { fadeOut(animationSpec = tween(150)) }
+                        enterTransition = slideUpEnter,
+                        exitTransition = slideDownExit,
+                        popEnterTransition = slideUpEnter,
+                        popExitTransition = slideDownExit
                     ) {
                         SongsScreen(navController, this@SharedTransitionLayout, this@composable)
                     }
