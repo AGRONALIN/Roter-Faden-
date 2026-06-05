@@ -11,6 +11,7 @@ import com.example.data.GlossaryItem
 import com.squareup.moshi.Moshi
 import com.example.data.ArgumentExport
 import com.example.data.GlossaryExport
+import com.example.data.LiteratureExport
 import com.example.data.ExportData
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -199,7 +200,10 @@ class AppViewModel(
         val glossary = glossaryItems.value.map { 
             GlossaryExport(it.term, it.definition) 
         }
-        val data = ExportData(arguments, glossary)
+        val literature = literatureList.value.map {
+            LiteratureExport(it.title, it.author, it.summary)
+        }
+        val data = ExportData(arguments, glossary, literature)
         val adapter = moshi.adapter(ExportData::class.java)
         return adapter.toJson(data)
     }
@@ -209,7 +213,7 @@ class AppViewModel(
         val arguments = recentArguments.value.filter { it.id in ids }.map {
             ArgumentExport(it.antiMarxistStatement, it.marxistCounterArgument, it.category, it.lastAccessed)
         }
-        val data = ExportData(arguments, emptyList())
+        val data = ExportData(arguments, emptyList(), emptyList())
         val adapter = moshi.adapter(ExportData::class.java)
         return adapter.toJson(data)
     }
@@ -223,7 +227,7 @@ class AppViewModel(
         val glossary = glossaryItems.value.filter { it.id in ids }.map {
             GlossaryExport(it.term, it.definition)
         }
-        val data = ExportData(emptyList(), glossary)
+        val data = ExportData(emptyList(), glossary, emptyList())
         val adapter = moshi.adapter(ExportData::class.java)
         return adapter.toJson(data)
     }
@@ -232,13 +236,43 @@ class AppViewModel(
         return exportGlossaries(setOf(id))
     }
 
+    suspend fun exportSelectedItems(argumentIds: Set<Int>, glossaryIds: Set<Int>, literatureIds: Set<Int>): String {
+        val moshi = Moshi.Builder().build()
+        val arguments = recentArguments.value.filter { it.id in argumentIds }.map {
+            ArgumentExport(it.antiMarxistStatement, it.marxistCounterArgument, it.category, it.lastAccessed)
+        }
+        val glossary = glossaryItems.value.filter { it.id in glossaryIds }.map {
+            GlossaryExport(it.term, it.definition)
+        }
+        val literature = literatureList.value.filter { it.id in literatureIds }.map {
+            LiteratureExport(it.title, it.author, it.summary)
+        }
+        val data = ExportData(arguments, glossary, literature)
+        val adapter = moshi.adapter(ExportData::class.java)
+        return adapter.toJson(data)
+    }
+
+    fun deleteGlossariesById(ids: Set<Int>) {
+        viewModelScope.launch {
+            val toDelete = glossaryItems.value.filter { it.id in ids }
+            toDelete.forEach { repository.deleteGlossary(it) }
+        }
+    }
+
+    fun deleteLiteratureById(ids: Set<Int>) {
+        viewModelScope.launch {
+            val toDelete = literatureList.value.filter { it.id in ids }
+            toDelete.forEach { repository.deleteLiterature(it) }
+        }
+    }
+
     suspend fun importData(jsonString: String): Boolean {
         return try {
             val moshi = Moshi.Builder().build()
             val adapter = moshi.adapter(ExportData::class.java)
             val parsed = adapter.fromJson(jsonString) ?: return false
             
-            if (parsed.arguments.isEmpty() && parsed.glossary.isEmpty()) {
+            if (parsed.arguments.isEmpty() && parsed.glossary.isEmpty() && parsed.literature.isEmpty()) {
                 return false
             }
             
@@ -257,6 +291,15 @@ class AppViewModel(
                     GlossaryItem(
                         term = it.term,
                         definition = it.definition
+                    )
+                )
+            }
+            parsed.literature.forEach {
+                repository.insertLiterature(
+                    com.example.data.LiteratureItem(
+                        title = it.title,
+                        author = it.author,
+                        summary = it.summary
                     )
                 )
             }

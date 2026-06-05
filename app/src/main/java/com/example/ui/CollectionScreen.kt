@@ -59,12 +59,16 @@ fun CollectionScreen(
     val allLiteratureItems by viewModel.literatureList.collectAsState()
 
     var selectedArgumentIds by remember { mutableStateOf(setOf<Int>()) }
-    val isSelectionMode = selectedArgumentIds.isNotEmpty()
+    var selectedGlossaryIds by remember { mutableStateOf(setOf<Int>()) }
+    var selectedLiteratureIds by remember { mutableStateOf(setOf<Int>()) }
+    val isSelectionMode = selectedArgumentIds.isNotEmpty() || selectedGlossaryIds.isNotEmpty() || selectedLiteratureIds.isNotEmpty()
 
     var showDeleteDialog by remember { mutableStateOf(false) }
 
     BackHandler(enabled = isSelectionMode) {
         selectedArgumentIds = emptySet()
+        selectedGlossaryIds = emptySet()
+        selectedLiteratureIds = emptySet()
     }
 
     val context = LocalContext.current
@@ -110,11 +114,13 @@ fun CollectionScreen(
     ) { uri ->
         uri?.let {
             scope.launch {
-                val jsonStr = viewModel.exportArguments(selectedArgumentIds)
+                val jsonStr = viewModel.exportSelectedItems(selectedArgumentIds, selectedGlossaryIds, selectedLiteratureIds)
                 context.contentResolver.openOutputStream(it)?.use { out ->
                     out.write(jsonStr.toByteArray())
                 }
                 selectedArgumentIds = emptySet()
+                selectedGlossaryIds = emptySet()
+                selectedLiteratureIds = emptySet()
             }
         }
     }
@@ -140,6 +146,7 @@ fun CollectionScreen(
     }
 
     if (showExportSelectionDialog) {
+        val totalSelectedCount = selectedArgumentIds.size + selectedGlossaryIds.size + selectedLiteratureIds.size
         AlertDialog(
             onDismissRequest = { showExportSelectionDialog = false },
             containerColor = ImmersiveBackground,
@@ -157,7 +164,7 @@ fun CollectionScreen(
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     Text(
-                        text = "Wähle eine Methode, um deine ${selectedArgumentIds.size} ausgewählten Argumentationen zu übertragen:",
+                        text = "Wähle eine Methode, um deine $totalSelectedCount ausgewählten Einträge zu übertragen:",
                         color = ImmersiveTextSecondary,
                         fontSize = 14.sp
                     )
@@ -166,14 +173,16 @@ fun CollectionScreen(
                         onClick = {
                             showExportSelectionDialog = false
                             scope.launch {
-                                val jsonStr = viewModel.exportArguments(selectedArgumentIds)
+                                val jsonStr = viewModel.exportSelectedItems(selectedArgumentIds, selectedGlossaryIds, selectedLiteratureIds)
                                 val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
                                     type = "text/plain"
                                     putExtra(android.content.Intent.EXTRA_TEXT, jsonStr)
                                     putExtra(android.content.Intent.EXTRA_SUBJECT, "Roter Faden - Export")
                                 }
-                                context.startActivity(android.content.Intent.createChooser(intent, "Argumente teilen"))
+                                context.startActivity(android.content.Intent.createChooser(intent, "Inhalte teilen"))
                                 selectedArgumentIds = emptySet()
+                                selectedGlossaryIds = emptySet()
+                                selectedLiteratureIds = emptySet()
                             }
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = ImmersiveGreen),
@@ -283,14 +292,25 @@ fun CollectionScreen(
     }
 
     if (showDeleteDialog) {
+        val totalSelectedCount = selectedArgumentIds.size + selectedGlossaryIds.size + selectedLiteratureIds.size
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
             title = { Text("Wirklich löschen?") },
-            text = { Text("Möchtest du diese ${selectedArgumentIds.size} Einträge endgültig löschen?") },
+            text = { Text("Möchtest du diese $totalSelectedCount Einträge endgültig löschen?") },
             confirmButton = {
                 TextButton(onClick = {
-                    viewModel.deleteArgumentsById(selectedArgumentIds)
+                    if (selectedArgumentIds.isNotEmpty()) {
+                        viewModel.deleteArgumentsById(selectedArgumentIds)
+                    }
+                    if (selectedGlossaryIds.isNotEmpty()) {
+                        viewModel.deleteGlossariesById(selectedGlossaryIds)
+                    }
+                    if (selectedLiteratureIds.isNotEmpty()) {
+                        viewModel.deleteLiteratureById(selectedLiteratureIds)
+                    }
                     selectedArgumentIds = emptySet()
+                    selectedGlossaryIds = emptySet()
+                    selectedLiteratureIds = emptySet()
                     showDeleteDialog = false
                 }) {
                     Text("Löschen", color = Color.Red)
@@ -314,7 +334,7 @@ fun CollectionScreen(
             ) {
                 Spacer(modifier = Modifier.height(WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 24.dp))
                 
-                // Top header - Title and settings icon
+                // Top header - Title only (Import button removed)
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -328,8 +348,6 @@ fun CollectionScreen(
                             letterSpacing = (-1).sp
                         )
                     )
-
-
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -363,12 +381,13 @@ fun CollectionScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 AnimatedVisibility(visible = isSelectionMode) {
+                    val totalSelectedItems = selectedArgumentIds.size + selectedGlossaryIds.size + selectedLiteratureIds.size
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // Left action button (Shuffle style used for Export)
+                        // Left action button (Export)
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(percent = 50))
@@ -381,11 +400,11 @@ fun CollectionScreen(
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(Icons.Filled.Upload, contentDescription = "Export", modifier = Modifier.size(20.dp), tint = ImmersiveOnGreen)
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text("Export", fontWeight = FontWeight.Bold, color = ImmersiveOnGreen)
+                                Text("Export ($totalSelectedItems)", fontWeight = FontWeight.Bold, color = ImmersiveOnGreen)
                             }
                         }
                         
-                        // Right icons
+                        // Right icons (Delete / Close)
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
@@ -403,7 +422,11 @@ fun CollectionScreen(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(12.dp))
                                     .background(ImmersiveDarkNav)
-                                    .bounceClick { selectedArgumentIds = emptySet() }
+                                    .bounceClick { 
+                                        selectedArgumentIds = emptySet()
+                                        selectedGlossaryIds = emptySet()
+                                        selectedLiteratureIds = emptySet()
+                                    }
                                     .padding(12.dp),
                                 contentAlignment = Alignment.Center
                             ) {
@@ -517,12 +540,29 @@ fun CollectionScreen(
                                         key = { _, item -> "gloss_${item.id}" }
                                     ) { index, item ->
                                         Column {
+                                            val isSelected = selectedGlossaryIds.contains(item.id)
                                             GlossaryCard(
                                                 item = item,
                                                 onClick = {
-                                                    viewModel.updateGlossaryLastAccessed(item)
-                                                    navController.navigate("glossary_detail/${item.id}?source=card")
+                                                    if (isSelectionMode) {
+                                                        selectedGlossaryIds = if (isSelected) {
+                                                            selectedGlossaryIds - item.id
+                                                        } else {
+                                                            selectedGlossaryIds + item.id
+                                                        }
+                                                    } else {
+                                                        viewModel.updateGlossaryLastAccessed(item)
+                                                        navController.navigate("glossary_detail/${item.id}?source=card")
+                                                    }
                                                 },
+                                                onLongClick = {
+                                                    selectedGlossaryIds = if (isSelected) {
+                                                        selectedGlossaryIds - item.id
+                                                    } else {
+                                                        selectedGlossaryIds + item.id
+                                                    }
+                                                },
+                                                isSelected = isSelected,
                                                 sharedTransitionScope = sharedTransitionScope,
                                                 animatedVisibilityScope = animatedVisibilityScope,
                                                 navAnimatedVisibilityScope = navAnimatedVisibilityScope,
@@ -550,12 +590,29 @@ fun CollectionScreen(
                                         key = { _, item -> "lit_${item.id}" }
                                     ) { index, item ->
                                         Column {
+                                            val isSelected = selectedLiteratureIds.contains(item.id)
                                             LiteratureCard(
                                                 item = item,
                                                 onClick = {
-                                                    viewModel.updateLiteratureLastAccessed(item)
-                                                    navController.navigate("literature_detail/${item.id}?source=card")
+                                                    if (isSelectionMode) {
+                                                        selectedLiteratureIds = if (isSelected) {
+                                                            selectedLiteratureIds - item.id
+                                                        } else {
+                                                            selectedLiteratureIds + item.id
+                                                        }
+                                                    } else {
+                                                        viewModel.updateLiteratureLastAccessed(item)
+                                                        navController.navigate("literature_detail/${item.id}?source=card")
+                                                    }
                                                 },
+                                                onLongClick = {
+                                                    selectedLiteratureIds = if (isSelected) {
+                                                        selectedLiteratureIds - item.id
+                                                    } else {
+                                                        selectedLiteratureIds + item.id
+                                                    }
+                                                },
+                                                isSelected = isSelected,
                                                 sharedTransitionScope = sharedTransitionScope,
                                                 animatedVisibilityScope = animatedVisibilityScope,
                                                 navAnimatedVisibilityScope = navAnimatedVisibilityScope,

@@ -5,7 +5,8 @@ import com.squareup.moshi.JsonClass
 @JsonClass(generateAdapter = true)
 data class ExportData(
     val arguments: List<ArgumentExport>,
-    val glossary: List<GlossaryExport>
+    val glossary: List<GlossaryExport>,
+    val literature: List<LiteratureExport> = emptyList()
 )
 
 @JsonClass(generateAdapter = true)
@@ -20,4 +21,11 @@ data class ArgumentExport(
 data class GlossaryExport(
     val term: String,
     val definition: String
+)
+
+@JsonClass(generateAdapter = true)
+data class LiteratureExport(
+    val title: String,
+    val author: String,
+    val summary: String
 )

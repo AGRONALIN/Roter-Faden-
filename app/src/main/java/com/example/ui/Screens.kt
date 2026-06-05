@@ -468,6 +468,8 @@ fun ArgumentCard(
 fun GlossaryCard(
     item: com.example.data.GlossaryItem,
     onClick: () -> Unit,
+    onLongClick: (() -> Unit)? = null,
+    isSelected: Boolean = false,
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
     navAnimatedVisibilityScope: AnimatedVisibilityScope? = null,
@@ -513,9 +515,9 @@ fun GlossaryCard(
                     modifier = Modifier
                         .fillMaxWidth()
                         .then(tabSharedBoundsModifier)
-                        .background(ImmersivePillBg, RoundedCornerShape(12.dp))
+                        .background(if (isSelected) ImmersiveGreen.copy(alpha = 0.2f) else ImmersivePillBg, RoundedCornerShape(12.dp))
                         .clip(RoundedCornerShape(12.dp))
-                        .bounceClick(onClick = onClick)
+                        .bounceClick(onLongClick = onLongClick, onClick = onClick)
                         .padding(vertical = 12.dp, horizontal = 12.dp)
                 ) {
                     Text(
@@ -545,9 +547,9 @@ fun GlossaryCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .then(tabSharedBoundsModifier)
-                    .background(ImmersivePillBg, RoundedCornerShape(12.dp))
+                    .background(if (isSelected) ImmersiveGreen.copy(alpha = 0.2f) else ImmersivePillBg, RoundedCornerShape(12.dp))
                     .clip(RoundedCornerShape(12.dp))
-                    .bounceClick(onClick = onClick)
+                    .bounceClick(onLongClick = onLongClick, onClick = onClick)
                     .padding(vertical = 12.dp, horizontal = 12.dp)
             ) {
                 Text(
@@ -578,6 +580,8 @@ fun GlossaryCard(
 fun LiteratureCard(
     item: com.example.data.LiteratureItem,
     onClick: () -> Unit,
+    onLongClick: (() -> Unit)? = null,
+    isSelected: Boolean = false,
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
     navAnimatedVisibilityScope: AnimatedVisibilityScope? = null,
@@ -623,9 +627,9 @@ fun LiteratureCard(
                     modifier = Modifier
                         .fillMaxWidth()
                         .then(tabSharedBoundsModifier)
-                        .background(ImmersivePillBg, RoundedCornerShape(12.dp))
+                        .background(if (isSelected) ImmersiveGreen.copy(alpha = 0.2f) else ImmersivePillBg, RoundedCornerShape(12.dp))
                         .clip(RoundedCornerShape(12.dp))
-                        .bounceClick(onClick = onClick)
+                        .bounceClick(onLongClick = onLongClick, onClick = onClick)
                         .padding(vertical = 12.dp, horizontal = 12.dp)
                 ) {
                     Text(
@@ -664,9 +668,9 @@ fun LiteratureCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .then(tabSharedBoundsModifier)
-                    .background(ImmersivePillBg, RoundedCornerShape(12.dp))
+                    .background(if (isSelected) ImmersiveGreen.copy(alpha = 0.2f) else ImmersivePillBg, RoundedCornerShape(12.dp))
                     .clip(RoundedCornerShape(12.dp))
-                    .bounceClick(onClick = onClick)
+                    .bounceClick(onLongClick = onLongClick, onClick = onClick)
                     .padding(vertical = 12.dp, horizontal = 12.dp)
             ) {
                 Text(
