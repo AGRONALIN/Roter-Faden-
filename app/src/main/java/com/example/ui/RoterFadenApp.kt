@@ -517,115 +517,163 @@ fun SharedTransitionScope.RoterFadenBottomNav(
                 exit = androidx.compose.animation.slideOutHorizontally(targetOffsetX = { -150 }, animationSpec = spring(stiffness = 100f, dampingRatio = 0.8f)) + fadeOut(animationSpec = tween(600))
             ) {
                 val fabVisibilityScope = this
+                var showItem1 by remember { mutableStateOf(expanded) }
+                var showItem2 by remember { mutableStateOf(expanded) }
+                var showItem3 by remember { mutableStateOf(expanded) }
+
+                LaunchedEffect(expanded) {
+                    if (expanded) {
+                        showItem3 = true
+                        kotlinx.coroutines.delay(100)
+                        showItem2 = true
+                        kotlinx.coroutines.delay(100)
+                        showItem1 = true
+                    } else {
+                        showItem1 = false
+                        kotlinx.coroutines.delay(80)
+                        showItem2 = false
+                        kotlinx.coroutines.delay(80)
+                        showItem3 = false
+                    }
+                }
+
                 Column(
                     horizontalAlignment = Alignment.End,
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    AnimatedVisibility(
-                        visible = expanded,
-                        enter = scaleIn(initialScale = 0.8f, animationSpec = spring(dampingRatio = 0.6f, stiffness = 150f)) + fadeIn(animationSpec = tween(600)),
-                        exit = scaleOut(targetScale = 0.8f, animationSpec = spring(dampingRatio = 0.8f, stiffness = 150f)) + fadeOut(animationSpec = tween(600))
-                    ) {
+                    val anyVisible = showItem1 || showItem2 || showItem3
+                    if (anyVisible || expanded) {
                         Column(
                             verticalArrangement = Arrangement.spacedBy(12.dp),
-                            horizontalAlignment = Alignment.End
+                            horizontalAlignment = Alignment.End,
+                            modifier = Modifier.padding(bottom = 8.dp)
                         ) {
-                            Row(
-                                modifier = Modifier
-                                    .sharedBounds(
-                                        sharedContentState = rememberSharedContentState(key = "fab_neuer_begriff"),
-                                        animatedVisibilityScope = animatedVisibilityScope,
-                                        enter = fadeIn(),
-                                        exit = fadeOut(),
-                                        resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(contentScale = androidx.compose.ui.layout.ContentScale.Crop),
-                                        boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 100f) }
-                                    )
-                                    .clip(RoundedCornerShape(percent = 50))
-                                    .background(navBarColor)
-                                    .bounceClick {
-                                        onExpandedChange(false)
-                                        navController.navigate("edit_glossary")
-                                    }
-                                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                verticalAlignment = Alignment.CenterVertically
+                            androidx.compose.animation.AnimatedVisibility(
+                                visible = showItem1,
+                                enter = fadeIn(animationSpec = tween(250, easing = FastOutSlowInEasing)) + 
+                                        scaleIn(initialScale = 0.8f, animationSpec = tween(250, easing = FastOutSlowInEasing)) +
+                                        slideInVertically(initialOffsetY = { 30 }, animationSpec = tween(250, easing = FastOutSlowInEasing)),
+                                exit = fadeOut(animationSpec = tween(200, easing = FastOutSlowInEasing)) + 
+                                       scaleOut(targetScale = 0.8f, animationSpec = tween(200, easing = FastOutSlowInEasing)) +
+                                       slideOutVertically(targetOffsetY = { 15 }, animationSpec = tween(200, easing = FastOutSlowInEasing))
                             ) {
-                                Text(
-                                    text = "Neuer Begriff",
-                                    color = ImmersiveTextPrimary,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                Box(
-                                    modifier = Modifier.size(40.dp).clip(CircleShape).background(ImmersiveGreen),
-                                    contentAlignment = Alignment.Center
+                                Row(
+                                    modifier = Modifier
+                                        .sharedBounds(
+                                            sharedContentState = rememberSharedContentState(key = "fab_neuer_begriff"),
+                                            animatedVisibilityScope = animatedVisibilityScope,
+                                            enter = fadeIn(),
+                                            exit = fadeOut(),
+                                            resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(contentScale = androidx.compose.ui.layout.ContentScale.Crop),
+                                            boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 100f) }
+                                        )
+                                        .clip(RoundedCornerShape(percent = 50))
+                                        .background(navBarColor)
+                                        .bounceClick {
+                                            onExpandedChange(false)
+                                            navController.navigate("edit_glossary")
+                                        }
+                                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Icon(Icons.Filled.AutoStories, contentDescription = "Begriff", modifier = Modifier.size(20.dp), tint = ImmersiveOnGreen)
+                                    Text(
+                                        text = "Neuer Begriff",
+                                        color = ImmersiveTextPrimary,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Box(
+                                        modifier = Modifier.size(40.dp).clip(CircleShape).background(ImmersiveGreen),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(Icons.Filled.AutoStories, contentDescription = "Begriff", modifier = Modifier.size(20.dp), tint = ImmersiveOnGreen)
+                                    }
                                 }
                             }
 
-                            Row(
-                                modifier = Modifier
-                                    .sharedBounds(
-                                        sharedContentState = rememberSharedContentState(key = "fab_neue_literatur"),
-                                        animatedVisibilityScope = animatedVisibilityScope,
-                                        enter = fadeIn(),
-                                        exit = fadeOut(),
-                                        resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(contentScale = androidx.compose.ui.layout.ContentScale.Crop),
-                                        boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 100f) }
-                                    )
-                                    .clip(RoundedCornerShape(percent = 50))
-                                    .background(navBarColor)
-                                    .bounceClick {
-                                        onExpandedChange(false)
-                                        navController.navigate("edit_literature")
-                                    }
-                                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                verticalAlignment = Alignment.CenterVertically
+                            androidx.compose.animation.AnimatedVisibility(
+                                visible = showItem2,
+                                enter = fadeIn(animationSpec = tween(250, easing = FastOutSlowInEasing)) + 
+                                        scaleIn(initialScale = 0.8f, animationSpec = tween(250, easing = FastOutSlowInEasing)) +
+                                        slideInVertically(initialOffsetY = { 30 }, animationSpec = tween(250, easing = FastOutSlowInEasing)),
+                                exit = fadeOut(animationSpec = tween(200, easing = FastOutSlowInEasing)) + 
+                                       scaleOut(targetScale = 0.8f, animationSpec = tween(200, easing = FastOutSlowInEasing)) +
+                                       slideOutVertically(targetOffsetY = { 15 }, animationSpec = tween(200, easing = FastOutSlowInEasing))
                             ) {
-                                Text(
-                                    text = "Neue Literatur",
-                                    color = ImmersiveTextPrimary,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                Box(
-                                    modifier = Modifier.size(40.dp).clip(CircleShape).background(ImmersiveGreen),
-                                    contentAlignment = Alignment.Center
+                                Row(
+                                    modifier = Modifier
+                                        .sharedBounds(
+                                            sharedContentState = rememberSharedContentState(key = "fab_neue_literatur"),
+                                            animatedVisibilityScope = animatedVisibilityScope,
+                                            enter = fadeIn(),
+                                            exit = fadeOut(),
+                                            resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(contentScale = androidx.compose.ui.layout.ContentScale.Crop),
+                                            boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 100f) }
+                                        )
+                                        .clip(RoundedCornerShape(percent = 50))
+                                        .background(navBarColor)
+                                        .bounceClick {
+                                            onExpandedChange(false)
+                                            navController.navigate("edit_literature")
+                                        }
+                                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Icon(Icons.Filled.AutoStories, contentDescription = "Literatur", modifier = Modifier.size(20.dp), tint = ImmersiveOnGreen)
+                                    Text(
+                                        text = "Neue Literatur",
+                                        color = ImmersiveTextPrimary,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Box(
+                                        modifier = Modifier.size(40.dp).clip(CircleShape).background(ImmersiveGreen),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(Icons.Filled.AutoStories, contentDescription = "Literatur", modifier = Modifier.size(20.dp), tint = ImmersiveOnGreen)
+                                    }
                                 }
                             }
-                            
-                            Row(
-                                modifier = Modifier
-                                    .sharedBounds(
-                                        sharedContentState = rememberSharedContentState(key = "fab_neues_argument"),
-                                        animatedVisibilityScope = animatedVisibilityScope,
-                                        enter = fadeIn(),
-                                        exit = fadeOut(),
-                                        resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(contentScale = androidx.compose.ui.layout.ContentScale.Crop),
-                                        boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 100f) }
-                                    )
-                                    .clip(RoundedCornerShape(percent = 50))
-                                    .background(navBarColor)
-                                    .bounceClick {
-                                        onExpandedChange(false)
-                                        navController.navigate("edit_argument")
-                                    }
-                                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                verticalAlignment = Alignment.CenterVertically
+
+                            androidx.compose.animation.AnimatedVisibility(
+                                visible = showItem3,
+                                enter = fadeIn(animationSpec = tween(250, easing = FastOutSlowInEasing)) + 
+                                        scaleIn(initialScale = 0.8f, animationSpec = tween(250, easing = FastOutSlowInEasing)) +
+                                        slideInVertically(initialOffsetY = { 30 }, animationSpec = tween(250, easing = FastOutSlowInEasing)),
+                                exit = fadeOut(animationSpec = tween(200, easing = FastOutSlowInEasing)) + 
+                                       scaleOut(targetScale = 0.8f, animationSpec = tween(200, easing = FastOutSlowInEasing)) +
+                                       slideOutVertically(targetOffsetY = { 15 }, animationSpec = tween(200, easing = FastOutSlowInEasing))
                             ) {
-                                Text(
-                                    text = "Neues Argument",
-                                    color = ImmersiveTextPrimary,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                Box(
-                                    modifier = Modifier.size(40.dp).clip(CircleShape).background(ImmersiveGreen),
-                                    contentAlignment = Alignment.Center
+                                Row(
+                                    modifier = Modifier
+                                        .sharedBounds(
+                                            sharedContentState = rememberSharedContentState(key = "fab_neues_argument"),
+                                            animatedVisibilityScope = animatedVisibilityScope,
+                                            enter = fadeIn(),
+                                            exit = fadeOut(),
+                                            resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(contentScale = androidx.compose.ui.layout.ContentScale.Crop),
+                                            boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 100f) }
+                                        )
+                                        .clip(RoundedCornerShape(percent = 50))
+                                        .background(navBarColor)
+                                        .bounceClick {
+                                            onExpandedChange(false)
+                                            navController.navigate("edit_argument")
+                                        }
+                                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Icon(Icons.Filled.Add, contentDescription = "Argument", modifier = Modifier.size(20.dp), tint = ImmersiveOnGreen)
+                                    Text(
+                                        text = "Neues Argument",
+                                        color = ImmersiveTextPrimary,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Box(
+                                        modifier = Modifier.size(40.dp).clip(CircleShape).background(ImmersiveGreen),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(Icons.Filled.Add, contentDescription = "Argument", modifier = Modifier.size(20.dp), tint = ImmersiveOnGreen)
+                                    }
                                 }
                             }
                         }
