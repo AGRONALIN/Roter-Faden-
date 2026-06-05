@@ -95,19 +95,22 @@ fun RoterFadenApp(viewModel: AppViewModel) {
         val isDarkTheme by viewModel.isDarkTheme.collectAsState()
         val animProgress = remember { Animatable(0f) }
         var previousDarkTheme by remember { mutableStateOf(isDarkTheme) }
-        var oldBackground by remember { mutableStateOf(if (isDarkTheme) Color(0xFFFFFFFF) else Color(0xFF121212)) }
+        var oldBackground by remember { mutableStateOf(if (isDarkTheme) Color(0xFF121212) else Color(0xFFFFFFFF)) }
         var isAnimating by remember { mutableStateOf(false) }
         val buttonPosition by viewModel.themeTogglePosition.collectAsState()
 
+        if (isDarkTheme != previousDarkTheme) {
+            oldBackground = if (previousDarkTheme) {
+                Color(0xFF121212)
+            } else {
+                Color(0xFFFFFFFF)
+            }
+            previousDarkTheme = isDarkTheme
+            isAnimating = true
+        }
+
         LaunchedEffect(isDarkTheme) {
-            if (isDarkTheme != previousDarkTheme) {
-                oldBackground = if (previousDarkTheme) {
-                    Color(0xFF121212)
-                } else {
-                    Color(0xFFFFFFFF)
-                }
-                previousDarkTheme = isDarkTheme
-                isAnimating = true
+            if (isAnimating) {
                 animProgress.snapTo(0f)
                 animProgress.animateTo(
                     targetValue = 1f,
