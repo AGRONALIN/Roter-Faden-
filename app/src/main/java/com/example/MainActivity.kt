@@ -36,10 +36,11 @@ class MainActivity : ComponentActivity() {
         .fallbackToDestructiveMigration(dropAllTables = true)
         .build()
 
-        val repository = AppRepository(database)
+                val repository = AppRepository(database)
         
         // Initialize ViewModel
-        val factory = AppViewModelFactory(repository)
+        val sharedPreferences = getSharedPreferences("app_preferences", android.content.Context.MODE_PRIVATE)
+        val factory = AppViewModelFactory(repository, sharedPreferences)
         val viewModel = ViewModelProvider(this, factory)[AppViewModel::class.java]
 
         setContent {

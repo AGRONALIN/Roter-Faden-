@@ -29,7 +29,10 @@ sealed class AppOverlay {
     object Mediathek : AppOverlay()
 }
 
-class AppViewModel(private val repository: AppRepository) : ViewModel() {
+class AppViewModel(
+    private val repository: AppRepository,
+    private val sharedPreferences: android.content.SharedPreferences
+) : ViewModel() {
     private val _appOverlay = MutableStateFlow<AppOverlay>(AppOverlay.None)
     val appOverlay: StateFlow<AppOverlay> = _appOverlay.asStateFlow()
 
@@ -40,10 +43,14 @@ class AppViewModel(private val repository: AppRepository) : ViewModel() {
     fun closeOverlay() {
         _appOverlay.value = AppOverlay.None
     }
-    val isDarkTheme: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val isDarkTheme: MutableStateFlow<Boolean> = MutableStateFlow(
+        sharedPreferences.getBoolean("is_dark_theme", false)
+    )
 
     fun toggleTheme() {
-        isDarkTheme.value = !isDarkTheme.value
+        val nextValue = !isDarkTheme.value
+        isDarkTheme.value = nextValue
+        sharedPreferences.edit().putBoolean("is_dark_theme", nextValue).apply()
     }
 
     val recentArguments: StateFlow<List<Argument>> = repository.recentArguments
@@ -313,11 +320,14 @@ class AppViewModel(private val repository: AppRepository) : ViewModel() {
     }
 }
 
-class AppViewModelFactory(private val repository: AppRepository) : ViewModelProvider.Factory {
+class AppViewModelFactory(
+    private val repository: AppRepository,
+    private val sharedPreferences: android.content.SharedPreferences
+) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(AppViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return AppViewModel(repository) as T
+            return AppViewModel(repository, sharedPreferences) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }
