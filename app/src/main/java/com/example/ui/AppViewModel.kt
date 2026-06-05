@@ -232,11 +232,15 @@ class AppViewModel(
         return exportGlossaries(setOf(id))
     }
 
-    suspend fun importData(jsonString: String) {
-        try {
+    suspend fun importData(jsonString: String): Boolean {
+        return try {
             val moshi = Moshi.Builder().build()
             val adapter = moshi.adapter(ExportData::class.java)
-            val parsed = adapter.fromJson(jsonString) ?: return
+            val parsed = adapter.fromJson(jsonString) ?: return false
+            
+            if (parsed.arguments.isEmpty() && parsed.glossary.isEmpty()) {
+                return false
+            }
             
             parsed.arguments.forEach {
                 repository.insertArgument(
@@ -256,8 +260,10 @@ class AppViewModel(
                     )
                 )
             }
+            true
         } catch (e: Exception) {
             e.printStackTrace()
+            false
         }
     }
 

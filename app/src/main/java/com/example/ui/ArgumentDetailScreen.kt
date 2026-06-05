@@ -76,6 +76,7 @@ fun ArgumentDetailScreen(
     var containerPosition by remember { mutableStateOf(Offset.Zero) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showOptions by remember { mutableStateOf(false) }
+    var showExportSelectionDialog by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     
     val density = androidx.compose.ui.platform.LocalDensity.current
@@ -92,6 +93,73 @@ fun ArgumentDetailScreen(
                 }
             }
         }
+    }
+
+    if (showExportSelectionDialog) {
+        AlertDialog(
+            onDismissRequest = { showExportSelectionDialog = false },
+            containerColor = ImmersiveBackground,
+            title = {
+                Text(
+                    text = "Argumentation teilen / speichern",
+                    color = ImmersiveTextPrimary,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp
+                )
+            },
+            text = {
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Text(
+                        text = "Wähle eine Methode, um diese Argumentation zu übertragen:",
+                        color = ImmersiveTextSecondary,
+                        fontSize = 14.sp
+                    )
+                    
+                    Button(
+                        onClick = {
+                            showExportSelectionDialog = false
+                            scope.launch {
+                                val jsonStr = viewModel.exportSingleArgument(argument.id)
+                                val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                                    type = "text/plain"
+                                    putExtra(android.content.Intent.EXTRA_TEXT, jsonStr)
+                                    putExtra(android.content.Intent.EXTRA_SUBJECT, "Roter Faden - Argumentation")
+                                }
+                                context.startActivity(android.content.Intent.createChooser(intent, "Argument teilen"))
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = ImmersiveGreen),
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(percent = 50)
+                    ) {
+                        Text("Drahtlos teilen (WhatsApp / Quick Share)", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                    }
+
+                    Button(
+                        onClick = {
+                            showExportSelectionDialog = false
+                            val dateFormat = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault())
+                            val fileName = "debattenbank_argument_${argument.id}_${dateFormat.format(Date())}.json"
+                            exportLauncher.launch(fileName)
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = CreamRed),
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(percent = 50)
+                    ) {
+                        Text("Als JSON-Datei speichern", color = ImmersiveGreen, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = { showExportSelectionDialog = false }) {
+                    Text("Abbrechen", color = ImmersiveTextSecondary)
+                }
+            }
+        )
     }
     
     val blurRadius by androidx.compose.animation.core.animateDpAsState(
@@ -175,9 +243,7 @@ fun ArgumentDetailScreen(
                                 }
                                 BounceIconButton(onClick = {
                                     showOptions = false
-                                    val dateFormat = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault())
-                                    val fileName = "debattenbank_argument_${argument.id}_${dateFormat.format(Date())}.json"
-                                    exportLauncher.launch(fileName)
+                                    showExportSelectionDialog = true
                                 }) {
                                     Icon(Icons.Filled.Upload, contentDescription = "Exportieren", tint = ImmersiveGreen)
                                 }

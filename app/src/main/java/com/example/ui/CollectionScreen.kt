@@ -102,6 +102,9 @@ fun CollectionScreen(
             }
     }
 
+    var showExportSelectionDialog by remember { mutableStateOf(false) }
+    var showImportDialog by remember { mutableStateOf(false) }
+
     val exportLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("application/json")
     ) { uri ->
@@ -114,6 +117,169 @@ fun CollectionScreen(
                 selectedArgumentIds = emptySet()
             }
         }
+    }
+
+    val generalImportLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        uri?.let { selectedUri ->
+            scope.launch {
+                val jsonStr = context.contentResolver.openInputStream(selectedUri)?.use { inputStream ->
+                    inputStream.bufferedReader().use { reader -> reader.readText() }
+                }
+                if (jsonStr != null) {
+                    val success = viewModel.importData(jsonStr)
+                    if (success) {
+                        android.widget.Toast.makeText(context, "Erfolgreich importiert!", android.widget.Toast.LENGTH_SHORT).show()
+                    } else {
+                        android.widget.Toast.makeText(context, "Fehler beim Importieren!", android.widget.Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        }
+    }
+
+    if (showExportSelectionDialog) {
+        AlertDialog(
+            onDismissRequest = { showExportSelectionDialog = false },
+            containerColor = ImmersiveBackground,
+            title = {
+                Text(
+                    text = "Inhalt teilen / speichern",
+                    color = ImmersiveTextPrimary,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp
+                )
+            },
+            text = {
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Text(
+                        text = "Wähle eine Methode, um deine ${selectedArgumentIds.size} ausgewählten Argumentationen zu übertragen:",
+                        color = ImmersiveTextSecondary,
+                        fontSize = 14.sp
+                    )
+                    
+                    Button(
+                        onClick = {
+                            showExportSelectionDialog = false
+                            scope.launch {
+                                val jsonStr = viewModel.exportArguments(selectedArgumentIds)
+                                val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                                    type = "text/plain"
+                                    putExtra(android.content.Intent.EXTRA_TEXT, jsonStr)
+                                    putExtra(android.content.Intent.EXTRA_SUBJECT, "Roter Faden - Export")
+                                }
+                                context.startActivity(android.content.Intent.createChooser(intent, "Argumente teilen"))
+                                selectedArgumentIds = emptySet()
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = ImmersiveGreen),
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(percent = 50)
+                    ) {
+                        Text("Drahtlos teilen (WhatsApp / Quick Share)", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                    }
+
+                    Button(
+                        onClick = {
+                            showExportSelectionDialog = false
+                            val dateFormat = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault())
+                            val fileName = "debattenbank_export_${dateFormat.format(Date())}.json"
+                            exportLauncher.launch(fileName)
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = CreamRed),
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(percent = 50)
+                    ) {
+                        Text("Als JSON-Datei speichern", color = ImmersiveGreen, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = { showExportSelectionDialog = false }) {
+                    Text("Abbrechen", color = ImmersiveTextSecondary)
+                }
+            }
+        )
+    }
+
+    if (showImportDialog) {
+        AlertDialog(
+            onDismissRequest = { showImportDialog = false },
+            containerColor = ImmersiveBackground,
+            title = {
+                Text(
+                    text = "Daten importieren",
+                    color = ImmersiveTextPrimary,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp
+                )
+            },
+            text = {
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Text(
+                        text = "Füge neue Argumentationen oder Glossareinträge über eine JSON-Datei oder aus deiner Zwischenablage hinzu:",
+                        color = ImmersiveTextSecondary,
+                        fontSize = 14.sp
+                    )
+                    
+                    Button(
+                        onClick = {
+                            showImportDialog = false
+                            generalImportLauncher.launch(arrayOf("application/json"))
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = CreamRed),
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(percent = 50)
+                    ) {
+                        Text("Aus einer JSON-Datei laden", color = ImmersiveGreen, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                    }
+
+                    Button(
+                        onClick = {
+                            showImportDialog = false
+                            val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                            val clipData = clipboard.primaryClip
+                            if (clipData != null && clipData.itemCount > 0) {
+                                val text = clipData.getItemAt(0).text?.toString() ?: ""
+                                if (text.isNotBlank()) {
+                                    scope.launch {
+                                        val success = viewModel.importData(text)
+                                        if (success) {
+                                            android.widget.Toast.makeText(context, "Erfolgreich aus Zwischenablage importiert!", android.widget.Toast.LENGTH_SHORT).show()
+                                        } else {
+                                            android.widget.Toast.makeText(context, "Fehler beim Importieren! Überprüfe die Daten.", android.widget.Toast.LENGTH_SHORT).show()
+                                        }
+                                    }
+                                } else {
+                                    android.widget.Toast.makeText(context, "Die Zwischenablage ist leer!", android.widget.Toast.LENGTH_SHORT).show()
+                                }
+                            } else {
+                                android.widget.Toast.makeText(context, "Die Zwischenablage ist leer!", android.widget.Toast.LENGTH_SHORT).show()
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = ImmersiveGreen),
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(percent = 50)
+                    ) {
+                        Text("Aus der Zwischenablage einfügen", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = { showImportDialog = false }) {
+                    Text("Abbrechen", color = ImmersiveTextSecondary)
+                }
+            }
+        )
     }
 
     if (showDeleteDialog) {
@@ -162,6 +328,26 @@ fun CollectionScreen(
                             letterSpacing = (-1).sp
                         )
                     )
+
+                    // Import button using CreamRed theme
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(percent = 50))
+                            .background(CreamRed)
+                            .bounceClick { showImportDialog = true }
+                            .padding(horizontal = 14.dp, vertical = 8.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Download,
+                                contentDescription = "Import",
+                                modifier = Modifier.size(16.dp),
+                                tint = ImmersiveGreen
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Import", color = ImmersiveGreen, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -206,9 +392,7 @@ fun CollectionScreen(
                                 .clip(RoundedCornerShape(percent = 50))
                                 .background(ImmersiveGreen)
                                 .bounceClick {
-                                    val dateFormat = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault())
-                                    val fileName = "debattenbank_export_${dateFormat.format(Date())}.json"
-                                    exportLauncher.launch(fileName)
+                                    showExportSelectionDialog = true
                                 }
                                 .padding(horizontal = 16.dp, vertical = 12.dp)
                         ) {

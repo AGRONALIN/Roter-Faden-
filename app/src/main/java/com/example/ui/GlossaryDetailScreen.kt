@@ -13,6 +13,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -53,6 +54,7 @@ fun GlossaryDetailScreen(
 ) {
     var showOptions by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
+    var showExportSelectionDialog by remember { mutableStateOf(false) }
     
     val scope = rememberCoroutineScope()
 
@@ -68,6 +70,73 @@ fun GlossaryDetailScreen(
                 }
             }
         }
+    }
+
+    if (showExportSelectionDialog) {
+        AlertDialog(
+            onDismissRequest = { showExportSelectionDialog = false },
+            containerColor = ImmersiveBackground,
+            title = {
+                Text(
+                    text = "Glossar teilen / speichern",
+                    color = ImmersiveTextPrimary,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp
+                )
+            },
+            text = {
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Text(
+                        text = "Wähle eine Methode, um diesen Begriff zu übertragen:",
+                        color = ImmersiveTextSecondary,
+                        fontSize = 14.sp
+                    )
+                    
+                    Button(
+                        onClick = {
+                            showExportSelectionDialog = false
+                            scope.launch {
+                                val jsonStr = viewModel.exportSingleGlossary(glossaryItem.id)
+                                val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                                    type = "text/plain"
+                                    putExtra(android.content.Intent.EXTRA_TEXT, jsonStr)
+                                    putExtra(android.content.Intent.EXTRA_SUBJECT, "Roter Faden - Glossar")
+                                }
+                                context.startActivity(android.content.Intent.createChooser(intent, "Begriff teilen"))
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = ImmersiveGreen),
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(percent = 50)
+                    ) {
+                        Text("Drahtlos teilen (WhatsApp / Quick Share)", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                    }
+
+                    Button(
+                        onClick = {
+                            showExportSelectionDialog = false
+                            val dateFormat = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault())
+                            val fileName = "debattenbank_glossary_${glossaryItem.id}_${dateFormat.format(Date())}.json"
+                            exportLauncher.launch(fileName)
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = CreamRed),
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(percent = 50)
+                    ) {
+                        Text("Als JSON-Datei speichern", color = ImmersiveGreen, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = { showExportSelectionDialog = false }) {
+                    Text("Abbrechen", color = ImmersiveTextSecondary)
+                }
+            }
+        )
     }
 
     if (showDeleteDialog) {
@@ -169,9 +238,7 @@ fun GlossaryDetailScreen(
                                 }
                                 BounceIconButton(onClick = {
                                     showOptions = false
-                                    val dateFormat = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault())
-                                    val fileName = "debattenbank_glossary_${glossaryItem.id}_${dateFormat.format(Date())}.json"
-                                    exportLauncher.launch(fileName)
+                                    showExportSelectionDialog = true
                                 }) {
                                     Icon(Icons.Filled.Upload, contentDescription = "Exportieren", tint = ImmersiveGreen)
                                 }

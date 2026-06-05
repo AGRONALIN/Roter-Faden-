@@ -1,5 +1,7 @@
 package com.example.ui
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
@@ -23,6 +25,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.LocalContext
 import com.example.ui.theme.*
 import kotlinx.coroutines.launch
 
@@ -32,7 +35,7 @@ fun OnboardingScreen(
     viewModel: AppViewModel,
     onFinish: () -> Unit
 ) {
-    val pagerState = rememberPagerState(pageCount = { 3 })
+    val pagerState = rememberPagerState(pageCount = { 4 })
     val coroutineScope = rememberCoroutineScope()
     val isDarkTheme by viewModel.isDarkTheme.collectAsState()
 
@@ -76,7 +79,7 @@ fun OnboardingScreen(
                 )
             }
 
-            if (pagerState.currentPage < 2) {
+            if (pagerState.currentPage < 3) {
                 Text(
                     text = "Überspringen",
                     color = textSecondary,
@@ -125,6 +128,7 @@ fun OnboardingScreen(
                         0 -> OnboardingArgumentSlide(accentRed, creamRedColor, textPrimary, textSecondary)
                         1 -> OnboardingGlossarySlide(pillBg, textPrimary, textSecondary)
                         2 -> OnboardingLiteratureSlide(pillBg, accentRed, textPrimary, textSecondary)
+                        3 -> OnboardingShareSlide(viewModel, pillBg, accentRed, textPrimary, textSecondary)
                     }
                 }
 
@@ -140,7 +144,8 @@ fun OnboardingScreen(
                     val (title, description) = when (page) {
                         0 -> "Strukturierte Argumente" to "Bringe Klarheit in deine Ausführungen und halte Thesen sowie Gegenargumente geordnet fest."
                         1 -> "Präzises Glossar" to "Definiere Begriffe an einem zentralen Ort. Sie werden in deinen Argumentationen automatisch erkannt und hervorgehoben."
-                        else -> "Zentrale Quellen" to "Verknüpfe deine wissenschaftlichen Quellen und Zitate mit deinen erstellten Diskursen."
+                        2 -> "Zentrale Quellen" to "Verknüpfe deine wissenschaftlichen Quellen und Zitate mit deinen erstellten Diskursen."
+                        else -> "Teilen & Synchronisieren" to "Teile Debatten drahtlos mit Freunden oder importiere Argumente direkt per Datei oder Zwischenablage."
                     }
 
                     Text(
@@ -179,7 +184,7 @@ fun OnboardingScreen(
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                repeat(3) { index ->
+                repeat(4) { index ->
                     val isSelected = pagerState.currentPage == index
                     val width by animateDpAsState(
                         targetValue = if (isSelected) 20.dp else 8.dp,
@@ -203,7 +208,7 @@ fun OnboardingScreen(
             }
 
             // CTA Button
-            val isLastPage = pagerState.currentPage == 2
+            val isLastPage = pagerState.currentPage == 3
             Box(
                 modifier = Modifier
                     .height(48.dp)
@@ -390,6 +395,138 @@ fun OnboardingLiteratureSlide(
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis
             )
+        }
+    }
+}
+
+@Composable
+fun OnboardingShareSlide(
+    viewModel: AppViewModel,
+    pillBg: Color,
+    accentRed: Color,
+    textPrimary: Color,
+    textSecondary: Color
+) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    
+    val importLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        uri?.let { selectedUri: android.net.Uri ->
+            scope.launch {
+                val jsonStr = context.contentResolver.openInputStream(selectedUri)?.use { inputStream: java.io.InputStream ->
+                    inputStream.bufferedReader().use { reader: java.io.BufferedReader -> reader.readText() }
+                }
+                if (jsonStr != null) {
+                    val success = viewModel.importData(jsonStr)
+                    if (success) {
+                        android.widget.Toast.makeText(context, "Erfolgreich importiert!", android.widget.Toast.LENGTH_SHORT).show()
+                    } else {
+                        android.widget.Toast.makeText(context, "Fehler beim Importieren!", android.widget.Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        }
+    }
+
+    Column(
+        modifier = Modifier.fillMaxWidth(0.9f),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+                modifier = Modifier
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(pillBg)
+                    .padding(10.dp)
+                    .width(60.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Bookmark,
+                    contentDescription = null,
+                    tint = accentRed,
+                    modifier = Modifier.size(20.dp)
+                )
+                Text("Gerät A", color = textPrimary, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+            }
+
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                contentDescription = null,
+                tint = accentRed,
+                modifier = Modifier.size(24.dp)
+            )
+
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+                modifier = Modifier
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(pillBg)
+                    .padding(10.dp)
+                    .width(60.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Bookmark,
+                    contentDescription = null,
+                    tint = textSecondary,
+                    modifier = Modifier.size(20.dp)
+                )
+                Text("Gerät B", color = textPrimary, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+            }
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Button(
+                onClick = {
+                    importLauncher.launch(arrayOf("application/json"))
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = pillBg),
+                shape = RoundedCornerShape(percent = 50),
+                modifier = Modifier.weight(1.5f)
+            ) {
+                Text("Datei wählen", color = textPrimary, fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+            }
+
+            Button(
+                onClick = {
+                    val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                    val clipData = clipboard.primaryClip
+                    if (clipData != null && clipData.itemCount > 0) {
+                        val text = clipData.getItemAt(0).text?.toString() ?: ""
+                        if (text.isNotBlank()) {
+                            scope.launch {
+                                val success = viewModel.importData(text)
+                                if (success) {
+                                    android.widget.Toast.makeText(context, "Aus Zwischenablage importiert!", android.widget.Toast.LENGTH_SHORT).show()
+                                } else {
+                                    android.widget.Toast.makeText(context, "Keine gültigen Argumente gefunden!", android.widget.Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        } else {
+                            android.widget.Toast.makeText(context, "Die Zwischenablage ist leer!", android.widget.Toast.LENGTH_SHORT).show()
+                        }
+                    } else {
+                        android.widget.Toast.makeText(context, "Die Zwischenablage ist leer!", android.widget.Toast.LENGTH_SHORT).show()
+                    }
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = accentRed),
+                shape = RoundedCornerShape(percent = 50),
+                modifier = Modifier.weight(1.5f)
+            ) {
+                Text("Zwischenablage", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+            }
         }
     }
 }
