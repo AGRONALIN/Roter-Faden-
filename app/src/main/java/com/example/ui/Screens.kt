@@ -68,10 +68,10 @@ fun HomeScreen(
     onNavigateToSearch: () -> Unit = {}
 ) {
     val recentArguments by viewModel.recentArguments.collectAsState()
-    val topRecentArguments = recentArguments.take(3)
-    val recentCategories = recentArguments.map { it.category }.filter { it.isNotBlank() }.distinct()
+    val topRecentArguments = remember(recentArguments) { recentArguments.take(3) }
+    val recentCategories = remember(recentArguments) { recentArguments.map { it.category }.filter { it.isNotBlank() }.distinct() }
     val recentGlossaries by viewModel.recentGlossaryItems.collectAsState()
-    val topRecentGlossaries = recentGlossaries.take(3)
+    val topRecentGlossaries = remember(recentGlossaries) { recentGlossaries.take(3) }
     
     var randomArgument by remember(recentArguments) { 
         mutableStateOf(if (recentArguments.isNotEmpty()) recentArguments.random() else null)

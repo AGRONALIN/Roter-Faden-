@@ -17,30 +17,54 @@ fun Modifier.verticalFadingEdge(
     .graphicsLayer(compositingStrategy = CompositingStrategy.Offscreen)
     .drawWithContent {
         drawContent()
-        val topPx = topEdge.toPx().coerceAtMost(size.height / 2f)
-        val bottomPx = bottomEdge.toPx().coerceAtMost(size.height / 2f)
+        val height = size.height
+        if (height <= 0f) return@drawWithContent
         
-        val colors = mutableListOf<Pair<Float, Color>>()
-        if (topPx > 0f) {
-            colors.add(0f to Color.Transparent)
-            colors.add(topPx / size.height to Color.Black)
+        val topPx = topEdge.toPx().coerceAtMost(height / 2f)
+        val bottomPx = bottomEdge.toPx().coerceAtMost(height / 2f)
+        
+        if (topPx > 0f && bottomPx > 0f) {
+            val stop1 = topPx / height
+            val stop2 = 1f - (bottomPx / height)
+            drawRect(
+                brush = Brush.verticalGradient(
+                    0f to Color.Transparent,
+                    stop1 to Color.Black,
+                    stop2 to Color.Black,
+                    1f to Color.Transparent,
+                    startY = 0f,
+                    endY = height
+                ),
+                blendMode = BlendMode.DstIn
+            )
+        } else if (topPx > 0f) {
+            val stop1 = topPx / height
+            drawRect(
+                brush = Brush.verticalGradient(
+                    0f to Color.Transparent,
+                    stop1 to Color.Black,
+                    1f to Color.Black,
+                    startY = 0f,
+                    endY = height
+                ),
+                blendMode = BlendMode.DstIn
+            )
+        } else if (bottomPx > 0f) {
+            val stop2 = 1f - (bottomPx / height)
+            drawRect(
+                brush = Brush.verticalGradient(
+                    0f to Color.Black,
+                    stop2 to Color.Black,
+                    1f to Color.Transparent,
+                    startY = 0f,
+                    endY = height
+                ),
+                blendMode = BlendMode.DstIn
+            )
         } else {
-            colors.add(0f to Color.Black)
+            drawRect(
+                color = Color.Black,
+                blendMode = BlendMode.DstIn
+            )
         }
-        
-        if (bottomPx > 0f) {
-            colors.add(1f - (bottomPx / size.height) to Color.Black)
-            colors.add(1f to Color.Transparent)
-        } else {
-            colors.add(1f to Color.Black)
-        }
-        
-        drawRect(
-            brush = Brush.verticalGradient(
-                *colors.toTypedArray(),
-                startY = 0f,
-                endY = size.height
-            ),
-            blendMode = BlendMode.DstIn
-        )
     }

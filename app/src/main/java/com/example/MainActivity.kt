@@ -116,9 +116,7 @@ class MainActivity : ComponentActivity() {
                             String(decodedBytes, java.nio.charset.StandardCharsets.UTF_8)
                         }
 
-                        val moshi = com.squareup.moshi.Moshi.Builder().build()
-                        val adapter = moshi.adapter(com.example.data.ExportData::class.java)
-                        val parsed = adapter.fromJson(jsonStr)
+                        val parsed = com.example.data.ExportData.adapter.fromJson(jsonStr)
                         if (parsed != null && (parsed.arguments.isNotEmpty() || parsed.glossary.isNotEmpty() || parsed.literature.isNotEmpty())) {
                             viewModel.setPendingImportData(parsed)
                         }
@@ -134,9 +132,7 @@ class MainActivity : ComponentActivity() {
                 try {
                     contentResolver.openInputStream(uri)?.use { inputStream ->
                         val jsonStr = inputStream.bufferedReader(java.nio.charset.StandardCharsets.UTF_8).use { it.readText() }
-                        val moshi = com.squareup.moshi.Moshi.Builder().build()
-                        val adapter = moshi.adapter(com.example.data.ExportData::class.java)
-                        val parsed = adapter.fromJson(jsonStr)
+                        val parsed = com.example.data.ExportData.adapter.fromJson(jsonStr)
                         if (parsed != null && (parsed.arguments.isNotEmpty() || parsed.glossary.isNotEmpty() || parsed.literature.isNotEmpty())) {
                             viewModel.setPendingImportData(parsed)
                         }

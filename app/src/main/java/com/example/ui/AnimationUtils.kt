@@ -44,10 +44,12 @@ fun Modifier.bounceClick(
     val isPressed by interactionSource.collectIsPressedAsState()
     val scale by animateFloatAsState(
         targetValue = if (isPressed) 0.92f else 1f,
-        animationSpec = spring(
-            dampingRatio = 0.6f,
-            stiffness = 100f
-        ),
+        animationSpec = remember {
+            spring(
+                dampingRatio = 0.6f,
+                stiffness = 100f
+            )
+        },
         label = "bounceScale"
     )
 
@@ -68,10 +70,12 @@ fun Modifier.bounceScale(interactionSource: InteractionSource): Modifier = compo
     val isPressed by interactionSource.collectIsPressedAsState()
     val scale by animateFloatAsState(
         targetValue = if (isPressed) 0.92f else 1f,
-        animationSpec = spring(
-            dampingRatio = 0.6f,
-            stiffness = 100f
-        ),
+        animationSpec = remember {
+            spring(
+                dampingRatio = 0.6f,
+                stiffness = 100f
+            )
+        },
         label = "bounceScale"
     )
     this.graphicsLayer {

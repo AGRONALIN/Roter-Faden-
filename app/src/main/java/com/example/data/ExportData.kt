@@ -7,7 +7,12 @@ data class ExportData(
     val arguments: List<ArgumentExport>,
     val glossary: List<GlossaryExport>,
     val literature: List<LiteratureExport> = emptyList()
-)
+) {
+    companion object {
+        val moshi: com.squareup.moshi.Moshi = com.squareup.moshi.Moshi.Builder().build()
+        val adapter: com.squareup.moshi.JsonAdapter<ExportData> = moshi.adapter(ExportData::class.java)
+    }
+}
 
 @JsonClass(generateAdapter = true)
 data class ArgumentExport(

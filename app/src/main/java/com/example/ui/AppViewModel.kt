@@ -207,7 +207,6 @@ class AppViewModel(
     }
 
     suspend fun exportData(): String {
-        val moshi = Moshi.Builder().build()
         val arguments = recentArguments.value.map { 
             ArgumentExport(it.antiMarxistStatement, it.marxistCounterArgument, it.category, it.lastAccessed) 
         }
@@ -218,18 +217,15 @@ class AppViewModel(
             LiteratureExport(it.title, it.author, it.summary)
         }
         val data = ExportData(arguments, glossary, literature)
-        val adapter = moshi.adapter(ExportData::class.java)
-        return adapter.toJson(data)
+        return com.example.data.ExportData.adapter.toJson(data)
     }
 
     suspend fun exportArguments(ids: Set<Int>): String {
-        val moshi = Moshi.Builder().build()
         val arguments = recentArguments.value.filter { it.id in ids }.map {
             ArgumentExport(it.antiMarxistStatement, it.marxistCounterArgument, it.category, it.lastAccessed)
         }
         val data = ExportData(arguments, emptyList(), emptyList())
-        val adapter = moshi.adapter(ExportData::class.java)
-        return adapter.toJson(data)
+        return com.example.data.ExportData.adapter.toJson(data)
     }
 
     suspend fun exportSingleArgument(id: Int): String {
@@ -237,13 +233,11 @@ class AppViewModel(
     }
 
     suspend fun exportGlossaries(ids: Set<Int>): String {
-        val moshi = Moshi.Builder().build()
         val glossary = glossaryItems.value.filter { it.id in ids }.map {
             GlossaryExport(it.term, it.definition)
         }
         val data = ExportData(emptyList(), glossary, emptyList())
-        val adapter = moshi.adapter(ExportData::class.java)
-        return adapter.toJson(data)
+        return com.example.data.ExportData.adapter.toJson(data)
     }
 
     suspend fun exportSingleGlossary(id: Int): String {
@@ -251,7 +245,6 @@ class AppViewModel(
     }
 
     suspend fun exportSelectedItems(argumentIds: Set<Int>, glossaryIds: Set<Int>, literatureIds: Set<Int>): String {
-        val moshi = Moshi.Builder().build()
         val arguments = recentArguments.value.filter { it.id in argumentIds }.map {
             ArgumentExport(it.antiMarxistStatement, it.marxistCounterArgument, it.category, it.lastAccessed)
         }
@@ -262,8 +255,7 @@ class AppViewModel(
             LiteratureExport(it.title, it.author, it.summary)
         }
         val data = ExportData(arguments, glossary, literature)
-        val adapter = moshi.adapter(ExportData::class.java)
-        return adapter.toJson(data)
+        return com.example.data.ExportData.adapter.toJson(data)
     }
 
     fun deleteGlossariesById(ids: Set<Int>) {
@@ -282,10 +274,7 @@ class AppViewModel(
 
     suspend fun importData(jsonString: String): Boolean {
         return try {
-            val moshi = Moshi.Builder().build()
-            val adapter = moshi.adapter(ExportData::class.java)
-            val parsed = adapter.fromJson(jsonString) ?: return false
-            
+            val parsed = com.example.data.ExportData.adapter.fromJson(jsonString) ?: return false
             importDataDirectly(parsed)
         } catch (e: Exception) {
             e.printStackTrace()
