@@ -72,6 +72,13 @@ class AppViewModel(
     val recentGlossaryItems: StateFlow<List<GlossaryItem>> = repository.recentGlossaryItems
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    private val _pendingImportData = MutableStateFlow<ExportData?>(null)
+    val pendingImportData: StateFlow<ExportData?> = _pendingImportData.asStateFlow()
+
+    fun setPendingImportData(data: ExportData?) {
+        _pendingImportData.value = data
+    }
+
     private val _isBottomBarVisible = MutableStateFlow(true)
     val isBottomBarVisible: StateFlow<Boolean> = _isBottomBarVisible.asStateFlow()
 
@@ -279,10 +286,18 @@ class AppViewModel(
             val adapter = moshi.adapter(ExportData::class.java)
             val parsed = adapter.fromJson(jsonString) ?: return false
             
-            if (parsed.arguments.isEmpty() && parsed.glossary.isEmpty() && parsed.literature.isEmpty()) {
-                return false
-            }
-            
+            importDataDirectly(parsed)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
+    }
+
+    suspend fun importDataDirectly(parsed: ExportData): Boolean {
+        if (parsed.arguments.isEmpty() && parsed.glossary.isEmpty() && parsed.literature.isEmpty()) {
+            return false
+        }
+        return try {
             parsed.arguments.forEach {
                 repository.insertArgument(
                     Argument(

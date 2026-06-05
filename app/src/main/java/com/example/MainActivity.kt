@@ -21,6 +21,8 @@ import com.example.ui.theme.MyApplicationTheme
 import com.example.ui.theme.ImmersiveBackground
 
 class MainActivity : ComponentActivity() {
+    private lateinit var viewModel: AppViewModel
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -36,12 +38,14 @@ class MainActivity : ComponentActivity() {
         .fallbackToDestructiveMigration(dropAllTables = true)
         .build()
 
-                val repository = AppRepository(database)
+        val repository = AppRepository(database)
         
         // Initialize ViewModel
         val sharedPreferences = getSharedPreferences("app_preferences", android.content.Context.MODE_PRIVATE)
         val factory = AppViewModelFactory(repository, sharedPreferences)
-        val viewModel = ViewModelProvider(this, factory)[AppViewModel::class.java]
+        viewModel = ViewModelProvider(this, factory)[AppViewModel::class.java]
+
+        handleIntent(intent, viewModel)
 
         setContent {
             val isDarkTheme by viewModel.isDarkTheme.collectAsState()
@@ -53,6 +57,63 @@ class MainActivity : ComponentActivity() {
                 ) {
                     RoterFadenApp(viewModel)
                 }
+            }
+        }
+    }
+
+    override fun onNewIntent(intent: android.content.Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        if (::viewModel.isInitialized) {
+            handleIntent(intent, viewModel)
+        }
+    }
+
+    private fun handleIntent(intent: android.content.Intent?, viewModel: AppViewModel) {
+        val uri = intent?.data ?: return
+        
+        if (uri.scheme == "roterfaden") {
+            // Handle roterfaden://import?data=...
+            if (uri.host == "import") {
+                val base64Data = uri.getQueryParameter("data")
+                if (!base64Data.isNullOrEmpty()) {
+                    try {
+                        val decodedBytes = android.util.Base64.decode(base64Data, android.util.Base64.DEFAULT or android.util.Base64.URL_SAFE or android.util.Base64.NO_WRAP)
+                        
+                        // Try GZIP decompress, fallback to raw string
+                        val jsonStr = try {
+                            val byteStream = java.io.ByteArrayInputStream(decodedBytes)
+                            val gzipStream = java.util.zip.GZIPInputStream(byteStream)
+                            gzipStream.bufferedReader(java.nio.charset.StandardCharsets.UTF_8).use { it.readText() }
+                        } catch (e: Exception) {
+                            String(decodedBytes, java.nio.charset.StandardCharsets.UTF_8)
+                        }
+
+                        val moshi = com.squareup.moshi.Moshi.Builder().build()
+                        val adapter = moshi.adapter(com.example.data.ExportData::class.java)
+                        val parsed = adapter.fromJson(jsonStr)
+                        if (parsed != null && (parsed.arguments.isNotEmpty() || parsed.glossary.isNotEmpty() || parsed.literature.isNotEmpty())) {
+                            viewModel.setPendingImportData(parsed)
+                        }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
+            }
+        } else if (uri.scheme == "content" || uri.scheme == "file") {
+            // Handle file open (.roterfaden)
+            try {
+                contentResolver.openInputStream(uri)?.use { inputStream ->
+                    val jsonStr = inputStream.bufferedReader(java.nio.charset.StandardCharsets.UTF_8).use { it.readText() }
+                    val moshi = com.squareup.moshi.Moshi.Builder().build()
+                    val adapter = moshi.adapter(com.example.data.ExportData::class.java)
+                    val parsed = adapter.fromJson(jsonStr)
+                    if (parsed != null && (parsed.arguments.isNotEmpty() || parsed.glossary.isNotEmpty() || parsed.literature.isNotEmpty())) {
+                        viewModel.setPendingImportData(parsed)
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
         }
     }

@@ -100,12 +100,7 @@ fun GlossaryDetailScreen(
                             showExportSelectionDialog = false
                             scope.launch {
                                 val jsonStr = viewModel.exportSingleGlossary(glossaryItem.id)
-                                val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
-                                    type = "text/plain"
-                                    putExtra(android.content.Intent.EXTRA_TEXT, jsonStr)
-                                    putExtra(android.content.Intent.EXTRA_SUBJECT, "Roter Faden - Glossar")
-                                }
-                                context.startActivity(android.content.Intent.createChooser(intent, "Begriff teilen"))
+                                ShareHelper.shareTextAsFile(context, jsonStr, "Roter Faden - Glossar")
                             }
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = ImmersiveGreen),

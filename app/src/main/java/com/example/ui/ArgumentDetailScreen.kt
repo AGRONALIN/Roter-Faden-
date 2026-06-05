@@ -123,12 +123,7 @@ fun ArgumentDetailScreen(
                             showExportSelectionDialog = false
                             scope.launch {
                                 val jsonStr = viewModel.exportSingleArgument(argument.id)
-                                val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
-                                    type = "text/plain"
-                                    putExtra(android.content.Intent.EXTRA_TEXT, jsonStr)
-                                    putExtra(android.content.Intent.EXTRA_SUBJECT, "Roter Faden - Argumentation")
-                                }
-                                context.startActivity(android.content.Intent.createChooser(intent, "Argument teilen"))
+                                ShareHelper.shareTextAsFile(context, jsonStr, "Roter Faden - Argumentation")
                             }
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = ImmersiveGreen),

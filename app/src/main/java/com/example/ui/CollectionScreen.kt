@@ -184,12 +184,7 @@ fun CollectionScreen(
                             showExportSelectionDialog = false
                             scope.launch {
                                 val jsonStr = viewModel.exportSelectedItems(selectedArgumentIds, selectedGlossaryIds, selectedLiteratureIds)
-                                val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
-                                    type = "text/plain"
-                                    putExtra(android.content.Intent.EXTRA_TEXT, jsonStr)
-                                    putExtra(android.content.Intent.EXTRA_SUBJECT, "Roter Faden - Export")
-                                }
-                                context.startActivity(android.content.Intent.createChooser(intent, "Inhalte teilen"))
+                                ShareHelper.shareTextAsFile(context, jsonStr, "Roter Faden - Export")
                                 selectedArgumentIds = emptySet()
                                 selectedGlossaryIds = emptySet()
                                 selectedLiteratureIds = emptySet()

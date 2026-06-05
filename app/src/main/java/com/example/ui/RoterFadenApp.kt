@@ -420,6 +420,114 @@ fun RoterFadenApp(viewModel: AppViewModel) {
                     )
                 }
 
+                val pendingImport by viewModel.pendingImportData.collectAsState()
+                pendingImport?.let { data ->
+                    AlertDialog(
+                        onDismissRequest = { viewModel.setPendingImportData(null) },
+                        title = {
+                            Text(
+                                text = "Daten importieren?",
+                                color = ImmersiveTextPrimary,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 20.sp
+                            )
+                        },
+                        text = {
+                            Column(
+                                verticalArrangement = Arrangement.spacedBy(10.dp),
+                                modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
+                            ) {
+                                Text(
+                                    text = "Möchtest du die folgenden geteilten Daten importieren?",
+                                    color = ImmersiveTextSecondary,
+                                    fontSize = 14.sp
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                if (data.arguments.isNotEmpty()) {
+                                    Row(
+                                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Filled.List,
+                                            contentDescription = "Debatten",
+                                            tint = CreamRed,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                        Text(
+                                            text = "${data.arguments.size} Debatten / Argumente",
+                                            color = ImmersiveTextPrimary,
+                                            fontWeight = FontWeight.Medium,
+                                            fontSize = 14.sp
+                                        )
+                                    }
+                                }
+                                if (data.glossary.isNotEmpty()) {
+                                    Row(
+                                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Filled.AutoStories,
+                                            contentDescription = "Begriffe",
+                                            tint = ImmersiveGreen,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                        Text(
+                                            text = "${data.glossary.size} Begriffe im Glossar",
+                                            color = ImmersiveTextPrimary,
+                                            fontWeight = FontWeight.Medium,
+                                            fontSize = 14.sp
+                                        )
+                                    }
+                                }
+                                if (data.literature.isNotEmpty()) {
+                                    Row(
+                                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Filled.AutoStories,
+                                            contentDescription = "Literatur",
+                                            tint = ImmersiveGreen,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                        Text(
+                                            text = "${data.literature.size} Buchempfehlungen",
+                                            color = ImmersiveTextPrimary,
+                                            fontWeight = FontWeight.Medium,
+                                            fontSize = 14.sp
+                                        )
+                                    }
+                                }
+                            }
+                        },
+                        confirmButton = {
+                            Button(
+                                onClick = {
+                                    coroutineScope.launch {
+                                        val success = viewModel.importDataDirectly(data)
+                                        if (success) {
+                                            viewModel.setPendingImportData(null)
+                                        }
+                                    }
+                                },
+                                colors = ButtonDefaults.buttonColors(containerColor = ImmersiveGreen),
+                                shape = RoundedCornerShape(percent = 50)
+                            ) {
+                                Text("Importieren", color = Color.White, fontWeight = FontWeight.Bold)
+                            }
+                        },
+                        dismissButton = {
+                            TextButton(
+                                onClick = { viewModel.setPendingImportData(null) }
+                            ) {
+                                Text("Verwerfen", color = ImmersiveTextSecondary)
+                            }
+                        },
+                        shape = RoundedCornerShape(24.dp)
+                    )
+                }
 
             }
         }
