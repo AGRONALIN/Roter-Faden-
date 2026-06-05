@@ -329,25 +329,7 @@ fun CollectionScreen(
                         )
                     )
 
-                    // Import button using CreamRed theme
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(percent = 50))
-                            .background(CreamRed)
-                            .bounceClick { showImportDialog = true }
-                            .padding(horizontal = 14.dp, vertical = 8.dp)
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.Download,
-                                contentDescription = "Import",
-                                modifier = Modifier.size(16.dp),
-                                tint = ImmersiveGreen
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("Import", color = ImmersiveGreen, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                        }
-                    }
+
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
