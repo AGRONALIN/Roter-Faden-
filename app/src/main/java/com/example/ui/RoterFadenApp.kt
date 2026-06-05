@@ -116,18 +116,32 @@ fun RoterFadenApp(viewModel: AppViewModel) {
             modifier = Modifier.fillMaxSize()
                 .background(immersiveBg)
         ) { _ ->
+            val startDest = remember { if (viewModel.showOnboarding.value) "onboarding" else "main" }
+
             Box(
                 modifier = Modifier
                     .fillMaxSize()
             ) {
                 NavHost(
                     navController = navController,
-                    startDestination = "main",
+                    startDestination = startDest,
                     enterTransition = { fadeIn(animationSpec = spring(dampingRatio = 0.8f, stiffness = 380f)) },
                     exitTransition = { fadeOut(animationSpec = spring(dampingRatio = 0.8f, stiffness = 380f)) },
                     popEnterTransition = { fadeIn(animationSpec = spring(dampingRatio = 0.8f, stiffness = 380f)) },
                     popExitTransition = { fadeOut(animationSpec = spring(dampingRatio = 0.8f, stiffness = 380f)) }
                 ) {
+                    composable("onboarding") {
+                        OnboardingScreen(
+                            viewModel = viewModel,
+                            onFinish = {
+                                viewModel.completeOnboarding()
+                                navController.navigate("main") {
+                                    popUpTo("onboarding") { inclusive = true }
+                                }
+                            }
+                        )
+                    }
+
                     composable("main") {
                         val mainScope = this@composable
 

@@ -47,6 +47,15 @@ class AppViewModel(
         sharedPreferences.getBoolean("is_dark_theme", false)
     )
 
+    val showOnboarding: MutableStateFlow<Boolean> = MutableStateFlow(
+        !sharedPreferences.getBoolean("onboarding_completed", false)
+    )
+
+    fun completeOnboarding() {
+        showOnboarding.value = false
+        sharedPreferences.edit().putBoolean("onboarding_completed", true).apply()
+    }
+
     fun toggleTheme() {
         val nextValue = !isDarkTheme.value
         isDarkTheme.value = nextValue
