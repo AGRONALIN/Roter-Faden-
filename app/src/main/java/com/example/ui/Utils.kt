@@ -68,3 +68,76 @@ fun Modifier.verticalFadingEdge(
             )
         }
     }
+
+fun buildAutoLinkedText(
+    text: String,
+    glossaryItems: List<com.example.data.GlossaryItem>,
+    literatureItems: List<com.example.data.LiteratureItem>,
+    highlightColor: Color,
+    navController: androidx.navigation.NavController
+): androidx.compose.ui.text.AnnotatedString {
+    return androidx.compose.ui.text.buildAnnotatedString {
+        append(text)
+        
+        data class MatchRange(val start: Int, val end: Int, val route: String)
+        val matches = mutableListOf<MatchRange>()
+        
+        val sortedLit = literatureItems.sortedByDescending { it.title.length }
+        val sortedGlossary = glossaryItems.sortedByDescending { it.term.length }
+        
+        for (lit in sortedLit) {
+            val title = lit.title
+            if (title.isBlank()) continue
+            var startIndex = text.indexOf(title, ignoreCase = true)
+            while (startIndex >= 0) {
+                val endIndex = startIndex + title.length
+                val hasOverlap = matches.any { 
+                    (startIndex >= it.start && startIndex < it.end) || 
+                    (endIndex > it.start && endIndex <= it.end) ||
+                    (it.start >= startIndex && it.start < endIndex)
+                }
+                if (!hasOverlap) {
+                    matches.add(MatchRange(startIndex, endIndex, "literature_detail/${lit.id}?source=text"))
+                }
+                startIndex = text.indexOf(title, startIndex + title.length, ignoreCase = true)
+            }
+        }
+        
+        for (glossary in sortedGlossary) {
+            val term = glossary.term
+            if (term.isBlank()) continue
+            var startIndex = text.indexOf(term, ignoreCase = true)
+            while (startIndex >= 0) {
+                val endIndex = startIndex + term.length
+                val hasOverlap = matches.any { 
+                    (startIndex >= it.start && startIndex < it.end) || 
+                    (endIndex > it.start && endIndex <= it.end) ||
+                    (it.start >= startIndex && it.start < endIndex)
+                }
+                if (!hasOverlap) {
+                    matches.add(MatchRange(startIndex, endIndex, "glossary_detail/${glossary.id}?source=text"))
+                }
+                startIndex = text.indexOf(term, startIndex + term.length, ignoreCase = true)
+            }
+        }
+        
+        for (match in matches) {
+            addStyle(
+                style = androidx.compose.ui.text.SpanStyle(
+                    color = highlightColor,
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                    textDecoration = androidx.compose.ui.text.style.TextDecoration.Underline
+                ),
+                start = match.start,
+                end = match.end
+            )
+            addLink(
+                androidx.compose.ui.text.LinkAnnotation.Clickable(match.route) {
+                    navController.navigate(match.route)
+                },
+                start = match.start,
+                end = match.end
+            )
+        }
+    }
+}

@@ -70,6 +70,7 @@ fun ArgumentDetailScreen(
     sourceKey: String = "card"
 ) {
     val glossaryItems by viewModel.glossaryItems.collectAsState()
+    val literatureItems by viewModel.literatureList.collectAsState()
     val tooltipState by viewModel.tooltipState.collectAsState()
 
     var textLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
@@ -280,6 +281,17 @@ fun ArgumentDetailScreen(
                 }
 
                 // 1. Anti-Marxist Statement Bubble
+                val immersiveGreenColor = ImmersiveGreen
+                val annotatedAntiMarxist = remember(argument.antiMarxistStatement, glossaryItems, literatureItems, immersiveGreenColor) {
+                    buildAutoLinkedText(
+                        text = argument.antiMarxistStatement,
+                        glossaryItems = glossaryItems,
+                        literatureItems = literatureItems,
+                        highlightColor = immersiveGreenColor,
+                        navController = navController
+                    )
+                }
+
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -297,7 +309,7 @@ fun ArgumentDetailScreen(
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
                     Text(
-                        text = argument.antiMarxistStatement,
+                        text = annotatedAntiMarxist,
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.Bold,
                             color = ImmersiveTextPrimary,
@@ -310,38 +322,14 @@ fun ArgumentDetailScreen(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 // 2. Marxist Counter Argument Bubble
-                val immersiveGreenColor = ImmersiveGreen
-                val annotatedString = remember(argument.marxistCounterArgument, glossaryItems, immersiveGreenColor) {
-                    buildAnnotatedString {
-                        val text = argument.marxistCounterArgument
-                        append(text)
-                        
-                        // Apply styling for glossary matches
-                        glossaryItems.forEach { glossaryItem ->
-                            val term = glossaryItem.term
-                            var startIndex = text.indexOf(term, ignoreCase = true)
-                            while (startIndex >= 0) {
-                                val endIndex = startIndex + term.length
-                                addStyle(
-                                    style = SpanStyle(
-                                        color = immersiveGreenColor,
-                                        fontWeight = FontWeight.Bold,
-                                        textDecoration = TextDecoration.Underline
-                                    ),
-                                    start = startIndex,
-                                    end = endIndex
-                                )
-                                addLink(
-                                    androidx.compose.ui.text.LinkAnnotation.Clickable("GLOSSARY_TERM") {
-                                        navController.navigate("glossary_detail/${glossaryItem.id}?source=text")
-                                    },
-                                    start = startIndex,
-                                    end = endIndex
-                                )
-                                startIndex = text.indexOf(term, startIndex + term.length, ignoreCase = true)
-                            }
-                        }
-                    }
+                val annotatedMarxist = remember(argument.marxistCounterArgument, glossaryItems, literatureItems, immersiveGreenColor) {
+                    buildAutoLinkedText(
+                        text = argument.marxistCounterArgument,
+                        glossaryItems = glossaryItems,
+                        literatureItems = literatureItems,
+                        highlightColor = immersiveGreenColor,
+                        navController = navController
+                    )
                 }
 
                 Column(
@@ -361,7 +349,7 @@ fun ArgumentDetailScreen(
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
                     Text(
-                        text = annotatedString,
+                        text = annotatedMarxist,
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.Normal,
                             color = ImmersiveTextPrimary,

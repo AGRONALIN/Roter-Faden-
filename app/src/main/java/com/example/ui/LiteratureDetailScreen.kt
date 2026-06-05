@@ -38,6 +38,9 @@ fun LiteratureDetailScreen(
     animatedVisibilityScope: AnimatedVisibilityScope,
     sourceKey: String = "card"
 ) {
+    val glossaryItems by viewModel.glossaryItems.collectAsState()
+    val literatureItems by viewModel.literatureList.collectAsState()
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -115,8 +118,19 @@ fun LiteratureDetailScreen(
                 
                 Spacer(modifier = Modifier.height(16.dp))
                 
+                val immersiveGreenColor = ImmersiveGreen
+                val annotatedSummary = remember(literatureItem.summary, glossaryItems, literatureItems, immersiveGreenColor) {
+                    buildAutoLinkedText(
+                        text = literatureItem.summary,
+                        glossaryItems = glossaryItems,
+                        literatureItems = literatureItems.filter { it.id != literatureItem.id },
+                        highlightColor = immersiveGreenColor,
+                        navController = navController
+                    )
+                }
+
                 Text(
-                    text = literatureItem.summary,
+                    text = annotatedSummary,
                     style = MaterialTheme.typography.bodyLarge.copy(
                         fontWeight = FontWeight.Normal,
                         color = ImmersiveTextSecondary,

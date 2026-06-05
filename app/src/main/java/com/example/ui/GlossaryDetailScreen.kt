@@ -165,6 +165,8 @@ fun GlossaryDetailScreen(
             .background(ImmersiveBackground)
     ) {
         val allArguments by viewModel.recentArguments.collectAsState()
+        val glossaryItems by viewModel.glossaryItems.collectAsState()
+        val literatureItems by viewModel.literatureList.collectAsState()
         val relatedArguments = remember(allArguments, glossaryItem.term) {
             allArguments.filter {
                 it.marxistCounterArgument.contains(glossaryItem.term, ignoreCase = true) ||
@@ -267,8 +269,19 @@ fun GlossaryDetailScreen(
                 
                 Spacer(modifier = Modifier.height(16.dp))
                 
+            val immersiveGreenColor = ImmersiveGreen
+            val annotatedDefinition = remember(glossaryItem.definition, glossaryItems, literatureItems, immersiveGreenColor) {
+                buildAutoLinkedText(
+                    text = glossaryItem.definition,
+                    glossaryItems = glossaryItems.filter { it.id != glossaryItem.id },
+                    literatureItems = literatureItems,
+                    highlightColor = immersiveGreenColor,
+                    navController = navController
+                )
+            }
+
             Text(
-                text = glossaryItem.definition,
+                text = annotatedDefinition,
                 style = MaterialTheme.typography.bodyLarge.copy(
                     fontWeight = FontWeight.Normal,
                     color = ImmersiveTextSecondary,
