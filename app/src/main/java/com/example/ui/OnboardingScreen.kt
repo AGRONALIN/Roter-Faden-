@@ -139,7 +139,7 @@ fun OnboardingScreen(
                 ) {
                     val (title, description) = when (page) {
                         0 -> "Strukturierte Argumente" to "Bringe Klarheit in deine Ausführungen und halte Thesen sowie Gegenargumente geordnet fest."
-                        1 -> "Präzises Glossar" to "Definiere und sammle Schlüsselbegriffe an einem organisierten Ort für schnelle Erklärungen."
+                        1 -> "Präzises Glossar" to "Definiere Begriffe an einem zentralen Ort. Sie werden in deinen Argumentationen automatisch erkannt und hervorgehoben."
                         else -> "Zentrale Quellen" to "Verknüpfe deine wissenschaftlichen Quellen und Zitate mit deinen erstellten Diskursen."
                     }
 
