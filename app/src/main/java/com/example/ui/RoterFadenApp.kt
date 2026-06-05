@@ -44,6 +44,7 @@ import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.activity.compose.BackHandler
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLayoutResult
@@ -447,6 +448,9 @@ fun SharedTransitionScope.RoterFadenBottomNav(
     val navBarColor by animateColorAsState(targetNavBarColor, animationSpec = tween(400), label = "navBarColor")
     val navBarBorderColor = ImmersiveTextSecondary.copy(alpha = 0.35f)
     
+    val density = LocalDensity.current
+    var navBarLeftDp by remember { mutableStateOf(24.dp) }
+    
     AnimatedVisibility(
         visible = isVisible,
         modifier = Modifier.zIndex(100f),
@@ -457,7 +461,6 @@ fun SharedTransitionScope.RoterFadenBottomNav(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 24.dp)
                 .navigationBarsPadding()
                 .padding(bottom = 16.dp)
         ) {
@@ -478,6 +481,13 @@ fun SharedTransitionScope.RoterFadenBottomNav(
                     .align(Alignment.BottomCenter)
                     .offset(x = navBarOffset)
                     .zIndex(100f)
+                    .onGloballyPositioned { coordinates ->
+                        val positionInRoot = coordinates.positionInRoot()
+                        val leftInDp = with(density) { positionInRoot.x.toDp() }
+                        if (leftInDp > 0.dp) {
+                            navBarLeftDp = leftInDp
+                        }
+                    }
                     .clip(CircleShape)
                     .background(navBarColor) // Frosted Cream Rot
                     .padding(horizontal = 4.dp, vertical = 4.dp),
@@ -523,10 +533,17 @@ fun SharedTransitionScope.RoterFadenBottomNav(
                 )
             }
         
+            val animatedPaddingEnd by androidx.compose.animation.core.animateDpAsState(
+                targetValue = if (expanded) 24.dp else navBarLeftDp,
+                label = "fabPaddingEnd"
+            )
+
             // Expandable FAB on the right
             AnimatedVisibility(
                 visible = currentTab != 2,
-                modifier = Modifier.align(Alignment.BottomEnd),
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(end = animatedPaddingEnd),
                 enter = androidx.compose.animation.slideInHorizontally(initialOffsetX = { -150 }, animationSpec = spring(stiffness = 100f, dampingRatio = 0.8f)) + fadeIn(animationSpec = tween(600)),
                 exit = androidx.compose.animation.slideOutHorizontally(targetOffsetX = { -150 }, animationSpec = spring(stiffness = 100f, dampingRatio = 0.8f)) + fadeOut(animationSpec = tween(600))
             ) {
