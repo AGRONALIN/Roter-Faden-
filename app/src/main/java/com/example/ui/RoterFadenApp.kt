@@ -420,7 +420,7 @@ fun SharedTransitionScope.RoterFadenBottomNav(
     val isBottomBarVisible by viewModel.isBottomBarVisible.collectAsState()
     val isVisible = currentRoute == "main" && isBottomBarVisible
     
-    val navBarColor = CreamRed
+    val navBarColor = Color(255, 195, 185)
     val navBarBorderColor = ImmersiveTextSecondary.copy(alpha = 0.35f)
     
     AnimatedVisibility(
