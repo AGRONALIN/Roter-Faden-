@@ -1,7 +1,7 @@
 package com.example.ui.theme
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.graphics.Color
 
 class AppColors(
@@ -52,7 +52,7 @@ val darkColors = AppColors(
     immersiveHighlightText = Color(0xFFFF8998)
 )
 
-val LocalAppColors = staticCompositionLocalOf { lightColors }
+val LocalAppColors = compositionLocalOf { lightColors }
 
 val ImmersiveGreen: Color @Composable get() = LocalAppColors.current.immersiveGreen
 val ImmersiveGreenContainer: Color @Composable get() = LocalAppColors.current.immersiveGreenContainer

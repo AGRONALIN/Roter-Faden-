@@ -22,36 +22,15 @@ private val LightColorScheme =
     primary = Purple40,
     secondary = PurpleGrey40,
     tertiary = Pink40,
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
   )
 
 @Composable
 fun MyApplicationTheme(
   darkTheme: Boolean = isSystemInDarkTheme(),
-  // Dynamic color is available on Android 12+
-  dynamicColor: Boolean = true,
+  // Dynamic color is available on Android 12+ (disabled by default to prevent wallpaper color clashes in our specific themed app)
+  dynamicColor: Boolean = false,
   content: @Composable () -> Unit,
 ) {
-  val colorScheme =
-    when {
-      dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-        val context = LocalContext.current
-        if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-      }
-
-      darkTheme -> DarkColorScheme
-      else -> LightColorScheme
-    }
-
   val targetColors = if (darkTheme) darkColors else lightColors
 
   val immersiveGreen by animateColorAsState(targetColors.immersiveGreen, animationSpec = tween(400), label = "immersiveGreen")
@@ -83,6 +62,46 @@ fun MyApplicationTheme(
       immersiveOnGreen = immersiveOnGreen,
       immersiveHighlightText = immersiveHighlightText
   )
+
+  val colorScheme = if (darkTheme) {
+      darkColorScheme(
+          primary = immersiveGreen,
+          onPrimary = immersiveOnGreen,
+          primaryContainer = immersiveGreenContainer,
+          onPrimaryContainer = immersiveHighlightText,
+          secondary = PurpleGrey80,
+          onSecondary = Color(0xFF333333),
+          secondaryContainer = creamRed,
+          onSecondaryContainer = immersiveTextPrimary,
+          tertiary = creamBlue,
+          background = immersiveBackground,
+          onBackground = immersiveTextPrimary,
+          surface = immersiveSurface,
+          onSurface = immersiveTextPrimary,
+          surfaceVariant = immersivePillBg,
+          onSurfaceVariant = immersiveTextSecondary,
+          outline = immersiveBorder
+      )
+  } else {
+      lightColorScheme(
+          primary = immersiveGreen,
+          onPrimary = immersiveOnGreen,
+          primaryContainer = immersiveGreenContainer,
+          onPrimaryContainer = immersiveHighlightText,
+          secondary = PurpleGrey40,
+          onSecondary = Color(0xFFFFFFFF),
+          secondaryContainer = creamRed,
+          onSecondaryContainer = immersiveTextPrimary,
+          tertiary = creamBlue,
+          background = immersiveBackground,
+          onBackground = immersiveTextPrimary,
+          surface = immersiveSurface,
+          onSurface = immersiveTextPrimary,
+          surfaceVariant = immersivePillBg,
+          onSurfaceVariant = immersiveTextSecondary,
+          outline = immersiveBorder
+      )
+  }
 
   androidx.compose.runtime.CompositionLocalProvider(LocalAppColors provides appColors) {
       MaterialTheme(colorScheme = colorScheme, typography = Typography, content = content)
