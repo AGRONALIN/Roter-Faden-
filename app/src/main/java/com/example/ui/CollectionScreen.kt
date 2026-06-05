@@ -69,7 +69,17 @@ fun CollectionScreen(
 
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val listState = androidx.compose.foundation.lazy.rememberLazyListState()
+    val listState0 = androidx.compose.foundation.lazy.rememberLazyListState()
+    val listState1 = androidx.compose.foundation.lazy.rememberLazyListState()
+    val listState2 = androidx.compose.foundation.lazy.rememberLazyListState()
+
+    val activeListState = remember(selectedTabIndex) {
+        when (selectedTabIndex) {
+            0 -> listState0
+            1 -> listState1
+            else -> listState2
+        }
+    }
 
     DisposableEffect(Unit) {
         onDispose {
@@ -77,10 +87,10 @@ fun CollectionScreen(
         }
     }
 
-    LaunchedEffect(listState) {
-        var previousIndex = listState.firstVisibleItemIndex
-        var previousScrollOffset = listState.firstVisibleItemScrollOffset
-        androidx.compose.runtime.snapshotFlow { listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset }
+    LaunchedEffect(activeListState) {
+        var previousIndex = activeListState.firstVisibleItemIndex
+        var previousScrollOffset = activeListState.firstVisibleItemScrollOffset
+        androidx.compose.runtime.snapshotFlow { activeListState.firstVisibleItemIndex to activeListState.firstVisibleItemScrollOffset }
             .collect { (index, offset) ->
                 if (index > previousIndex || (index == previousIndex && offset > previousScrollOffset + 10)) {
                     viewModel.setBottomBarVisible(false)
@@ -276,7 +286,7 @@ fun CollectionScreen(
                     when (targetIndex) {
                         0 -> {
                             LazyColumn(
-                                state = listState,
+                                state = listState0,
                                 modifier = Modifier.fillMaxSize(),
                                 contentPadding = PaddingValues(bottom = 120.dp, top = 16.dp),
                                 verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -326,7 +336,7 @@ fun CollectionScreen(
                         }
                         1 -> {
                             LazyColumn(
-                                state = listState,
+                                state = listState1,
                                 modifier = Modifier.fillMaxSize(),
                                 contentPadding = PaddingValues(bottom = 120.dp),
                                 verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -359,7 +369,7 @@ fun CollectionScreen(
                         }
                         2 -> {
                             LazyColumn(
-                                state = listState,
+                                state = listState2,
                                 modifier = Modifier.fillMaxSize(),
                                 contentPadding = PaddingValues(bottom = 120.dp),
                                 verticalArrangement = Arrangement.spacedBy(16.dp)

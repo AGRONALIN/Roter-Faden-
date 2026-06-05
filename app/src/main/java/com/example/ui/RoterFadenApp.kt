@@ -123,77 +123,43 @@ fun RoterFadenApp(viewModel: AppViewModel) {
                     popExitTransition = { fadeOut(animationSpec = spring(dampingRatio = 0.8f, stiffness = 380f)) }
                 ) {
                     composable("main") {
-                        val transitionState = remember { SeekableTransitionState(currentTab) }
-                        val transition = rememberTransition(transitionState, label = "tab_transition")
-                        val screenWidth = with(LocalDensity.current) { LocalConfiguration.current.screenWidthDp.dp.toPx() }
+                        val mainScope = this@composable
 
-                        LaunchedEffect(currentTab) {
-                            if (transitionState.currentState != currentTab && transitionState.targetState != currentTab) {
-                                transitionState.animateTo(currentTab, animationSpec = spring(stiffness = 40f, dampingRatio = 0.9f))
-                            }
-                        }
-
-                        transition.AnimatedContent(
+                        AnimatedContent(
+                            targetState = currentTab,
                             transitionSpec = {
                                 if (targetState > initialState) {
-                                    slideInHorizontally(animationSpec = spring(stiffness = 40f, dampingRatio = 0.9f)) { width -> width }.togetherWith(
-                                        slideOutHorizontally(animationSpec = spring(stiffness = 40f, dampingRatio = 0.9f)) { width -> -width }
+                                    slideInHorizontally(animationSpec = spring(stiffness = 200f, dampingRatio = 0.85f)) { width -> width }.togetherWith(
+                                        slideOutHorizontally(animationSpec = spring(stiffness = 200f, dampingRatio = 0.85f)) { width -> -width }
                                     ).using(SizeTransform(clip = false))
                                 } else {
-                                    slideInHorizontally(animationSpec = spring(stiffness = 40f, dampingRatio = 0.9f)) { width -> -width }.togetherWith(
-                                        slideOutHorizontally(animationSpec = spring(stiffness = 40f, dampingRatio = 0.9f)) { width -> width }
+                                    slideInHorizontally(animationSpec = spring(stiffness = 200f, dampingRatio = 0.85f)) { width -> -width }.togetherWith(
+                                        slideOutHorizontally(animationSpec = spring(stiffness = 200f, dampingRatio = 0.85f)) { width -> width }
                                     ).using(SizeTransform(clip = false))
                                 }
                             },
                             modifier = Modifier
                                 .fillMaxSize()
                                 .pointerInput(Unit) {
-                                    var dragOffset = 0f
-                                    var target = currentTab
+                                    var dragAccumulator = 0f
                                     detectHorizontalDragGestures(
-                                        onDragStart = { dragOffset = 0f },
+                                        onDragStart = { dragAccumulator = 0f },
                                         onDragEnd = {
-                                            val fraction = (Math.abs(dragOffset) / screenWidth).coerceIn(0f, 1f)
-                                            coroutineScope.launch {
-                                                if (fraction > 0.10f && target != currentTab) {
-                                                    transitionState.animateTo(target, spring(stiffness = 40f, dampingRatio = 0.9f))
-                                                    currentTab = target
-                                                } else {
-                                                    transitionState.animateTo(currentTab, spring(stiffness = 40f, dampingRatio = 0.9f))
-                                                }
+                                            if (dragAccumulator > 120f && currentTab > 0) {
+                                                currentTab -= 1
+                                            } else if (dragAccumulator < -120f && currentTab < 2) {
+                                                currentTab += 1
                                             }
                                         },
-                                        onDragCancel = { 
-                                            coroutineScope.launch {
-                                                transitionState.animateTo(currentTab, spring(stiffness = 40f, dampingRatio = 0.9f))
-                                            }
-                                        },
-                                        onHorizontalDrag = { _, dragAmount ->
-                                            dragOffset += dragAmount * 2.2f // Much lower resistance / more sensitive
-                                            if (dragOffset < 0 && currentTab < 2) {
-                                                target = currentTab + 1
-                                            } else if (dragOffset > 0 && currentTab > 0) {
-                                                target = currentTab - 1
-                                            } else {
-                                                target = currentTab
-                                            }
-                                            
-                                            if (target != currentTab) {
-                                                val fraction = (Math.abs(dragOffset) / screenWidth).coerceIn(0f, 1f)
-                                                coroutineScope.launch {
-                                                    transitionState.seekTo(fraction = fraction, targetState = target)
-                                                }
-                                            } else {
-                                                coroutineScope.launch {
-                                                    transitionState.seekTo(0f, currentTab)
-                                                }
-                                            }
+                                        onDragCancel = {},
+                                        onHorizontalDrag = { change, dragAmount ->
+                                            change.consume()
+                                            dragAccumulator += dragAmount
                                         }
                                     )
                                 },
-                            contentKey = { it }
+                            label = "tab_transition"
                         ) { page ->
-                            val mainScope = this@composable
                             when (page) {
                                 0 -> HomeScreen(
                                     viewModel = viewModel,
