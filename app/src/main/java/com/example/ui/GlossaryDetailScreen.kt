@@ -187,7 +187,7 @@ fun GlossaryDetailScreen(
                         BounceIconButton(
                             onClick = { showOptions = !showOptions },
                         ) {
-                            Text("☭", color = Color.Red, fontSize = 28.sp)
+                            Text("★", color = Color.Red, fontSize = 28.sp)
                         }
                     }
                 }

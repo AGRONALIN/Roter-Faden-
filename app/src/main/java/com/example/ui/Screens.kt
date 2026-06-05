@@ -17,6 +17,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.material.icons.filled.AutoStories
 import androidx.compose.material3.*
@@ -250,7 +251,7 @@ fun HomeScreen(
                         .padding(start = 18.dp, end = 16.dp, top = 6.dp, bottom = 6.dp)
                 ) {
                     Text(
-                        text = "Setzt eure Herzen in Brand!",
+                        text = "VIVA LA REVOLUTION!",
                         style = MaterialTheme.typography.titleMedium.copy(
                             color = ImmersiveTextSecondary,
                             fontWeight = FontWeight.Medium
@@ -294,12 +295,11 @@ fun HomeScreen(
                                 },
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(
-                                text = "☭",
-                                color = Color.White,
-                                fontSize = 40.sp,
-                                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                                modifier = Modifier.padding(bottom = 4.dp)
+                            Icon(
+                                imageVector = Icons.Filled.Star,
+                                contentDescription = "Zufälliges Argument",
+                                tint = Color.White,
+                                modifier = Modifier.size(54.dp)
                             )
                         }
                     }

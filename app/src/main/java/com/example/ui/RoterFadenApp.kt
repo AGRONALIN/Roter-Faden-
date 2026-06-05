@@ -455,7 +455,7 @@ fun SharedTransitionScope.RoterFadenBottomNav(
     val isVisible = currentRoute == "main" && isBottomBarVisible
     
     val navBarColor = CreamRed
-    val navBarBorderColor = ImmersiveBorder.copy(alpha = 0.4f)
+    val navBarBorderColor = ImmersiveTextSecondary.copy(alpha = 0.35f)
     
     AnimatedVisibility(
         visible = isVisible,
@@ -488,10 +488,8 @@ fun SharedTransitionScope.RoterFadenBottomNav(
                     .align(Alignment.BottomCenter)
                     .offset(x = navBarOffset)
                     .zIndex(100f)
-                    .shadow(24.dp, CircleShape, ambientColor = Color.Black.copy(alpha = 0.15f), spotColor = Color.Black.copy(alpha = 0.3f))
                     .clip(CircleShape)
                     .background(navBarColor) // Frosted Cream Rot
-                    .border(1.dp, navBarBorderColor, CircleShape)
                     .padding(horizontal = 4.dp, vertical = 4.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
@@ -566,10 +564,8 @@ fun SharedTransitionScope.RoterFadenBottomNav(
                                         resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(contentScale = androidx.compose.ui.layout.ContentScale.Crop),
                                         boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 100f) }
                                     )
-                                    .shadow(16.dp, RoundedCornerShape(percent = 50), ambientColor = Color.Black.copy(alpha = 0.15f), spotColor = Color.Black.copy(alpha = 0.3f))
                                     .clip(RoundedCornerShape(percent = 50))
                                     .background(navBarColor)
-                                    .border(1.dp, navBarBorderColor, RoundedCornerShape(percent = 50))
                                     .bounceClick {
                                         onExpandedChange(false)
                                         navController.navigate("edit_glossary")
@@ -601,10 +597,8 @@ fun SharedTransitionScope.RoterFadenBottomNav(
                                         resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(contentScale = androidx.compose.ui.layout.ContentScale.Crop),
                                         boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 100f) }
                                     )
-                                    .shadow(16.dp, RoundedCornerShape(percent = 50), ambientColor = Color.Black.copy(alpha = 0.15f), spotColor = Color.Black.copy(alpha = 0.3f))
                                     .clip(RoundedCornerShape(percent = 50))
                                     .background(navBarColor)
-                                    .border(1.dp, navBarBorderColor, RoundedCornerShape(percent = 50))
                                     .bounceClick {
                                         onExpandedChange(false)
                                         navController.navigate("edit_literature")
@@ -636,10 +630,8 @@ fun SharedTransitionScope.RoterFadenBottomNav(
                                         resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(contentScale = androidx.compose.ui.layout.ContentScale.Crop),
                                         boundsTransform = { _, _ -> androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 100f) }
                                     )
-                                    .shadow(16.dp, RoundedCornerShape(percent = 50), ambientColor = Color.Black.copy(alpha = 0.15f), spotColor = Color.Black.copy(alpha = 0.3f))
                                     .clip(RoundedCornerShape(percent = 50))
                                     .background(navBarColor)
-                                    .border(1.dp, navBarBorderColor, RoundedCornerShape(percent = 50))
                                     .bounceClick {
                                         onExpandedChange(false)
                                         navController.navigate("edit_argument")
@@ -673,10 +665,8 @@ fun SharedTransitionScope.RoterFadenBottomNav(
                             Box(
                                 modifier = Modifier
                                     .size(64.dp)
-                                    .shadow(24.dp, CircleShape, ambientColor = Color.Black.copy(alpha = 0.15f), spotColor = Color.Black.copy(alpha = 0.3f))
                                     .clip(CircleShape)
                                     .background(navBarColor)
-                                    .border(1.dp, navBarBorderColor, CircleShape)
                                     .bounceClick { onExpandedChange(true) },
                                 contentAlignment = Alignment.Center
                             ) {

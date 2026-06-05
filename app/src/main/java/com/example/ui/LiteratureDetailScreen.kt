@@ -88,7 +88,7 @@ fun LiteratureDetailScreen(
                         onClick = { navController.navigate("edit_literature/${literatureItem.id}") },
                         modifier = Modifier.size(48.dp).clip(CircleShape).background(Color.Red.copy(alpha = 0.15f))
                     ) {
-                        Text("☭", color = Color.Red, fontSize = 26.sp)
+                        Text("★", color = Color.Red, fontSize = 26.sp)
                     }
                 }
                 

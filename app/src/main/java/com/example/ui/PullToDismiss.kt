@@ -59,7 +59,7 @@ fun PullToDismissContainer(
             }
 
             override suspend fun onPreFling(available: Velocity): Velocity {
-                if (offsetY.value > screenHeightPx * 0.15f || abs(offsetX.value) > screenWidthPx * 0.25f || available.y > 1000f) {
+                if (offsetY.value > screenHeightPx * 0.30f || abs(offsetX.value) > screenWidthPx * 0.40f || (available.y > 3500f && offsetY.value > screenHeightPx * 0.08f)) {
                     onDismiss()
                     return available
                 } else {
@@ -83,7 +83,7 @@ fun PullToDismissContainer(
                     onDragStart = { isDragging = true },
                     onDragEnd = {
                         isDragging = false
-                        if (offsetY.value > screenHeightPx * 0.15f || abs(offsetX.value) > screenWidthPx * 0.25f) {
+                        if (offsetY.value > screenHeightPx * 0.30f || abs(offsetX.value) > screenWidthPx * 0.40f) {
                             onDismiss()
                         } else {
                             coroutineScope.launch {
