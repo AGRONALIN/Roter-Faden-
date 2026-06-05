@@ -93,35 +93,6 @@ fun RoterFadenApp(viewModel: AppViewModel) {
 
     SharedTransitionLayout {
         val isDarkTheme by viewModel.isDarkTheme.collectAsState()
-        val animProgress = remember { Animatable(0f) }
-        var previousDarkTheme by remember { mutableStateOf(isDarkTheme) }
-        var oldBackground by remember { mutableStateOf(if (isDarkTheme) Color(0xFF121212) else Color(0xFFFFFFFF)) }
-        var isAnimating by remember { mutableStateOf(false) }
-        val buttonPosition by viewModel.themeTogglePosition.collectAsState()
-
-        if (isDarkTheme != previousDarkTheme) {
-            oldBackground = if (previousDarkTheme) {
-                Color(0xFF121212)
-            } else {
-                Color(0xFFFFFFFF)
-            }
-            previousDarkTheme = isDarkTheme
-            isAnimating = true
-        }
-
-        LaunchedEffect(isDarkTheme) {
-            if (isAnimating) {
-                animProgress.snapTo(0f)
-                animProgress.animateTo(
-                    targetValue = 1f,
-                    animationSpec = tween(
-                        durationMillis = 650,
-                        easing = FastOutSlowInEasing
-                    )
-                )
-                isAnimating = false
-            }
-        }
 
         val immersiveBg = ImmersiveBackground
         val immersiveGreenColor = ImmersiveGreen
@@ -434,42 +405,7 @@ fun RoterFadenApp(viewModel: AppViewModel) {
                     )
                 }
 
-                if (isAnimating) {
-                    val density = LocalDensity.current
-                    val config = LocalConfiguration.current
-                    val screenWidthPx = with(density) { config.screenWidthDp.dp.toPx() }
-                    val screenHeightPx = with(density) { config.screenHeightDp.dp.toPx() }
-                    val maxRadius = Math.max(screenWidthPx, screenHeightPx) * 1.5f
-                    
-                    val center = buttonPosition ?: Offset(screenWidthPx - 100f, 150f)
-                    
-                    Canvas(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .zIndex(1000f)
-                    ) {
-                        if (isDarkTheme) {
-                            // Light to Dark: Expanding circle reveal
-                            val radius = animProgress.value * maxRadius
-                            val path = Path().apply {
-                                addOval(androidx.compose.ui.geometry.Rect(center.x - radius, center.y - radius, center.x + radius, center.y + radius))
-                            }
-                            clipPath(path = path, clipOp = ClipOp.Difference) {
-                                drawRect(color = oldBackground)
-                            }
-                        } else {
-                            // Dark to Light: Shrinking circle (runs in reverse, shrinking into the button)
-                            val radius = (1f - animProgress.value) * maxRadius
-                            if (radius > 0f) {
-                                drawCircle(
-                                    color = oldBackground,
-                                    radius = radius,
-                                    center = center
-                                )
-                            }
-                        }
-                    }
-                }
+
             }
         }
     }
@@ -493,7 +429,8 @@ fun SharedTransitionScope.RoterFadenBottomNav(
     val isVisible = currentRoute == "main" && isBottomBarVisible
     val isDarkTheme by viewModel.isDarkTheme.collectAsState()
     
-    val navBarColor = if (isDarkTheme) Color(0xFF3C1F1B) else Color(255, 195, 185)
+    val targetNavBarColor = if (isDarkTheme) Color(0xFF3C1F1B) else Color(255, 195, 185)
+    val navBarColor by animateColorAsState(targetNavBarColor, animationSpec = tween(400), label = "navBarColor")
     val navBarBorderColor = ImmersiveTextSecondary.copy(alpha = 0.35f)
     
     AnimatedVisibility(

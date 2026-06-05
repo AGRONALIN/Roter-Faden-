@@ -41,7 +41,6 @@ class AppViewModel(private val repository: AppRepository) : ViewModel() {
         _appOverlay.value = AppOverlay.None
     }
     val isDarkTheme: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val themeTogglePosition: MutableStateFlow<Offset?> = MutableStateFlow(null)
 
     fun toggleTheme() {
         isDarkTheme.value = !isDarkTheme.value

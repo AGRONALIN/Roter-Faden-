@@ -278,14 +278,6 @@ fun HomeScreen(
                         Box(
                             modifier = Modifier
                                 .whiteGlowPill(headerBgColor, headerBorderColor, headerGlowAlpha)
-                                .onGloballyPositioned { coordinates ->
-                                    val pos = coordinates.positionInWindow()
-                                    val size = coordinates.size
-                                    viewModel.themeTogglePosition.value = Offset(
-                                        pos.x + size.width / 2f,
-                                        pos.y + size.height / 2f
-                                    )
-                                }
                                 .clip(CircleShape)
                                 .bounceClick { viewModel.toggleTheme() }
                                 .padding(10.dp),
