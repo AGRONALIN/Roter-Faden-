@@ -51,12 +51,22 @@ fun CollectionScreen(
     animatedVisibilityScope: AnimatedVisibilityScope,
     navAnimatedVisibilityScope: AnimatedVisibilityScope? = null
 ) {
-    var selectedTabIndex by remember { mutableIntStateOf(0) }
+    val selectedTabIndex by viewModel.collectionSelectedTabIndex.collectAsState()
     val tabs = listOf("Argumente", "Glossar", "Literatur")
 
-    val allArguments by viewModel.recentArguments.collectAsState()
-    val allGlossaryItems by viewModel.glossaryItems.collectAsState()
-    val allLiteratureItems by viewModel.literatureList.collectAsState()
+    val allArgumentsRaw by viewModel.recentArguments.collectAsState()
+    val allGlossaryItemsRaw by viewModel.glossaryItems.collectAsState()
+    val allLiteratureItemsRaw by viewModel.literatureList.collectAsState()
+
+    val allArguments = remember(allArgumentsRaw) {
+        allArgumentsRaw.sortedByDescending { it.lastEdited }
+    }
+    val allGlossaryItems = remember(allGlossaryItemsRaw) {
+        allGlossaryItemsRaw.sortedByDescending { it.lastEdited }
+    }
+    val allLiteratureItems = remember(allLiteratureItemsRaw) {
+        allLiteratureItemsRaw.sortedByDescending { it.lastEdited }
+    }
 
     var selectedArgumentIds by remember { mutableStateOf(setOf<Int>()) }
     var selectedGlossaryIds by remember { mutableStateOf(setOf<Int>()) }
@@ -363,7 +373,7 @@ fun CollectionScreen(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(percent = 50))
                                 .background(if (isSelected) ImmersiveGreen else CreamRed)
-                                .bounceClick { selectedTabIndex = index }
+                                .bounceClick { viewModel.setCollectionSelectedTabIndex(index) }
                                 .padding(horizontal = 20.dp, vertical = 12.dp)
                         ) {
                             Text(

@@ -75,6 +75,13 @@ class AppViewModel(
     private val _isBottomBarVisible = MutableStateFlow(true)
     val isBottomBarVisible: StateFlow<Boolean> = _isBottomBarVisible.asStateFlow()
 
+    private val _collectionSelectedTabIndex = MutableStateFlow(0)
+    val collectionSelectedTabIndex: StateFlow<Int> = _collectionSelectedTabIndex.asStateFlow()
+
+    fun setCollectionSelectedTabIndex(index: Int) {
+        _collectionSelectedTabIndex.value = index
+    }
+
     fun setBottomBarVisible(visible: Boolean) {
         _isBottomBarVisible.value = visible
     }
@@ -151,7 +158,7 @@ class AppViewModel(
     
     fun updateArgument(argument: Argument) {
         viewModelScope.launch {
-            repository.insertArgument(argument)
+            repository.insertArgument(argument.copy(lastEdited = System.currentTimeMillis()))
         }
     }
     
@@ -182,7 +189,7 @@ class AppViewModel(
     
     fun updateGlossary(item: GlossaryItem) {
         viewModelScope.launch {
-            repository.insertGlossary(item)
+            repository.insertGlossary(item.copy(lastEdited = System.currentTimeMillis()))
         }
     }
     
@@ -361,7 +368,7 @@ class AppViewModel(
 
     fun updateLiterature(item: com.example.data.LiteratureItem) {
         viewModelScope.launch {
-            repository.insertLiterature(item)
+            repository.insertLiterature(item.copy(lastEdited = System.currentTimeMillis()))
         }
     }
 

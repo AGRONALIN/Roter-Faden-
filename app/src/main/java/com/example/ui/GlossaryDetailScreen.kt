@@ -178,7 +178,9 @@ fun GlossaryDetailScreen(
         }
         
     PullToDismissContainer(
-        onDismiss = { navController.popBackStack() }
+        onDismiss = {
+            navController.popBackStack()
+        }
     ) { nestedScrollConnection ->
         with(sharedTransitionScope) {
             Column(
@@ -212,7 +214,9 @@ fun GlossaryDetailScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     BounceIconButton(
-                        onClick = { navController.popBackStack() },
+                        onClick = {
+                            navController.popBackStack()
+                        },
                         modifier = Modifier.clip(CircleShape).background(ImmersivePillBg)
                     ) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Zurück", tint = ImmersiveTextPrimary)

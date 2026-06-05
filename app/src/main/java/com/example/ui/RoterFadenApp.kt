@@ -542,8 +542,7 @@ fun SharedTransitionScope.RoterFadenBottomNav(
             AnimatedVisibility(
                 visible = currentTab != 2,
                 modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(end = animatedPaddingEnd),
+                    .align(Alignment.BottomEnd),
                 enter = androidx.compose.animation.slideInHorizontally(initialOffsetX = { -150 }, animationSpec = spring(stiffness = 100f, dampingRatio = 0.8f)) + fadeIn(animationSpec = tween(600)),
                 exit = androidx.compose.animation.slideOutHorizontally(targetOffsetX = { -150 }, animationSpec = spring(stiffness = 100f, dampingRatio = 0.8f)) + fadeOut(animationSpec = tween(600))
             ) {
@@ -580,7 +579,7 @@ fun SharedTransitionScope.RoterFadenBottomNav(
                         Column(
                             verticalArrangement = Arrangement.spacedBy(12.dp),
                             horizontalAlignment = Alignment.End,
-                            modifier = Modifier.padding(bottom = 8.dp)
+                            modifier = Modifier.padding(bottom = 8.dp, end = 24.dp)
                         ) {
                             androidx.compose.animation.AnimatedVisibility(
                                 visible = showItem1,
@@ -713,7 +712,7 @@ fun SharedTransitionScope.RoterFadenBottomNav(
                         }
                     }
 
-                    Box(modifier = Modifier.size(64.dp), contentAlignment = Alignment.Center) {
+                    Box(modifier = Modifier.padding(end = animatedPaddingEnd).size(64.dp), contentAlignment = Alignment.Center) {
                         androidx.compose.animation.AnimatedVisibility(
                             visible = !expanded,
                             enter = scaleIn(animationSpec = spring(dampingRatio = 0.8f, stiffness = 100f)) + fadeIn(),

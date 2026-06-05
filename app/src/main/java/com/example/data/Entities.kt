@@ -9,7 +9,8 @@ data class Argument(
     val antiMarxistStatement: String,
     val marxistCounterArgument: String,
     val category: String = "",
-    val lastAccessed: Long = System.currentTimeMillis()
+    val lastAccessed: Long = System.currentTimeMillis(),
+    val lastEdited: Long = lastAccessed
 )
 
 @Entity(tableName = "glossary_items")
@@ -17,7 +18,8 @@ data class GlossaryItem(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val term: String,
     val definition: String,
-    val lastAccessed: Long = System.currentTimeMillis()
+    val lastAccessed: Long = System.currentTimeMillis(),
+    val lastEdited: Long = lastAccessed
 )
 
 @Entity(tableName = "songs")

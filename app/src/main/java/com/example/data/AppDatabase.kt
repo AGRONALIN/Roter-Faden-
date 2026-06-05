@@ -5,7 +5,7 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 
-@Database(entities = [Argument::class, GlossaryItem::class, SongEntity::class, LiteratureSummary::class, LiteratureItem::class], version = 5, exportSchema = false)
+@Database(entities = [Argument::class, GlossaryItem::class, SongEntity::class, LiteratureSummary::class, LiteratureItem::class], version = 6, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun argumentDao(): ArgumentDao
     abstract fun glossaryDao(): GlossaryDao

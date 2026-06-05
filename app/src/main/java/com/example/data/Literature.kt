@@ -9,7 +9,8 @@ data class LiteratureItem(
     val title: String,
     val author: String,
     val summary: String,
-    val lastAccessed: Long = System.currentTimeMillis()
+    val lastAccessed: Long = System.currentTimeMillis(),
+    val lastEdited: Long = lastAccessed
 )
 
 val staticLiteratures = listOf(
