@@ -13,11 +13,17 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.LightMode
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInWindow
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.material.icons.filled.AutoStories
 import androidx.compose.material3.*
@@ -74,7 +80,7 @@ fun HomeScreen(
     val isDarkTheme by viewModel.isDarkTheme.collectAsState()
     val listState = androidx.compose.foundation.lazy.rememberLazyListState()
     val scrollAmount by remember { derivedStateOf { if (listState.firstVisibleItemIndex > 0) 1f else (listState.firstVisibleItemScrollOffset / 100f).coerceIn(0f, 1f) } }
-    val headerBgColor by androidx.compose.animation.animateColorAsState(Color.White.copy(alpha = scrollAmount * 0.95f))
+    val headerBgColor by androidx.compose.animation.animateColorAsState(ImmersiveBackground.copy(alpha = scrollAmount * 0.95f))
     val headerGlowAlpha by androidx.compose.animation.core.animateFloatAsState(scrollAmount)
     val headerBorderColor = Color.Transparent
 
@@ -223,41 +229,76 @@ fun HomeScreen(
                         ),
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    // Main Header Pill
-                    Box(
-                        modifier = Modifier
-                            .whiteGlowPill(headerBgColor, headerBorderColor, headerGlowAlpha)
-                            .clip(RoundedCornerShape(percent = 50))
-                            .combinedClickable(
-                                onLongClick = { navController.navigate("songs") },
-                                onClick = {}
-                            )
-                            .padding(horizontal = 16.dp, vertical = 8.dp)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.Top
                     ) {
-                    Text(
-                        text = "Roter Faden",
-                        modifier = Modifier,
-                        style = MaterialTheme.typography.displayLarge.copy(
-                            fontWeight = FontWeight.Black,
-                            color = ImmersiveGreen
-                        )
-                    )
-                }
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            // Main Header Pill
+                            Box(
+                                modifier = Modifier
+                                    .whiteGlowPill(headerBgColor, headerBorderColor, headerGlowAlpha)
+                                    .clip(RoundedCornerShape(percent = 50))
+                                    .combinedClickable(
+                                        onLongClick = { navController.navigate("songs") },
+                                        onClick = {}
+                                    )
+                                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                            ) {
+                            Text(
+                                text = "Roter Faden",
+                                modifier = Modifier,
+                                style = MaterialTheme.typography.displayLarge.copy(
+                                    fontWeight = FontWeight.Black,
+                                    color = ImmersiveGreen
+                                )
+                            )
+                            }
 
-                // Subtitle Pill
-                Box(
-                    modifier = Modifier
-                        .whiteGlowPill(headerBgColor, headerBorderColor, headerGlowAlpha)
-                        .padding(start = 18.dp, end = 16.dp, top = 6.dp, bottom = 6.dp)
-                ) {
-                    Text(
-                        text = "VIVA LA REVOLUTION!",
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            color = ImmersiveTextSecondary,
-                            fontWeight = FontWeight.Medium
-                        )
-                    )
-                }
+                            // Subtitle Pill
+                            Box(
+                                modifier = Modifier
+                                    .whiteGlowPill(headerBgColor, headerBorderColor, headerGlowAlpha)
+                                    .padding(start = 18.dp, end = 16.dp, top = 6.dp, bottom = 6.dp)
+                            ) {
+                                Text(
+                                    text = "VIVA LA REVOLUTION!",
+                                    style = MaterialTheme.typography.titleMedium.copy(
+                                        color = ImmersiveTextSecondary,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                )
+                            }
+                        }
+
+                        // Theme Toggle Pill
+                        Box(
+                            modifier = Modifier
+                                .whiteGlowPill(headerBgColor, headerBorderColor, headerGlowAlpha)
+                                .onGloballyPositioned { coordinates ->
+                                    val pos = coordinates.positionInWindow()
+                                    val size = coordinates.size
+                                    viewModel.themeTogglePosition.value = Offset(
+                                        pos.x + size.width / 2f,
+                                        pos.y + size.height / 2f
+                                    )
+                                }
+                                .clip(CircleShape)
+                                .bounceClick { viewModel.toggleTheme() }
+                                .padding(10.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = if (isDarkTheme) androidx.compose.material.icons.Icons.Filled.DarkMode else androidx.compose.material.icons.Icons.Filled.LightMode,
+                                contentDescription = "Farbschema wechseln",
+                                tint = ImmersiveGreen,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                    }
 
                 Spacer(modifier = Modifier.height(32.dp))
                 
@@ -686,7 +727,7 @@ fun SearchScreen(
     val keyboardController = LocalSoftwareKeyboardController.current
     val listState = androidx.compose.foundation.lazy.rememberLazyListState()
     val scrollAmount by remember { derivedStateOf { if (listState.firstVisibleItemIndex > 0) 1f else (listState.firstVisibleItemScrollOffset / 100f).coerceIn(0f, 1f) } }
-    val headerBgColor by androidx.compose.animation.animateColorAsState(Color.White.copy(alpha = scrollAmount * 0.95f))
+    val headerBgColor by androidx.compose.animation.animateColorAsState(ImmersiveBackground.copy(alpha = scrollAmount * 0.95f))
     val headerGlowAlpha by androidx.compose.animation.core.animateFloatAsState(scrollAmount)
     val headerBorderColor = Color.Transparent
 
