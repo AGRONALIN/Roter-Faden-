@@ -23,36 +23,10 @@ import com.example.ui.theme.ImmersiveBackground
 class MainActivity : ComponentActivity() {
     private lateinit var viewModel: AppViewModel
 
-    private val requestPermissionLauncher = registerForActivityResult(
-        androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions()
-    ) { permissions ->
-        // Handle optional feedback if needed
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         requestHighRefreshRate()
-
-        // Ask for permissions on startup
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            val permissionsList = mutableListOf<String>()
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                permissionsList.add(android.Manifest.permission.READ_MEDIA_IMAGES)
-                permissionsList.add(android.Manifest.permission.READ_MEDIA_VIDEO)
-            } else {
-                permissionsList.add(android.Manifest.permission.READ_EXTERNAL_STORAGE)
-                permissionsList.add(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
-            }
-            
-            val neededPermissions = permissionsList.filter {
-                androidx.core.content.ContextCompat.checkSelfPermission(this, it) != android.content.pm.PackageManager.PERMISSION_GRANTED
-            }
-            
-            if (neededPermissions.isNotEmpty()) {
-                requestPermissionLauncher.launch(neededPermissions.toTypedArray())
-            }
-        }
         
         // Initialize Database
         val database = Room.databaseBuilder(
@@ -95,6 +69,33 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private fun getFileName(uri: android.net.Uri): String? {
+        var result: String? = null
+        if (uri.scheme == "content") {
+            val cursor = contentResolver.query(uri, null, null, null, null)
+            try {
+                if (cursor != null && cursor.moveToFirst()) {
+                    val displayNameIndex = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
+                    if (displayNameIndex != -1) {
+                        result = cursor.getString(displayNameIndex)
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            } finally {
+                cursor?.close()
+            }
+        }
+        if (result == null) {
+            result = uri.path
+            val cut = result?.lastIndexOf('/')
+            if (cut != null && cut != -1) {
+                result = result.substring(cut + 1)
+            }
+        }
+        return result
+    }
+
     private fun handleIntent(intent: android.content.Intent?, viewModel: AppViewModel) {
         val uri = intent?.data ?: return
         
@@ -127,19 +128,22 @@ class MainActivity : ComponentActivity() {
                 }
             }
         } else if (uri.scheme == "content" || uri.scheme == "file") {
-            // Handle file open (.roterfaden)
-            try {
-                contentResolver.openInputStream(uri)?.use { inputStream ->
-                    val jsonStr = inputStream.bufferedReader(java.nio.charset.StandardCharsets.UTF_8).use { it.readText() }
-                    val moshi = com.squareup.moshi.Moshi.Builder().build()
-                    val adapter = moshi.adapter(com.example.data.ExportData::class.java)
-                    val parsed = adapter.fromJson(jsonStr)
-                    if (parsed != null && (parsed.arguments.isNotEmpty() || parsed.glossary.isNotEmpty() || parsed.literature.isNotEmpty())) {
-                        viewModel.setPendingImportData(parsed)
+            val fileName = getFileName(uri)
+            if (fileName != null && fileName.endsWith(".roterfaden", ignoreCase = true)) {
+                // Handle file open (.roterfaden)
+                try {
+                    contentResolver.openInputStream(uri)?.use { inputStream ->
+                        val jsonStr = inputStream.bufferedReader(java.nio.charset.StandardCharsets.UTF_8).use { it.readText() }
+                        val moshi = com.squareup.moshi.Moshi.Builder().build()
+                        val adapter = moshi.adapter(com.example.data.ExportData::class.java)
+                        val parsed = adapter.fromJson(jsonStr)
+                        if (parsed != null && (parsed.arguments.isNotEmpty() || parsed.glossary.isNotEmpty() || parsed.literature.isNotEmpty())) {
+                            viewModel.setPendingImportData(parsed)
+                        }
                     }
+                } catch (e: Exception) {
+                    e.printStackTrace()
                 }
-            } catch (e: Exception) {
-                e.printStackTrace()
             }
         }
     }

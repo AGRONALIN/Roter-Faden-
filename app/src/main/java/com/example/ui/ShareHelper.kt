@@ -25,7 +25,7 @@ object ShareHelper {
             )
 
             val intent = Intent(Intent.ACTION_SEND).apply {
-                type = "application/octet-stream"
+                type = "application/x-roterfaden"
                 putExtra(Intent.EXTRA_STREAM, uri)
                 putExtra(Intent.EXTRA_SUBJECT, defaultTitle)
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
