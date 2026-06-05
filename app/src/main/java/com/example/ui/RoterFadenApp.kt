@@ -520,9 +520,11 @@ fun SharedTransitionScope.RoterFadenBottomNav(
                 var showItem1 by remember { mutableStateOf(expanded) }
                 var showItem2 by remember { mutableStateOf(expanded) }
                 var showItem3 by remember { mutableStateOf(expanded) }
+                var containerActivelyVisible by remember { mutableStateOf(expanded) }
 
                 LaunchedEffect(expanded) {
                     if (expanded) {
+                        containerActivelyVisible = true
                         showItem3 = true
                         kotlinx.coroutines.delay(100)
                         showItem2 = true
@@ -534,6 +536,8 @@ fun SharedTransitionScope.RoterFadenBottomNav(
                         showItem2 = false
                         kotlinx.coroutines.delay(80)
                         showItem3 = false
+                        kotlinx.coroutines.delay(250)
+                        containerActivelyVisible = false
                     }
                 }
 
@@ -541,8 +545,7 @@ fun SharedTransitionScope.RoterFadenBottomNav(
                     horizontalAlignment = Alignment.End,
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    val anyVisible = showItem1 || showItem2 || showItem3
-                    if (anyVisible || expanded) {
+                    if (containerActivelyVisible || expanded) {
                         Column(
                             verticalArrangement = Arrangement.spacedBy(12.dp),
                             horizontalAlignment = Alignment.End,
