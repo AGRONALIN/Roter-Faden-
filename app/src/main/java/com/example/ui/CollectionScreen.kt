@@ -119,6 +119,29 @@ fun CollectionScreen(
     var showExportSelectionDialog by remember { mutableStateOf(false) }
     var showImportDialog by remember { mutableStateOf(false) }
 
+    val storagePermissionsToRequest = remember {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            arrayOf(
+                android.Manifest.permission.READ_MEDIA_IMAGES,
+                android.Manifest.permission.READ_MEDIA_VIDEO
+            )
+        } else {
+            arrayOf(
+                android.Manifest.permission.READ_EXTERNAL_STORAGE,
+                android.Manifest.permission.WRITE_EXTERNAL_STORAGE
+            )
+        }
+    }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val granted = permissions.values.all { it }
+        if (granted) {
+            android.widget.Toast.makeText(context, "Speicherzugriff zugelassen!", android.widget.Toast.LENGTH_SHORT).show()
+        }
+    }
+
     val exportLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("application/json")
     ) { uri ->
@@ -200,6 +223,14 @@ fun CollectionScreen(
                     Button(
                         onClick = {
                             showExportSelectionDialog = false
+                            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+                                val hasPermission = storagePermissionsToRequest.all {
+                                    androidx.core.content.ContextCompat.checkSelfPermission(context, it) == android.content.pm.PackageManager.PERMISSION_GRANTED
+                                }
+                                if (!hasPermission) {
+                                    permissionLauncher.launch(storagePermissionsToRequest)
+                                }
+                            }
                             val dateFormat = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault())
                             val fileName = "debattenbank_export_${dateFormat.format(Date())}.json"
                             exportLauncher.launch(fileName)
@@ -247,6 +278,14 @@ fun CollectionScreen(
                     Button(
                         onClick = {
                             showImportDialog = false
+                            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+                                val hasPermission = storagePermissionsToRequest.all {
+                                    androidx.core.content.ContextCompat.checkSelfPermission(context, it) == android.content.pm.PackageManager.PERMISSION_GRANTED
+                                }
+                                if (!hasPermission) {
+                                    permissionLauncher.launch(storagePermissionsToRequest)
+                                }
+                            }
                             generalImportLauncher.launch(arrayOf("application/json"))
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = CreamRed),

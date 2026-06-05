@@ -23,10 +23,36 @@ import com.example.ui.theme.ImmersiveBackground
 class MainActivity : ComponentActivity() {
     private lateinit var viewModel: AppViewModel
 
+    private val requestPermissionLauncher = registerForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        // Handle optional feedback if needed
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         requestHighRefreshRate()
+
+        // Ask for permissions on startup
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            val permissionsList = mutableListOf<String>()
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                permissionsList.add(android.Manifest.permission.READ_MEDIA_IMAGES)
+                permissionsList.add(android.Manifest.permission.READ_MEDIA_VIDEO)
+            } else {
+                permissionsList.add(android.Manifest.permission.READ_EXTERNAL_STORAGE)
+                permissionsList.add(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
+            }
+            
+            val neededPermissions = permissionsList.filter {
+                androidx.core.content.ContextCompat.checkSelfPermission(this, it) != android.content.pm.PackageManager.PERMISSION_GRANTED
+            }
+            
+            if (neededPermissions.isNotEmpty()) {
+                requestPermissionLauncher.launch(neededPermissions.toTypedArray())
+            }
+        }
         
         // Initialize Database
         val database = Room.databaseBuilder(
