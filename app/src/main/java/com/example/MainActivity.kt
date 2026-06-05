@@ -1,5 +1,6 @@
 package com.example
 
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -23,6 +24,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        requestHighRefreshRate()
         
         // Initialize Database
         val database = Room.databaseBuilder(
@@ -50,6 +52,30 @@ class MainActivity : ComponentActivity() {
                 ) {
                     RoterFadenApp(viewModel)
                 }
+            }
+        }
+    }
+
+    private fun requestHighRefreshRate() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            try {
+                val display = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    display
+                } else {
+                    @Suppress("DEPRECATION")
+                    windowManager.defaultDisplay
+                }
+                val modes = display?.supportedModes
+                if (modes != null) {
+                    val highestMode = modes.maxByOrNull { it.refreshRate }
+                    if (highestMode != null && highestMode.refreshRate > 60f) {
+                        val params = window.attributes
+                        params.preferredDisplayModeId = highestMode.modeId
+                        window.attributes = params
+                    }
+                }
+            } catch (e: Exception) {
+                // Ignore if unsupported by device
             }
         }
     }
