@@ -294,6 +294,7 @@ fun RoterFadenApp(viewModel: AppViewModel) {
                                 },
                             label = "tab_transition"
                         ) { page ->
+                            val isTransitionRunning = transition.currentState != transition.targetState
                             when (page) {
                                 0 -> HomeScreen(
                                     viewModel = viewModel,
@@ -301,21 +302,24 @@ fun RoterFadenApp(viewModel: AppViewModel) {
                                     sharedTransitionScope = this@SharedTransitionLayout,
                                     animatedVisibilityScope = this@AnimatedContent,
                                     navAnimatedVisibilityScope = mainScope,
-                                    onNavigateToSearch = { currentTab = 2 }
+                                    onNavigateToSearch = { currentTab = 2 },
+                                    isTransitionRunning = isTransitionRunning
                                 )
                                 1 -> CollectionScreen(
                                     viewModel = viewModel,
                                     navController = navController,
                                     sharedTransitionScope = this@SharedTransitionLayout,
                                     animatedVisibilityScope = this@AnimatedContent,
-                                    navAnimatedVisibilityScope = mainScope
+                                    navAnimatedVisibilityScope = mainScope,
+                                    isTransitionRunning = isTransitionRunning
                                 )
                                 2 -> SearchScreen(
                                     viewModel = viewModel,
                                     navController = navController,
                                     sharedTransitionScope = this@SharedTransitionLayout,
                                     animatedVisibilityScope = this@AnimatedContent,
-                                    navAnimatedVisibilityScope = mainScope
+                                    navAnimatedVisibilityScope = mainScope,
+                                    isTransitionRunning = isTransitionRunning
                                 )
                             }
                         }
