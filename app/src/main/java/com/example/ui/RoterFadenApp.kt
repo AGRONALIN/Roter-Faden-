@@ -431,9 +431,19 @@ fun RoterFadenApp(viewModel: AppViewModel) {
                     composable(
                         "settings",
                         enterTransition = slideUpEnter,
-                        exitTransition = slideDownExit,
+                        exitTransition = {
+                            slideOutVertically(
+                                targetOffsetY = { it },
+                                animationSpec = tween(durationMillis = 400, easing = FastOutSlowInEasing)
+                            ) + fadeOut(animationSpec = tween(durationMillis = 300))
+                        },
                         popEnterTransition = slideUpEnter,
-                        popExitTransition = slideDownExit
+                        popExitTransition = {
+                            slideOutVertically(
+                                targetOffsetY = { it },
+                                animationSpec = tween(durationMillis = 400, easing = FastOutSlowInEasing)
+                            ) + fadeOut(animationSpec = tween(durationMillis = 300))
+                        }
                     ) {
                         SettingsScreen(viewModel, navController, this@SharedTransitionLayout, this@composable)
                     }
