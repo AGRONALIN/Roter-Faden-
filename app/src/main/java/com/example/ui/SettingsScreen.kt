@@ -11,6 +11,8 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AutoStories
 import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Error
+import androidx.compose.material.icons.filled.Link
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -36,8 +38,11 @@ fun SettingsScreen(
     animatedVisibilityScope: AnimatedVisibilityScope
 ) {
     val scope = rememberCoroutineScope()
-    var updateChecking by remember { mutableStateOf(false) }
-    var updateResultText by remember { mutableStateOf<String?>(null) }
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val isCheckingForUpdates by viewModel.isCheckingForUpdates.collectAsState()
+    val updateCheckResult by viewModel.updateCheckResult.collectAsState()
+    val githubRepoPath by viewModel.githubRepoPath.collectAsState()
+    var editRepoPath by remember(githubRepoPath) { mutableStateOf(githubRepoPath) }
     var showDialog by remember { mutableStateOf(false) }
 
     Scaffold(
@@ -143,22 +148,90 @@ fun SettingsScreen(
                 }
             }
 
+            // Section Title: Updates
+            Text(
+                text = "Updates & Entwickler",
+                color = ImmersiveTextSecondary,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.sp,
+                modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
+            )
+
+            // GitHub Repostory Config Card
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = ImmersiveSurface),
+                border = androidx.compose.foundation.BorderStroke(1.dp, ImmersiveBorder)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(44.dp)
+                                .background(ImmersiveGreen.copy(alpha = 0.1f), RoundedCornerShape(12.dp)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Link,
+                                contentDescription = "Repository",
+                                tint = ImmersiveGreen,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "GitHub-Repository",
+                                color = ImmersiveTextPrimary,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 15.sp
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = "Repository-Pfad für APK-Updates.",
+                                color = ImmersiveTextSecondary,
+                                fontSize = 12.sp,
+                                lineHeight = 16.sp
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    OutlinedTextField(
+                        value = editRepoPath,
+                        onValueChange = {
+                            editRepoPath = it
+                            viewModel.updateGithubRepoPath(it)
+                        },
+                        placeholder = { Text("owner/repo", color = ImmersiveTextSecondary) },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        shape = RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = ImmersiveTextPrimary,
+                            unfocusedTextColor = ImmersiveTextPrimary,
+                            focusedBorderColor = ImmersiveGreen,
+                            unfocusedBorderColor = ImmersiveBorder,
+                            focusedContainerColor = ImmersiveBackground,
+                            unfocusedContainerColor = ImmersiveBackground
+                        )
+                    )
+                }
+            }
+
             // Update Card
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(16.dp))
                     .clickable {
-                        if (!updateChecking) {
-                            scope.launch {
-                                updateChecking = true
-                                showDialog = true
-                                updateResultText = null
-                                delay(1800)
-                                updateChecking = false
-                                updateResultText = "Deine App ist auf dem neuesten Stand!\nVersion ${BuildConfig.VERSION_NAME} (aktuellste)"
-                            }
-                        }
+                        viewModel.checkForUpdates(context, isForceCheck = false, isManual = true)
+                        showDialog = true
                     },
                 colors = CardDefaults.cardColors(containerColor = ImmersiveSurface),
                 border = androidx.compose.foundation.BorderStroke(1.dp, ImmersiveBorder)
@@ -218,13 +291,13 @@ fun SettingsScreen(
 
     if (showDialog) {
         AlertDialog(
-            onDismissRequest = { if (!updateChecking) showDialog = false },
+            onDismissRequest = { if (!isCheckingForUpdates) showDialog = false },
             containerColor = ImmersiveSurface,
             titleContentColor = ImmersiveTextPrimary,
             textContentColor = ImmersiveTextSecondary,
             title = {
                 Text(
-                    text = if (updateChecking) "Suche läuft..." else "Update-Prüfung",
+                    text = if (isCheckingForUpdates) "Suche läuft..." else "Update-Prüfung",
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp
                 )
@@ -237,26 +310,28 @@ fun SettingsScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    if (updateChecking) {
+                    if (isCheckingForUpdates) {
                         CircularProgressIndicator(
                             color = ImmersiveGreen,
                             strokeWidth = 3.dp,
                             modifier = Modifier.size(40.dp)
                         )
                         Text(
-                            text = "Der Server wird nach Updates abgefragt...",
+                            text = "Der GitHub-Server wird nach Releases abgefragt...",
                             fontSize = 14.sp,
                             textAlign = TextAlign.Center
                         )
                     } else {
+                        val resultText = updateCheckResult ?: ""
+                        val isSuccess = resultText.contains("neuesten Stand") || resultText.contains("Update verfügbar")
                         Icon(
-                            imageVector = Icons.Default.CheckCircle,
-                            contentDescription = "Erfolg",
-                            tint = ImmersiveGreen,
+                            imageVector = if (isSuccess) Icons.Default.CheckCircle else Icons.Default.Error,
+                            contentDescription = if (isSuccess) "Ergebnis" else "Fehler",
+                            tint = if (isSuccess) ImmersiveGreen else Color(0xFFEF5350),
                             modifier = Modifier.size(48.dp)
                         )
                         Text(
-                            text = updateResultText ?: "",
+                            text = resultText,
                             fontSize = 14.sp,
                             textAlign = TextAlign.Center,
                             fontWeight = FontWeight.Medium,
@@ -266,7 +341,7 @@ fun SettingsScreen(
                 }
             },
             confirmButton = {
-                if (!updateChecking) {
+                if (!isCheckingForUpdates) {
                     TextButton(
                         onClick = { showDialog = false }
                     ) {

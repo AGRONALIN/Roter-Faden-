@@ -418,50 +418,152 @@ class AppViewModel(
     private val _updateDownloadProgress = MutableStateFlow<Float?>(null)
     val updateDownloadProgress: StateFlow<Float?> = _updateDownloadProgress.asStateFlow()
 
-    fun checkForUpdates(context: android.content.Context, isForceCheck: Boolean = false) {
-        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
-            try {
-                val currentVersionCode = try {
-                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
-                        context.packageManager.getPackageInfo(context.packageName, 0).longVersionCode.toInt()
-                    } else {
-                        @Suppress("DEPRECATION")
-                        context.packageManager.getPackageInfo(context.packageName, 0).versionCode
-                    }
-                } catch (e: Exception) {
-                    1
-                }
+    private val _isCheckingForUpdates = MutableStateFlow(false)
+    val isCheckingForUpdates: StateFlow<Boolean> = _isCheckingForUpdates.asStateFlow()
 
-                val repo = githubRepoPath.value
-                val url = java.net.URL("https://raw.githubusercontent.com/$repo/main/update.json")
+    private val _updateCheckResult = MutableStateFlow<String?>(null)
+    val updateCheckResult: StateFlow<String?> = _updateCheckResult.asStateFlow()
+
+    fun checkForUpdates(context: android.content.Context, isForceCheck: Boolean = false, isManual: Boolean = false) {
+        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            _isCheckingForUpdates.value = true
+            _updateCheckResult.value = null
+            
+            val currentVersionName = com.example.BuildConfig.VERSION_NAME
+            val currentVersionCode = try {
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+                    context.packageManager.getPackageInfo(context.packageName, 0).longVersionCode.toInt()
+                } else {
+                    @Suppress("DEPRECATION")
+                    context.packageManager.getPackageInfo(context.packageName, 0).versionCode
+                }
+            } catch (e: Exception) {
+                1
+            }
+
+            var updateFound = false
+            var errorOccurred = false
+            val repo = githubRepoPath.value
+
+            // 1. Try Github Releases API first
+            try {
+                val url = java.net.URL("https://api.github.com/repos/$repo/releases/latest")
                 val connection = url.openConnection() as java.net.HttpURLConnection
-                connection.connectTimeout = 5000
-                connection.readTimeout = 5000
+                connection.connectTimeout = 6000
+                connection.readTimeout = 6000
+                connection.setRequestProperty("User-Agent", "RoterFaden-App")
+                
                 if (connection.responseCode == 200) {
                     val text = connection.inputStream.bufferedReader().use { it.readText() }
                     val json = org.json.JSONObject(text)
-                    val vCode = json.optInt("versionCode", 1)
-                    val vName = json.optString("versionName", "1.1.0")
-                    val dlUrl = json.optString("downloadUrl", "")
-                    val log = json.optString("changelog", "")
+                    val tagName = json.optString("tag_name", "")
+                    val body = json.optString("body", "")
                     
-                    if (vCode > currentVersionCode) {
-                        _updateInfo.value = UpdateInfo(vCode, vName, dlUrl, log)
-                        return@launch
+                    // Look for an apk asset
+                    var dlUrl = ""
+                    val assets = json.optJSONArray("assets")
+                    if (assets != null) {
+                        for (i in 0 until assets.length()) {
+                            val asset = assets.getJSONObject(i)
+                            val name = asset.optString("name", "")
+                            if (name.endsWith(".apk")) {
+                                dlUrl = asset.optString("browser_download_url", "")
+                                break
+                            }
+                        }
                     }
+                    if (dlUrl.isEmpty() && assets != null && assets.length() > 0) {
+                        dlUrl = assets.getJSONObject(0).optString("browser_download_url", "")
+                    }
+
+                    if (tagName.isNotBlank() && isNewerVersion(currentVersionName, tagName)) {
+                        val finalDlUrl = if (dlUrl.isNotEmpty()) dlUrl else "https://github.com/$repo/releases"
+                        _updateInfo.value = UpdateInfo(
+                            versionCode = currentVersionCode + 1, // trigger update UI
+                            versionName = tagName,
+                            downloadUrl = finalDlUrl,
+                            changelog = body
+                        )
+                        _updateCheckResult.value = "Neues Update verfügbar: $tagName!"
+                        updateFound = true
+                    }
+                } else if (connection.responseCode != 404) {
+                    errorOccurred = true
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
+                errorOccurred = true
             }
-            if (isForceCheck) {
+
+            // 2. Fallback to raw update.json if no update found or release check failed/404
+            if (!updateFound) {
+                try {
+                    val url = java.net.URL("https://raw.githubusercontent.com/$repo/main/update.json")
+                    val connection = url.openConnection() as java.net.HttpURLConnection
+                    connection.connectTimeout = 6000
+                    connection.readTimeout = 6000
+                    connection.setRequestProperty("User-Agent", "RoterFaden-App")
+                    if (connection.responseCode == 200) {
+                        val text = connection.inputStream.bufferedReader().use { it.readText() }
+                        val json = org.json.JSONObject(text)
+                        val vCode = json.optInt("versionCode", 1)
+                        val vName = json.optString("versionName", "1.1.0")
+                        val dlUrl = json.optString("downloadUrl", "")
+                        val log = json.optString("changelog", "")
+                        
+                        if (vCode > currentVersionCode || isNewerVersion(currentVersionName, vName)) {
+                            _updateInfo.value = UpdateInfo(vCode, vName, dlUrl, log)
+                            _updateCheckResult.value = "Neues Update verfügbar: v$vName!"
+                            updateFound = true
+                        }
+                    } else if (connection.responseCode != 404) {
+                        errorOccurred = true
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    errorOccurred = true
+                }
+            }
+
+            // 3. Fallback for testing/isForceCheck
+            if (!updateFound && isForceCheck) {
                 _updateInfo.value = UpdateInfo(
                     versionCode = 99,
                     versionName = "2.0.0",
                     downloadUrl = "https://github.com/noafelix/RoterFaden/releases/download/v2.0.0/app-release.apk",
                     changelog = "• Komplett überarbeitetes M3-Design\n• Fehlerbehebungen & Stabilitätsverbesserungen\n• Neue Funktionen für Argumentanalysen im RoterFaden-System"
                 )
+                _updateCheckResult.value = "Neues Update verfügbar: v2.0.0!"
+                updateFound = true
             }
+
+            if (!updateFound) {
+                if (errorOccurred && isManual) {
+                    _updateCheckResult.value = "Fehler bei der Verbindung zu GitHub.\nBitte prüfe dein Netzwerk oder deine Repository-Pfad-Einstellung."
+                } else {
+                    _updateCheckResult.value = "Deine App ist auf dem neuesten Stand!\nVersion $currentVersionName"
+                }
+            }
+            
+            _isCheckingForUpdates.value = false
         }
+    }
+
+    private fun isNewerVersion(current: String, latest: String): Boolean {
+        try {
+            val cleanCurrent = current.replace("^[vV]".toRegex(), "").split(".")
+            val cleanLatest = latest.replace("^[vV]".toRegex(), "").split(".")
+            val maxLength = maxOf(cleanCurrent.size, cleanLatest.size)
+            for (i in 0 until maxLength) {
+                val currVal = cleanCurrent.getOrNull(i)?.toIntOrNull() ?: 0
+                val latVal = cleanLatest.getOrNull(i)?.toIntOrNull() ?: 0
+                if (latVal > currVal) return true
+                if (currVal > latVal) return false
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        return false
     }
     
     fun downloadAndInstallUpdate(context: android.content.Context, downloadUrl: String) {
