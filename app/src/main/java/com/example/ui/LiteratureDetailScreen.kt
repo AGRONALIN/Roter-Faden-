@@ -123,13 +123,20 @@ fun LiteratureDetailScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 literatureItem.imagePath?.let { path ->
-                    TransformableLocalImage(
-                        path = path,
-                        transformKey = "literature_${literatureItem.id}",
+                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(240.dp)
-                    )
+                            .wrapContentHeight()
+                            .clip(RoundedCornerShape(16.dp))
+                            .border(1.dp, ImmersiveBorder, RoundedCornerShape(16.dp))
+                    ) {
+                        LocalImageFromPath(
+                            path = path,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .wrapContentHeight()
+                        )
+                    }
                     Spacer(modifier = Modifier.height(16.dp))
                 }
                 

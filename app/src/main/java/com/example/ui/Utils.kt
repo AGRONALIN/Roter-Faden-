@@ -275,13 +275,15 @@ fun RichTextWithImages(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .heightIn(min = 120.dp, max = 280.dp)
+                            .wrapContentHeight()
                             .clip(RoundedCornerShape(16.dp))
                             .border(1.dp, ImmersiveBorder, RoundedCornerShape(16.dp))
                     ) {
                         LocalImageFromPath(
                             path = part.path,
-                            modifier = Modifier.fillMaxSize()
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .wrapContentHeight()
                         )
                     }
                 }
@@ -290,521 +292,242 @@ fun RichTextWithImages(
     }
 }
 
-@Composable
-fun InlineImageInsertBar(
-    textValue: String,
-    onTextChange: (String) -> Unit,
-    placeholderName: String = "Text"
-) {
-    val context = androidx.compose.ui.platform.LocalContext.current
-    val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
+sealed class EditorBlock {
+    data class Text(val id: String, var content: String) : EditorBlock()
+    data class Image(val id: String, val path: String) : EditorBlock()
+}
+
+fun textToBlocks(text: String): List<EditorBlock> {
+    val regex = "\\[image:([^\\]]+)\\]".toRegex()
+    val blocks = mutableListOf<EditorBlock>()
+    var lastIndex = 0
+    var idCounter = 0
     
-    val imagePickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri ->
-        uri?.let {
-            val copiedPath = copyUriToInternalStorage(context, it)
-            if (copiedPath != null) {
-                val updatedText = if (textValue.endsWith("\n") || textValue.isEmpty()) {
-                    textValue + "[image:$copiedPath]\n"
-                } else {
-                    textValue + "\n[image:$copiedPath]\n"
-                }
-                onTextChange(updatedText)
+    regex.findAll(text).forEach { matchResult ->
+        val matchStart = matchResult.range.first
+        val matchEnd = matchResult.range.last + 1
+        val imagePath = matchResult.groupValues[1]
+        
+        if (matchStart > lastIndex) {
+            blocks.add(EditorBlock.Text("text_${idCounter++}", text.substring(lastIndex, matchStart)))
+        }
+        blocks.add(EditorBlock.Image("image_${idCounter++}", imagePath))
+        lastIndex = matchEnd
+    }
+    
+    if (lastIndex < text.length) {
+        blocks.add(EditorBlock.Text("text_${idCounter++}", text.substring(lastIndex)))
+    }
+    
+    if (blocks.isEmpty()) {
+        blocks.add(EditorBlock.Text("text_${idCounter++}", ""))
+    }
+    
+    return blocks
+}
+
+fun blocksToText(blocks: List<EditorBlock>): String {
+    return buildString {
+        blocks.forEach { block ->
+            when (block) {
+                is EditorBlock.Text -> append(block.content)
+                is EditorBlock.Image -> append("[image:${block.path}]")
             }
         }
     }
+}
 
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        AssistChip(
-            onClick = { imagePickerLauncher.launch("image/*") },
-            label = { Text("Bild einfügen (Galerie) 🖼️", fontSize = 11.sp, color = ImmersiveTextPrimary) },
-            colors = AssistChipDefaults.assistChipColors(containerColor = ImmersiveSurface, labelColor = ImmersiveTextPrimary)
-        )
-        
-        AssistChip(
-            onClick = {
-                val clip = clipboard?.primaryClip
-                if (clip != null && clip.itemCount > 0) {
-                    val item = clip.getItemAt(0)
-                    val uri = item.uri
-                    val textPath = item.text?.toString()
-                    val resolvedUri = when {
-                        uri != null -> uri
-                        textPath != null && (textPath.startsWith("content://") || textPath.startsWith("file://")) -> android.net.Uri.parse(textPath)
-                        else -> null
-                    }
-                    if (resolvedUri != null) {
-                        val copiedPath = copyUriToInternalStorage(context, resolvedUri)
-                        if (copiedPath != null) {
-                            val updatedText = if (textValue.endsWith("\n") || textValue.isEmpty()) {
-                                textValue + "[image:$copiedPath]\n"
-                            } else {
-                                textValue + "\n[image:$copiedPath]\n"
-                            }
-                            onTextChange(updatedText)
-                            android.widget.Toast.makeText(context, "Bild erfolgreich aus Zwischenablage eingefügt!", android.widget.Toast.LENGTH_SHORT).show()
-                        } else {
-                            android.widget.Toast.makeText(context, "Fehler beim Kopieren des Bildes", android.widget.Toast.LENGTH_SHORT).show()
-                        }
-                    } else {
-                        android.widget.Toast.makeText(context, "Kein gültiges Bild in der Zwischenablage gefunden. Kopiere zuerst ein Bild.", android.widget.Toast.LENGTH_SHORT).show()
-                    }
-                } else {
-                    android.widget.Toast.makeText(context, "Zwischenablage ist leer.", android.widget.Toast.LENGTH_SHORT).show()
+fun cleanAndMinimizeBlocks(blocks: List<EditorBlock>): List<EditorBlock> {
+    if (blocks.isEmpty()) return listOf(EditorBlock.Text("text_0", ""))
+    val cleaned = mutableListOf<EditorBlock>()
+    var currentText = StringBuilder()
+    var textCount = 0
+    
+    for (block in blocks) {
+        when (block) {
+            is EditorBlock.Text -> {
+                currentText.append(block.content)
+            }
+            is EditorBlock.Image -> {
+                if (currentText.isNotEmpty()) {
+                    cleaned.add(EditorBlock.Text("text_${textCount++}", currentText.toString()))
+                    currentText = StringBuilder()
                 }
-            },
-            label = { Text("Aus Zwischenablage einfügen 📋", fontSize = 11.sp, color = ImmersiveTextPrimary) },
-            colors = AssistChipDefaults.assistChipColors(containerColor = ImmersiveSurface, labelColor = ImmersiveTextPrimary)
-        )
+                cleaned.add(block)
+            }
+        }
     }
+    if (currentText.isNotEmpty() || cleaned.isEmpty()) {
+        cleaned.add(EditorBlock.Text("text_${textCount++}", currentText.toString()))
+    }
+    return cleaned
 }
 
-data class ImageTransform(
-    val scale: Float = 1.0f,
-    val offsetX: Float = 0.0f,
-    val offsetY: Float = 0.0f,
-    val rotation: Float = 0.0f,
-    val contentScale: String = "Crop", // "Crop", "Fit"
-    val colorFilter: String = "None" // "None", "Grayscale", "Sepia", "Revolution Red", "Invert"
-)
-
-fun saveImageTransform(context: android.content.Context, key: String, transform: ImageTransform) {
-    val prefs = context.getSharedPreferences("image_transforms", android.content.Context.MODE_PRIVATE)
-    prefs.edit().apply {
-        putFloat("${key}_scale", transform.scale)
-        putFloat("${key}_offsetX", transform.offsetX)
-        putFloat("${key}_offsetY", transform.offsetY)
-        putFloat("${key}_rotation", transform.rotation)
-        putString("${key}_contentScale", transform.contentScale)
-        putString("${key}_colorFilter", transform.colorFilter)
-        apply()
-    }
-}
-
-fun loadImageTransform(context: android.content.Context, key: String): ImageTransform {
-    val prefs = context.getSharedPreferences("image_transforms", android.content.Context.MODE_PRIVATE)
-    return ImageTransform(
-        scale = prefs.getFloat("${key}_scale", 1.0f),
-        offsetX = prefs.getFloat("${key}_offsetX", 0.0f),
-        offsetY = prefs.getFloat("${key}_offsetY", 0.0f),
-        rotation = prefs.getFloat("${key}_rotation", 0.0f),
-        contentScale = prefs.getString("${key}_contentScale", "Crop") ?: "Crop",
-        colorFilter = prefs.getString("${key}_colorFilter", "None") ?: "None"
-    )
+fun moveBlock(blocks: List<EditorBlock>, index: Int, direction: Int): List<EditorBlock> {
+    val newIndex = index + direction
+    if (newIndex < 0 || newIndex >= blocks.size) return blocks
+    val mutable = blocks.toMutableList()
+    val temp = mutable[index]
+    mutable[index] = mutable[newIndex]
+    mutable[newIndex] = temp
+    return mutable
 }
 
 @Composable
-fun TransformableLocalImage(
-    path: String,
-    transformKey: String,
+fun InlineRichTextEditor(
+    value: String,
+    onValueChange: (String) -> Unit,
+    placeholder: String,
     modifier: Modifier = Modifier
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
-    var transform by remember(transformKey) {
-        mutableStateOf(loadImageTransform(context, transformKey))
+    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
+    
+    var blocks by remember(value) {
+        mutableStateOf(textToBlocks(value))
     }
-    var showEditor by remember { mutableStateOf(false) }
+    
+    val updateParent = { newBlocks: List<EditorBlock> ->
+        val clean = cleanAndMinimizeBlocks(newBlocks)
+        blocks = clean
+        onValueChange(blocksToText(clean))
+    }
 
-    Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(16.dp))
-            .border(1.dp, ImmersiveBorder, RoundedCornerShape(16.dp))
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        val bitmap = remember(path) {
-            try {
-                android.graphics.BitmapFactory.decodeFile(path)?.asImageBitmap()
-            } catch (e: Exception) {
-                null
-            }
-        }
-        
-        if (bitmap != null) {
-            val colorMatrix = remember(transform.colorFilter) {
-                when (transform.colorFilter) {
-                    "Grayscale" -> {
-                        val m = ColorMatrix()
-                        m.setToSaturation(0f)
-                        m
-                    }
-                    "Sepia" -> {
-                        ColorMatrix(floatArrayOf(
-                            0.393f, 0.769f, 0.189f, 0f, 0f,
-                            0.349f, 0.686f, 0.168f, 0f, 0f,
-                            0.272f, 0.534f, 0.131f, 0f, 0f,
-                            0f,     0f,     0f,     1f, 0f
-                        ))
-                    }
-                    "Revolution Red" -> {
-                        ColorMatrix(floatArrayOf(
-                            1.3f, 0.1f, 0.1f, 0f, 0f,
-                            0.2f, 0.8f, 0.1f, 0f, 0f,
-                            0.1f, 0.1f, 0.5f, 0f, 0f,
-                            0f,   0f,   0f,   1f, 0f
-                        ))
-                    }
-                    "Invert" -> {
-                        ColorMatrix(floatArrayOf(
-                            -1f, 0f,  0f,  0f, 255f,
-                            0f,  -1f, 0f,  0f, 255f,
-                            0f,  0f,  -1f, 0f, 255f,
-                            0f,  0f,  0f,  1f, 0f
-                        ))
-                    }
-                    else -> ColorMatrix()
-                }
-            }
-
-            val resolvedScale = if (transform.contentScale == "Crop") {
-                androidx.compose.ui.layout.ContentScale.Crop
-            } else {
-                androidx.compose.ui.layout.ContentScale.Fit
-            }
-
-            androidx.compose.foundation.Image(
-                bitmap = bitmap,
-                contentDescription = "Eingefügtes Bild",
-                colorFilter = if (transform.colorFilter != "None") ColorFilter.colorMatrix(colorMatrix) else null,
-                contentScale = resolvedScale,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .graphicsLayer(
-                        scaleX = transform.scale,
-                        scaleY = transform.scale,
-                        translationX = transform.offsetX,
-                        translationY = transform.offsetY,
-                        rotationZ = transform.rotation
-                    )
-            )
-
-            // Edit Overlay Button
-            Box(
-                modifier = Modifier
-                    .align(androidx.compose.ui.Alignment.BottomEnd)
-                    .padding(8.dp)
-                    .clip(RoundedCornerShape(percent = 50))
-                    .background(Color.Black.copy(alpha = 0.65f))
-                    .clickable { showEditor = true }
-                    .padding(horizontal = 12.dp, vertical = 6.dp)
-            ) {
-                Text(
-                    text = "Bild bearbeiten ⚡",
-                    color = Color.White,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-        }
-    }
-
-    if (showEditor) {
-        ImageTransformDialog(
-            path = path,
-            initialTransform = transform,
-            onDismiss = { showEditor = false },
-            onSave = { updatedTransform ->
-                saveImageTransform(context, transformKey, updatedTransform)
-                transform = updatedTransform
-                showEditor = false
-            }
-        )
-    }
-}
-
-@Composable
-fun ImageTransformDialog(
-    path: String,
-    initialTransform: ImageTransform,
-    onDismiss: () -> Unit,
-    onSave: (ImageTransform) -> Unit
-) {
-    var scale by remember { mutableStateOf(initialTransform.scale) }
-    var offsetX by remember { mutableStateOf(initialTransform.offsetX) }
-    var offsetY by remember { mutableStateOf(initialTransform.offsetY) }
-    var rotation by remember { mutableStateOf(initialTransform.rotation) }
-    var contentScaleState by remember { mutableStateOf(initialTransform.contentScale) }
-    var colorFilterState by remember { mutableStateOf(initialTransform.colorFilter) }
-
-    val bitmap = remember(path) {
-        try {
-            android.graphics.BitmapFactory.decodeFile(path)?.asImageBitmap()
-        } catch (e: Exception) {
-            null
-        }
-    }
-
-    if (bitmap != null) {
-        androidx.compose.ui.window.Dialog(
-            onDismissRequest = onDismiss,
-            properties = androidx.compose.ui.window.DialogProperties(
-                usePlatformDefaultWidth = false
-            )
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(ImmersiveBackground.copy(alpha = 0.95f))
-                    .padding(16.dp)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    // Header
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        TextButton(onClick = onDismiss) {
-                            Text("Abbrechen", color = ImmersiveTextSecondary, fontSize = 16.sp)
-                        }
-                        Text(
-                            "Bild anpassen",
-                            color = ImmersiveTextPrimary,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 18.sp
-                        )
-                        TextButton(
-                            onClick = {
-                                onSave(
-                                    ImageTransform(
-                                        scale = scale,
-                                        offsetX = offsetX,
-                                        offsetY = offsetY,
-                                        rotation = rotation,
-                                        contentScale = contentScaleState,
-                                        colorFilter = colorFilterState
-                                    )
-                                )
+        blocks.forEachIndexed { index, block ->
+            when (block) {
+                is EditorBlock.Text -> {
+                    val imagePickerLauncher = rememberLauncherForActivityResult(
+                        contract = ActivityResultContracts.GetContent()
+                    ) { uri ->
+                        uri?.let {
+                            val copiedPath = copyUriToInternalStorage(context, it)
+                            if (copiedPath != null) {
+                                val newBlocks = blocks.toMutableList()
+                                newBlocks.add(index + 1, EditorBlock.Image("img_${System.currentTimeMillis()}", copiedPath))
+                                updateParent(newBlocks)
                             }
-                        ) {
-                            Text("Speichern", color = ImmersiveGreen, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                         }
                     }
 
-                    Text(
-                        "Nutze Gesten zum Ziehen, Zoomen und Drehen direkt auf dem Bild.",
-                        color = ImmersiveTextSecondary,
-                        fontSize = 12.sp,
-                        modifier = Modifier.padding(horizontal = 8.dp)
+                    OutlinedTextField(
+                        value = block.content,
+                        onValueChange = { newText ->
+                            val newBlocks = blocks.toMutableList()
+                            newBlocks[index] = EditorBlock.Text(block.id, newText)
+                            updateParent(newBlocks)
+                        },
+                        label = { Text(placeholder) },
+                        modifier = Modifier.fillMaxWidth(),
+                        minLines = if (blocks.size == 1) 4 else 2,
+                        shape = RoundedCornerShape(16.dp),
+                        textStyle = MaterialTheme.typography.bodyLarge.copy(color = ImmersiveTextPrimary),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = ImmersiveGreen,
+                            focusedLabelColor = ImmersiveGreen,
+                            unfocusedBorderColor = ImmersiveBorder,
+                            focusedContainerColor = ImmersiveSurface,
+                            unfocusedContainerColor = ImmersiveSurface,
+                            focusedTextColor = ImmersiveTextPrimary,
+                            unfocusedTextColor = ImmersiveTextPrimary
+                        ),
+                        trailingIcon = {
+                            Row(
+                                modifier = Modifier.padding(end = 4.dp),
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                IconButton(
+                                    onClick = { imagePickerLauncher.launch("image/*") }
+                                ) {
+                                    Text("🖼️", fontSize = 16.sp)
+                                }
+                                IconButton(
+                                    onClick = {
+                                        val clip = clipboard?.primaryClip
+                                        if (clip != null && clip.itemCount > 0) {
+                                            val item = clip.getItemAt(0)
+                                            val uri = item.uri
+                                            val textPath = item.text?.toString()
+                                            val resolvedUri = when {
+                                                uri != null -> uri
+                                                textPath != null && (textPath.startsWith("content://") || textPath.startsWith("file://")) -> android.net.Uri.parse(textPath)
+                                                else -> null
+                                            }
+                                            if (resolvedUri != null) {
+                                                val copiedPath = copyUriToInternalStorage(context, resolvedUri)
+                                                if (copiedPath != null) {
+                                                    val newBlocks = blocks.toMutableList()
+                                                    newBlocks.add(index + 1, EditorBlock.Image("img_${System.currentTimeMillis()}", copiedPath))
+                                                    updateParent(newBlocks)
+                                                    android.widget.Toast.makeText(context, "Bild erfolgreich eingefügt!", android.widget.Toast.LENGTH_SHORT).show()
+                                                } else {
+                                                    android.widget.Toast.makeText(context, "Fehler beim Kopieren des Bildes", android.widget.Toast.LENGTH_SHORT).show()
+                                                }
+                                            } else {
+                                                android.widget.Toast.makeText(context, "Kein gültiges Bild in der Zwischenablage.", android.widget.Toast.LENGTH_SHORT).show()
+                                            }
+                                        } else {
+                                            android.widget.Toast.makeText(context, "Zwischenablage ist leer.", android.widget.Toast.LENGTH_SHORT).show()
+                                        }
+                                    }
+                                ) {
+                                    Text("📋", fontSize = 16.sp)
+                                }
+                            }
+                        }
                     )
-
-                    // Gesture Workspace Box
+                }
+                is EditorBlock.Image -> {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .aspectRatio(1.2f)
+                            .wrapContentHeight()
                             .clip(RoundedCornerShape(16.dp))
-                            .background(Color.Black.copy(alpha = 0.4f))
                             .border(1.dp, ImmersiveBorder, RoundedCornerShape(16.dp))
-                            .pointerInput(Unit) {
-                                detectTransformGestures { _, pan, zoom, rotate ->
-                                    scale = (scale * zoom).coerceIn(0.5f, 6.0f)
-                                    rotation = (rotation + rotate) % 360f
-                                    offsetX += pan.x
-                                    offsetY += pan.y
-                                }
-                            },
-                        contentAlignment = Alignment.Center
+                            .background(ImmersiveSurface)
                     ) {
-                        val colorMatrix = remember(colorFilterState) {
-                            when (colorFilterState) {
-                                "Grayscale" -> {
-                                    val m = ColorMatrix()
-                                    m.setToSaturation(0f)
-                                    m
-                                }
-                                "Sepia" -> {
-                                    ColorMatrix(floatArrayOf(
-                                        0.393f, 0.769f, 0.189f, 0f, 0f,
-                                        0.349f, 0.686f, 0.168f, 0f, 0f,
-                                        0.272f, 0.534f, 0.131f, 0f, 0f,
-                                        0f,     0f,     0f,     1f, 0f
-                                    ))
-                                }
-                                "Revolution Red" -> {
-                                    ColorMatrix(floatArrayOf(
-                                        1.3f, 0.1f, 0.1f, 0f, 0f,
-                                        0.2f, 0.8f, 0.1f, 0f, 0f,
-                                        0.1f, 0.1f, 0.5f, 0f, 0f,
-                                        0f,   0f,   0f,   1f, 0f
-                                    ))
-                                }
-                                "Invert" -> {
-                                    ColorMatrix(floatArrayOf(
-                                        -1f, 0f,  0f,  0f, 255f,
-                                        0f,  -1f, 0f,  0f, 255f,
-                                        0f,  0f,  -1f, 0f, 255f,
-                                        0f,  0f,  0f,  1f, 0f
-                                    ))
-                                }
-                                else -> ColorMatrix()
-                            }
-                        }
-
-                        val resolvedScale = if (contentScaleState == "Crop") {
-                            androidx.compose.ui.layout.ContentScale.Crop
-                        } else {
-                            androidx.compose.ui.layout.ContentScale.Fit
-                        }
-
-                        androidx.compose.foundation.Image(
-                            bitmap = bitmap,
-                            contentDescription = "Fokusiertes Bild",
-                            colorFilter = if (colorFilterState != "None") ColorFilter.colorMatrix(colorMatrix) else null,
-                            contentScale = resolvedScale,
+                        LocalImageFromPath(
+                            path = block.path,
                             modifier = Modifier
-                                .fillMaxSize()
-                                .graphicsLayer(
-                                    scaleX = scale,
-                                    scaleY = scale,
-                                    translationX = offsetX,
-                                    translationY = offsetY,
-                                    rotationZ = rotation
-                                )
+                                .fillMaxWidth()
+                                .wrapContentHeight()
                         )
-                    }
-
-                    // Sliders and controls detail panel
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(ImmersiveSurface, RoundedCornerShape(16.dp))
-                            .border(1.dp, ImmersiveBorder, RoundedCornerShape(16.dp))
-                            .padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        // Reset Button
+                        
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
+                            modifier = Modifier
+                                .align(Alignment.BottomEnd)
+                                .padding(8.dp)
+                                .clip(RoundedCornerShape(50))
+                                .background(Color.Black.copy(alpha = 0.75f))
+                                .padding(horizontal = 8.dp, vertical = 4.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text("Transformationen", color = ImmersiveTextPrimary, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                            Button(
-                                onClick = {
-                                    scale = 1.0f
-                                    offsetX = 0f
-                                    offsetY = 0f
-                                    rotation = 0f
-                                    contentScaleState = "Crop"
-                                    colorFilterState = "None"
-                                },
-                                colors = ButtonDefaults.buttonColors(containerColor = CreamRed),
-                                shape = RoundedCornerShape(percent = 50),
-                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 2.dp),
-                                modifier = Modifier.height(32.dp)
-                            ) {
-                                Text("Zurücksetzen", color = ImmersiveGreen, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                            }
-                        }
-
-                        // Zoom Slider
-                        Column {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text("Zoom (${String.format(java.util.Locale.US, "%.1fx", scale)})", color = ImmersiveTextSecondary, fontSize = 12.sp)
-                            }
-                            Slider(
-                                value = scale,
-                                onValueChange = { scale = it },
-                                valueRange = 0.5f..5.0f,
-                                colors = SliderDefaults.colors(
-                                    thumbColor = ImmersiveGreen,
-                                    activeTrackColor = ImmersiveGreen,
-                                    inactiveTrackColor = ImmersiveBorder
-                                )
-                            )
-                        }
-
-                        // Rotation Slider
-                        Column {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text("Drehung (${rotation.toInt()}°)", color = ImmersiveTextSecondary, fontSize = 12.sp)
-                            }
-                            Slider(
-                                value = rotation,
-                                onValueChange = { rotation = it },
-                                valueRange = 0f..360f,
-                                colors = SliderDefaults.colors(
-                                    thumbColor = ImmersiveGreen,
-                                    activeTrackColor = ImmersiveGreen,
-                                    inactiveTrackColor = ImmersiveBorder
-                                )
-                            )
-                        }
-
-                        // Content Scale Choice
-                        Column {
-                            Text("Bild-Anpassung", color = ImmersiveTextSecondary, fontSize = 12.sp)
-                            Spacer(modifier = Modifier.height(6.dp))
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                val option1Selected = contentScaleState == "Crop"
-                                val option2Selected = contentScaleState == "Fit"
-                                
-                                Button(
-                                    onClick = { contentScaleState = "Crop" },
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = if (option1Selected) ImmersiveGreen else ImmersivePillBg
-                                    ),
-                                    shape = RoundedCornerShape(12.dp),
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Text("Ausfüllen", color = if (option1Selected) Color.White else ImmersiveTextSecondary, fontSize = 12.sp)
-                                }
-                                Button(
-                                    onClick = { contentScaleState = "Fit" },
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = if (option2Selected) ImmersiveGreen else ImmersivePillBg
-                                    ),
-                                    shape = RoundedCornerShape(12.dp),
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Text("Einpassen", color = if (option2Selected) Color.White else ImmersiveTextSecondary, fontSize = 12.sp)
+                            if (index > 0) {
+                                Box(modifier = Modifier.clickable {
+                                    val newBlocks = moveBlock(blocks, index, -1)
+                                    updateParent(newBlocks)
+                                }) {
+                                    Text("⬆️", fontSize = 14.sp)
                                 }
                             }
-                        }
-
-                        // Filters Scrollable Row
-                        Column {
-                            Text("Farbfilter & Bildstil", color = ImmersiveTextSecondary, fontSize = 12.sp)
-                            Spacer(modifier = Modifier.height(8.dp))
-                            androidx.compose.foundation.lazy.LazyRow(
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                val filters = listOf("None" to "Normal", "Grayscale" to "S/W", "Sepia" to "Sepia", "Revolution Red" to "Rote Welle", "Invert" to "Negativ")
-                                items(filters.size) { idx ->
-                                    val (filterId, label) = filters[idx]
-                                    val selected = colorFilterState == filterId
-                                    Box(
-                                        modifier = Modifier
-                                            .clip(RoundedCornerShape(8.dp))
-                                            .background(if (selected) ImmersiveGreen else ImmersivePillBg)
-                                            .border(1.dp, if (selected) Color.White.copy(alpha = 0.3f) else ImmersiveBorder, RoundedCornerShape(8.dp))
-                                            .clickable { colorFilterState = filterId }
-                                            .padding(horizontal = 12.dp, vertical = 6.dp)
-                                    ) {
-                                        Text(label, color = if (selected) Color.White else ImmersiveTextPrimary, fontSize = 12.sp)
-                                    }
+                            if (index < blocks.lastIndex) {
+                                Box(modifier = Modifier.clickable {
+                                    val newBlocks = moveBlock(blocks, index, 1)
+                                    updateParent(newBlocks)
+                                }) {
+                                    Text("⬇️", fontSize = 14.sp)
                                 }
+                            }
+                            Box(modifier = Modifier.clickable {
+                                val newBlocks = blocks.toMutableList()
+                                newBlocks.removeAt(index)
+                                updateParent(newBlocks)
+                            }) {
+                                Text("❌", fontSize = 14.sp)
                             }
                         }
                     }

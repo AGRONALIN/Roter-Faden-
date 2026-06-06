@@ -263,13 +263,20 @@ fun ArgumentDetailScreen(
                 }
 
                 argument.imagePath?.let { path ->
-                    TransformableLocalImage(
-                        path = path,
-                        transformKey = "arg_${argument.id}",
+                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(240.dp)
-                    )
+                            .wrapContentHeight()
+                            .clip(RoundedCornerShape(16.dp))
+                            .border(1.dp, ImmersiveBorder, RoundedCornerShape(16.dp))
+                    ) {
+                        LocalImageFromPath(
+                            path = path,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .wrapContentHeight()
+                        )
+                    }
                     Spacer(modifier = Modifier.height(16.dp))
                 }
 

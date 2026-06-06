@@ -112,90 +112,17 @@ fun EditArgumentScreen(
                 )
             )
 
-            OutlinedTextField(
+            InlineRichTextEditor(
                 value = antiMarxist,
                 onValueChange = { antiMarxist = it },
-                label = { Text("Antimarxistisches Argument") },
-                modifier = Modifier.fillMaxWidth(),
-                minLines = 4,
-                shape = RoundedCornerShape(16.dp),
-                textStyle = MaterialTheme.typography.bodyLarge.copy(color = ImmersiveTextPrimary),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = ImmersiveGreen,
-                    focusedLabelColor = ImmersiveGreen,
-                    unfocusedBorderColor = ImmersiveBorder,
-                    focusedContainerColor = ImmersiveSurface,
-                    unfocusedContainerColor = ImmersiveSurface,
-                    focusedTextColor = ImmersiveTextPrimary,
-                    unfocusedTextColor = ImmersiveTextPrimary
-                )
+                placeholder = "Antimarxistisches Argument"
             )
 
-            InlineImageInsertBar(
-                textValue = antiMarxist,
-                onTextChange = { antiMarxist = it },
-                placeholderName = "Aufhänger/Argument"
-            )
-
-            OutlinedTextField(
+            InlineRichTextEditor(
                 value = marxist,
                 onValueChange = { marxist = it },
-                label = { Text("Marxistisches Gegenargument") },
-                modifier = Modifier.fillMaxWidth(),
-                minLines = 8,
-                shape = RoundedCornerShape(16.dp),
-                textStyle = MaterialTheme.typography.bodyLarge.copy(color = ImmersiveTextPrimary),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = ImmersiveGreen,
-                    focusedLabelColor = ImmersiveGreen,
-                    unfocusedBorderColor = ImmersiveBorder,
-                    focusedContainerColor = ImmersiveSurface,
-                    unfocusedContainerColor = ImmersiveSurface,
-                    focusedTextColor = ImmersiveTextPrimary,
-                    unfocusedTextColor = ImmersiveTextPrimary
-                )
+                placeholder = "Marxistisches Gegenargument"
             )
-
-            InlineImageInsertBar(
-                textValue = marxist,
-                onTextChange = { marxist = it },
-                placeholderName = "Gegenargument"
-            )
-
-            imagePath?.let { path ->
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(200.dp)
-                        .clip(RoundedCornerShape(16.dp))
-                        .border(1.dp, ImmersiveBorder, RoundedCornerShape(16.dp))
-                ) {
-                    LocalImageFromPath(path, modifier = Modifier.fillMaxSize())
-                    IconButton(
-                        onClick = { imagePath = null },
-                        modifier = Modifier
-                            .align(androidx.compose.ui.Alignment.TopEnd)
-                            .padding(8.dp)
-                            .background(Color.Black.copy(alpha = 0.6f), androidx.compose.foundation.shape.CircleShape)
-                    ) {
-                        Icon(androidx.compose.material.icons.Icons.Filled.Close, contentDescription = "Bild entfernen", tint = Color.White)
-                    }
-                }
-            }
-
-            OutlinedButton(
-                onClick = { imagePickerLauncher.launch("image/*") },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = ImmersiveGreen)
-            ) {
-                Icon(
-                    imageVector = androidx.compose.material.icons.Icons.Default.Image,
-                    contentDescription = "Upload",
-                    modifier = Modifier.padding(end = 8.dp)
-                )
-                Text(if (imagePath == null) "Bild hinzufügen" else "Bild ändern")
-            }
 
             Spacer(modifier = Modifier.height(100.dp))
         }
@@ -377,64 +304,11 @@ fun EditGlossaryScreen(
                         )
                     )
 
-                    OutlinedTextField(
+                    InlineRichTextEditor(
                         value = definition,
                         onValueChange = { definition = it },
-                        label = { Text("Definition") },
-                        modifier = Modifier.fillMaxWidth(),
-                        minLines = 6,
-                        shape = RoundedCornerShape(16.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = ImmersiveTextPrimary,
-                            unfocusedTextColor = ImmersiveTextPrimary,
-                            focusedBorderColor = ImmersiveGreen,
-                            focusedLabelColor = ImmersiveGreen,
-                            unfocusedBorderColor = ImmersiveBorder,
-                            focusedContainerColor = ImmersiveSurface,
-                            unfocusedContainerColor = ImmersiveSurface
-                        )
+                        placeholder = "Definition"
                     )
-
-                    InlineImageInsertBar(
-                        textValue = definition,
-                        onTextChange = { definition = it },
-                        placeholderName = "Definition"
-                    )
-
-                    imagePath?.let { path ->
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(200.dp)
-                                .clip(RoundedCornerShape(16.dp))
-                                .border(1.dp, ImmersiveBorder, RoundedCornerShape(16.dp))
-                        ) {
-                            LocalImageFromPath(path, modifier = Modifier.fillMaxSize())
-                            IconButton(
-                                onClick = { imagePath = null },
-                                modifier = Modifier
-                                    .align(androidx.compose.ui.Alignment.TopEnd)
-                                    .padding(8.dp)
-                                    .background(Color.Black.copy(alpha = 0.6f), androidx.compose.foundation.shape.CircleShape)
-                            ) {
-                                Icon(androidx.compose.material.icons.Icons.Filled.Close, contentDescription = "Bild entfernen", tint = Color.White)
-                            }
-                        }
-                    }
-
-                    OutlinedButton(
-                        onClick = { imagePickerLauncher.launch("image/*") },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = ImmersiveGreen)
-                    ) {
-                        Icon(
-                            imageVector = androidx.compose.material.icons.Icons.Default.Image,
-                            contentDescription = "Upload",
-                            modifier = Modifier.padding(end = 8.dp)
-                        )
-                        Text(if (imagePath == null) "Bild hinzufügen" else "Bild ändern")
-                    }
 
                     Spacer(modifier = Modifier.height(100.dp))
                 }
@@ -616,64 +490,11 @@ fun EditLiteratureScreen(
                         )
                     )
 
-                    OutlinedTextField(
+                    InlineRichTextEditor(
                         value = summary,
                         onValueChange = { summary = it },
-                        label = { Text("Zusammenfassung / Inhalt") },
-                        modifier = Modifier.fillMaxWidth(),
-                        minLines = 8,
-                        shape = RoundedCornerShape(16.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = ImmersiveTextPrimary,
-                            unfocusedTextColor = ImmersiveTextPrimary,
-                            focusedBorderColor = ImmersiveGreen,
-                            focusedLabelColor = ImmersiveGreen,
-                            unfocusedBorderColor = ImmersiveBorder,
-                            focusedContainerColor = ImmersiveSurface,
-                            unfocusedContainerColor = ImmersiveSurface
-                        )
+                        placeholder = "Zusammenfassung / Inhalt"
                     )
-
-                    InlineImageInsertBar(
-                        textValue = summary,
-                        onTextChange = { summary = it },
-                        placeholderName = "Inhalt"
-                    )
-
-                    imagePath?.let { path ->
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(200.dp)
-                                .clip(RoundedCornerShape(16.dp))
-                                .border(1.dp, ImmersiveBorder, RoundedCornerShape(16.dp))
-                        ) {
-                            LocalImageFromPath(path, modifier = Modifier.fillMaxSize())
-                            IconButton(
-                                onClick = { imagePath = null },
-                                modifier = Modifier
-                                    .align(androidx.compose.ui.Alignment.TopEnd)
-                                    .padding(8.dp)
-                                    .background(Color.Black.copy(alpha = 0.6f), androidx.compose.foundation.shape.CircleShape)
-                            ) {
-                                Icon(androidx.compose.material.icons.Icons.Filled.Close, contentDescription = "Bild entfernen", tint = Color.White)
-                            }
-                        }
-                    }
-
-                    OutlinedButton(
-                        onClick = { imagePickerLauncher.launch("image/*") },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = ImmersiveGreen)
-                    ) {
-                        Icon(
-                            imageVector = androidx.compose.material.icons.Icons.Default.Image,
-                            contentDescription = "Upload",
-                            modifier = Modifier.padding(end = 8.dp)
-                        )
-                        Text(if (imagePath == null) "Bild hinzufügen" else "Bild ändern")
-                    }
 
                     Spacer(modifier = Modifier.height(100.dp))
                 }
