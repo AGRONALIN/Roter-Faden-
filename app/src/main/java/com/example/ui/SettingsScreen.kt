@@ -280,7 +280,7 @@ fun SettingsScreen(
 
             // App Version Info
             Text(
-                text = "Roter Faden • Version ${BuildConfig.VERSION_NAME}\nEntwickelt von Agronalin",
+                text = "Roter Faden • Beta 1.58\nEntwickelt von Agronalin",
                 color = ImmersiveTextSecondary,
                 fontSize = 11.sp,
                 textAlign = TextAlign.Center,
