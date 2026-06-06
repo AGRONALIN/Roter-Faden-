@@ -263,12 +263,12 @@ fun RoterFadenApp(viewModel: AppViewModel) {
                             targetState = currentTab,
                             transitionSpec = {
                                 if (targetState > initialState) {
-                                    slideInHorizontally(animationSpec = spring(stiffness = 200f, dampingRatio = 0.85f)) { width -> width }.togetherWith(
-                                        slideOutHorizontally(animationSpec = spring(stiffness = 200f, dampingRatio = 0.85f)) { width -> -width }
+                                    slideInHorizontally(animationSpec = spring(stiffness = 800f, dampingRatio = 0.85f)) { width -> width }.togetherWith(
+                                        slideOutHorizontally(animationSpec = spring(stiffness = 800f, dampingRatio = 0.85f)) { width -> -width }
                                     ).using(SizeTransform(clip = false))
                                 } else {
-                                    slideInHorizontally(animationSpec = spring(stiffness = 200f, dampingRatio = 0.85f)) { width -> -width }.togetherWith(
-                                        slideOutHorizontally(animationSpec = spring(stiffness = 200f, dampingRatio = 0.85f)) { width -> width }
+                                    slideInHorizontally(animationSpec = spring(stiffness = 800f, dampingRatio = 0.85f)) { width -> -width }.togetherWith(
+                                        slideOutHorizontally(animationSpec = spring(stiffness = 800f, dampingRatio = 0.85f)) { width -> width }
                                     ).using(SizeTransform(clip = false))
                                 }
                             },
@@ -294,7 +294,6 @@ fun RoterFadenApp(viewModel: AppViewModel) {
                                 },
                             label = "tab_transition"
                         ) { page ->
-                            val isTransitionRunning = transition.currentState != transition.targetState || transition.isRunning
                             when (page) {
                                 0 -> HomeScreen(
                                     viewModel = viewModel,
@@ -302,24 +301,21 @@ fun RoterFadenApp(viewModel: AppViewModel) {
                                     sharedTransitionScope = this@SharedTransitionLayout,
                                     animatedVisibilityScope = this@AnimatedContent,
                                     navAnimatedVisibilityScope = mainScope,
-                                    onNavigateToSearch = { currentTab = 2 },
-                                    isTransitionRunning = isTransitionRunning
+                                    onNavigateToSearch = { currentTab = 2 }
                                 )
                                 1 -> CollectionScreen(
                                     viewModel = viewModel,
                                     navController = navController,
                                     sharedTransitionScope = this@SharedTransitionLayout,
                                     animatedVisibilityScope = this@AnimatedContent,
-                                    navAnimatedVisibilityScope = mainScope,
-                                    isTransitionRunning = isTransitionRunning
+                                    navAnimatedVisibilityScope = mainScope
                                 )
                                 2 -> SearchScreen(
                                     viewModel = viewModel,
                                     navController = navController,
                                     sharedTransitionScope = this@SharedTransitionLayout,
                                     animatedVisibilityScope = this@AnimatedContent,
-                                    navAnimatedVisibilityScope = mainScope,
-                                    isTransitionRunning = isTransitionRunning
+                                    navAnimatedVisibilityScope = mainScope
                                 )
                             }
                         }

@@ -50,8 +50,7 @@ fun CollectionScreen(
     navController: NavController,
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
-    navAnimatedVisibilityScope: AnimatedVisibilityScope? = null,
-    isTransitionRunning: Boolean = false
+    navAnimatedVisibilityScope: AnimatedVisibilityScope? = null
 ) {
     val selectedTabIndex by viewModel.collectionSelectedTabIndex.collectAsState()
     val tabs = listOf("Argumente", "Glossar", "Literatur")
@@ -464,9 +463,9 @@ fun CollectionScreen(
                     transitionSpec = {
                         val springSpec = androidx.compose.animation.core.spring<androidx.compose.ui.unit.IntOffset>(
                             dampingRatio = 0.8f,
-                            stiffness = 50f
+                            stiffness = 800f
                         )
-                        val fadeSpec = tween<Float>(800)
+                        val fadeSpec = tween<Float>(200)
 
                         if (targetState > initialState) {
                             (slideInHorizontally(
@@ -492,16 +491,13 @@ fun CollectionScreen(
                     },
                     label = "tab animation"
                 ) { targetIndex ->
-                    val isInternalTransitionActive = transition.currentState != transition.targetState
-                    val scrollEnabled = !isTransitionRunning && !isInternalTransitionActive && !sharedTransitionScope.isTransitionActive
                     when (targetIndex) {
                         0 -> {
                             LazyColumn(
                                 state = listState0,
                                 modifier = Modifier.fillMaxSize(),
                                 contentPadding = PaddingValues(bottom = 120.dp, top = 32.dp),
-                                verticalArrangement = Arrangement.spacedBy(16.dp),
-                                userScrollEnabled = scrollEnabled
+                                verticalArrangement = Arrangement.spacedBy(16.dp)
                             ) {
                                 if (allArguments.isEmpty()) {
                                     item {
@@ -551,8 +547,7 @@ fun CollectionScreen(
                                 state = listState1,
                                 modifier = Modifier.fillMaxSize(),
                                 contentPadding = PaddingValues(bottom = 120.dp, top = 32.dp),
-                                verticalArrangement = Arrangement.spacedBy(16.dp),
-                                userScrollEnabled = scrollEnabled
+                                verticalArrangement = Arrangement.spacedBy(16.dp)
                             ) {
                                 if (allGlossaryItems.isEmpty()) {
                                     item {
@@ -602,8 +597,7 @@ fun CollectionScreen(
                                 state = listState2,
                                 modifier = Modifier.fillMaxSize(),
                                 contentPadding = PaddingValues(bottom = 120.dp, top = 32.dp),
-                                verticalArrangement = Arrangement.spacedBy(16.dp),
-                                userScrollEnabled = scrollEnabled
+                                verticalArrangement = Arrangement.spacedBy(16.dp)
                             ) {
                                 if (allLiteratureItems.isEmpty()) {
                                     item {

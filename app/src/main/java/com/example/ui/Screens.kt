@@ -66,8 +66,7 @@ fun HomeScreen(
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
     navAnimatedVisibilityScope: AnimatedVisibilityScope? = null,
-    onNavigateToSearch: () -> Unit = {},
-    isTransitionRunning: Boolean = false
+    onNavigateToSearch: () -> Unit = {}
 ) {
     val recentArguments by viewModel.recentArguments.collectAsState()
     val topRecentArguments = remember(recentArguments) { recentArguments.take(3) }
@@ -121,8 +120,7 @@ fun HomeScreen(
                     .fillMaxSize()
                     .verticalFadingEdge(topEdge = 20.dp, bottomEdge = 40.dp),
                 contentPadding = PaddingValues(bottom = 120.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                userScrollEnabled = !isTransitionRunning && !sharedTransitionScope.isTransitionActive
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 // Header (always visible, scrolls with list)
                 item {
@@ -266,8 +264,7 @@ fun HomeScreen(
                             androidx.compose.foundation.lazy.LazyRow(
                                 horizontalArrangement = Arrangement.spacedBy(10.dp),
                                 contentPadding = PaddingValues(horizontal = 24.dp),
-                                modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
-                                userScrollEnabled = !isTransitionRunning
+                                modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
                             ) {
                                 items(recentCategories) { category ->
                                     Box(
@@ -372,6 +369,7 @@ fun ArgumentCard(
                 animatedVisibilityScope = animatedVisibilityScope,
                 enter = fadeIn(animationSpec = tween(200)),
                 exit = fadeOut(animationSpec = tween(150)),
+                clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(12.dp)),
                 resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(contentScale = androidx.compose.ui.layout.ContentScale.Crop),
                 boundsTransform = { _, _ ->
                     spring(
@@ -491,6 +489,7 @@ fun GlossaryCard(
                 animatedVisibilityScope = animatedVisibilityScope,
                 enter = fadeIn(animationSpec = tween(200)),
                 exit = fadeOut(animationSpec = tween(150)),
+                clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(12.dp)),
                 resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(contentScale = androidx.compose.ui.layout.ContentScale.Crop),
                 boundsTransform = { _, _ ->
                     spring(
@@ -602,6 +601,7 @@ fun LiteratureCard(
                 animatedVisibilityScope = animatedVisibilityScope,
                 enter = fadeIn(animationSpec = tween(200)),
                 exit = fadeOut(animationSpec = tween(150)),
+                clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(12.dp)),
                 resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(contentScale = androidx.compose.ui.layout.ContentScale.Crop),
                 boundsTransform = { _, _ ->
                     spring(
@@ -721,8 +721,7 @@ fun SearchScreen(
     navController: NavController,
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
-    navAnimatedVisibilityScope: AnimatedVisibilityScope? = null,
-    isTransitionRunning: Boolean = false
+    navAnimatedVisibilityScope: AnimatedVisibilityScope? = null
 ) {
     val searchQuery by viewModel.searchQuery.collectAsState()
     val searchResults by viewModel.searchResults.collectAsState()
@@ -775,8 +774,7 @@ fun SearchScreen(
                     .verticalFadingEdge(topEdge = 20.dp, bottomEdge = 40.dp)
                     .padding(horizontal = 24.dp),
                 contentPadding = PaddingValues(top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 160.dp, bottom = 120.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                userScrollEnabled = !isTransitionRunning
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 item {
                     val interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
