@@ -376,6 +376,33 @@ fun moveBlock(blocks: List<EditorBlock>, index: Int, direction: Int): List<Edito
     return mutable
 }
 
+fun normalizeBlocks(blocks: List<EditorBlock>): List<EditorBlock> {
+    val result = mutableListOf<EditorBlock>()
+    var idCounter = 1000
+    
+    if (blocks.isEmpty()) {
+        return listOf(EditorBlock.Text("text_norm_0", ""))
+    }
+    
+    // Ensure starts with a text block
+    if (blocks.first() is EditorBlock.Image) {
+        result.add(EditorBlock.Text("text_norm_${idCounter++}", ""))
+    }
+    
+    for (i in blocks.indices) {
+        val current = blocks[i]
+        result.add(current)
+        if (current is EditorBlock.Image) {
+            // If it's the last block, or the next block is also an image, add an empty text block
+            if (i == blocks.lastIndex || blocks[i + 1] is EditorBlock.Image) {
+                result.add(EditorBlock.Text("text_norm_${idCounter++}", ""))
+            }
+        }
+    }
+    
+    return result
+}
+
 @Composable
 fun InlineRichTextEditor(
     value: String,
@@ -384,20 +411,20 @@ fun InlineRichTextEditor(
     modifier: Modifier = Modifier
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
-    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
     
     var lastSentValue by remember { mutableStateOf(value) }
     var blocks by remember {
-        mutableStateOf(textToBlocks(value))
+        mutableStateOf(normalizeBlocks(textToBlocks(value)))
     }
     
-    if (value != lastSentValue) {
-        blocks = textToBlocks(value)
+    val currentSerialized = blocksToText(blocks)
+    if (value != currentSerialized && value != lastSentValue) {
+        blocks = normalizeBlocks(textToBlocks(value))
         lastSentValue = value
     }
     
     val updateParent = { newBlocks: List<EditorBlock> ->
-        val clean = cleanAndMinimizeBlocks(newBlocks)
+        val clean = normalizeBlocks(cleanAndMinimizeBlocks(newBlocks))
         blocks = clean
         val outText = blocksToText(clean)
         lastSentValue = outText
@@ -411,25 +438,54 @@ fun InlineRichTextEditor(
         blocks.forEachIndexed { index, block ->
             when (block) {
                 is EditorBlock.Text -> {
+                    var textFieldValue by remember(block.id) {
+                        mutableStateOf(androidx.compose.ui.text.input.TextFieldValue(
+                            text = block.content,
+                            selection = androidx.compose.ui.text.TextRange(block.content.length)
+                        ))
+                    }
+                    
+                    if (textFieldValue.text != block.content) {
+                        textFieldValue = textFieldValue.copy(
+                            text = block.content,
+                            selection = androidx.compose.ui.text.TextRange(block.content.length)
+                        )
+                    }
+
                     val imagePickerLauncher = rememberLauncherForActivityResult(
                         contract = ActivityResultContracts.GetContent()
                     ) { uri ->
                         uri?.let {
                             val copiedPath = copyUriToInternalStorage(context, it)
                             if (copiedPath != null) {
+                                val currentText = textFieldValue.text
+                                val cursorPosition = textFieldValue.selection.start.coerceIn(0, currentText.length)
+                                val textBefore = currentText.substring(0, cursorPosition)
+                                val textAfter = currentText.substring(cursorPosition)
+                                
                                 val newBlocks = blocks.toMutableList()
-                                newBlocks.add(index + 1, EditorBlock.Image("img_${System.currentTimeMillis()}", copiedPath))
+                                newBlocks[index] = EditorBlock.Text(block.id, textBefore)
+                                
+                                val imgId = "img_${System.currentTimeMillis()}"
+                                newBlocks.add(index + 1, EditorBlock.Image(imgId, copiedPath))
+                                
+                                val afterId = "text_after_${System.currentTimeMillis()}"
+                                newBlocks.add(index + 2, EditorBlock.Text(afterId, textAfter))
+                                
                                 updateParent(newBlocks)
                             }
                         }
                     }
 
                     OutlinedTextField(
-                        value = block.content,
-                        onValueChange = { newText ->
-                            val newBlocks = blocks.toMutableList()
-                            newBlocks[index] = EditorBlock.Text(block.id, newText)
-                            updateParent(newBlocks)
+                        value = textFieldValue,
+                        onValueChange = { newValue ->
+                            textFieldValue = newValue
+                            if (newValue.text != block.content) {
+                                val newBlocks = blocks.toMutableList()
+                                newBlocks[index] = EditorBlock.Text(block.id, newValue.text)
+                                updateParent(newBlocks)
+                            }
                         },
                         label = { Text(placeholder) },
                         modifier = Modifier.fillMaxWidth(),
@@ -510,3 +566,4 @@ fun InlineRichTextEditor(
         }
     }
 }
+
