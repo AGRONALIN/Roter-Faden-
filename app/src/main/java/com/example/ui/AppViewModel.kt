@@ -501,43 +501,64 @@ class AppViewModel(
             val config = parseRepoPath(githubRepoPath.value)
             val directApkDownloadUrl = "https://raw.githubusercontent.com/${config.owner}/${config.name}/${config.branch}/${config.apkPath}"
 
-            // 1. Try checking app/build.gradle.kts (Direct source code version bump tracker)
+            // 1. Try checking commit metadata for .build-outputs/app-debug.apk directly
             try {
-                val gradleUrl = java.net.URL("https://raw.githubusercontent.com/${config.owner}/${config.name}/${config.branch}/app/build.gradle.kts")
-                val connection = gradleUrl.openConnection() as java.net.HttpURLConnection
+                val url = java.net.URL("https://api.github.com/repos/${config.owner}/${config.name}/commits?path=${config.apkPath}&page=1&per_page=1")
+                val connection = url.openConnection() as java.net.HttpURLConnection
                 connection.connectTimeout = 6000
                 connection.readTimeout = 6000
                 connection.setRequestProperty("User-Agent", "RoterFaden-App")
                 
                 val responseCode = connection.responseCode
-                anyRequestSucceeded = true // Got an HTTP response from GitHub servers
+                anyRequestSucceeded = true // Got an HTTP response from GitHub API
                 
                 if (responseCode == 200) {
                     val text = connection.inputStream.bufferedReader().use { it.readText() }
-                    
-                    val vcMatcher = java.util.regex.Pattern.compile("versionCode\\s*=\\s*(\\d+)").matcher(text)
-                    val vnMatcher = java.util.regex.Pattern.compile("versionName\\s*=\\s*\"([^\"]+)\"").matcher(text)
-                    
-                    val extVCode = if (vcMatcher.find()) vcMatcher.group(1)?.toIntOrNull() ?: 1 else 1
-                    val extVName = if (vnMatcher.find()) vnMatcher.group(1) ?: "1.0" else "1.0"
-                    
-                    android.util.Log.d("RoterFadenUpdater", "Gradle Check: online versionCode=$extVCode, versionName=$extVName vs local versionCode=$currentVersionCode, versionName=$currentVersionName")
-                    
-                    if (extVCode > currentVersionCode || isNewerVersion(currentVersionName, extVName)) {
-                        _updateInfo.value = UpdateInfo(
-                            versionCode = extVCode,
-                            versionName = extVName,
-                            downloadUrl = directApkDownloadUrl,
-                            changelog = "Ein neues Repository-Code-Update wurde auf GitHub im Branch '${config.branch}' gefunden!\n\nDatei: /${config.apkPath}"
-                        )
-                        _updateCheckResult.value = "Neues Update verfügbar: v$extVName!"
-                        updateFound = true
+                    val jsonArray = org.json.JSONArray(text)
+                    if (jsonArray.length() > 0) {
+                        val commitObj = jsonArray.getJSONObject(0)
+                        val sha = commitObj.optString("sha", "")
+                        val commitData = commitObj.optJSONObject("commit")
+                        val committerData = commitData?.optJSONObject("committer")
+                        val commitDateStr = committerData?.optString("date", "") ?: ""
+                        val commitMsg = commitData?.optString("message", "") ?: "Neues APK-Build im Repository."
+                        
+                        if (commitDateStr.isNotBlank()) {
+                            val sdf = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", java.util.Locale.US).apply {
+                                timeZone = java.util.TimeZone.getTimeZone("UTC")
+                            }
+                            val remoteTime = sdf.parse(commitDateStr)?.time ?: 0L
+                            val localInstallTime = try {
+                                context.packageManager.getPackageInfo(context.packageName, 0).lastUpdateTime
+                            } catch (e: Exception) {
+                                0L
+                            }
+                            
+                            val savedSha = sharedPreferences.getString("last_installed_apk_sha", "") ?: ""
+                            val isNewer = remoteTime > (localInstallTime + 10000) // 10s margin for clock differences
+                            
+                            android.util.Log.d("RoterFadenUpdater", "APK Commits Check: remote = $commitDateStr ($remoteTime), local installed = $localInstallTime, isNewer = $isNewer")
+                            
+                            if (isNewer || (savedSha.isNotEmpty() && savedSha != sha)) {
+                                _updateInfo.value = UpdateInfo(
+                                    versionCode = currentVersionCode + 1,
+                                    versionName = "Build-${sha.take(7)}",
+                                    downloadUrl = directApkDownloadUrl,
+                                    changelog = "Ein neues APK-Build wurde directly im GitHub-Repository gefunden!\n\n" +
+                                            "• Commit-Inhalt: $commitMsg\n" +
+                                            "• Datum: $commitDateStr\n" +
+                                            "• Commit SHA: $sha"
+                                )
+                                _updateCheckResult.value = "Neues APK-Update verfügbar!"
+                                updateFound = true
+                            }
+                        }
                     }
                 } else {
-                    android.util.Log.d("RoterFadenUpdater", "Gradle Check returned status $responseCode")
+                    android.util.Log.d("RoterFadenUpdater", "APK Commits Check returned status $responseCode")
                 }
             } catch (e: Exception) {
-                android.util.Log.e("RoterFadenUpdater", "Gradle Check error", e)
+                android.util.Log.e("RoterFadenUpdater", "APK Commits Check error", e)
                 if (e !is java.net.UnknownHostException && e !is java.net.ConnectException && e !is java.io.IOException) {
                     anyRequestSucceeded = true
                 }
@@ -713,6 +734,12 @@ class AppViewModel(
                     input.close()
                     
                     _updateDownloadProgress.value = 1.0f
+                    _updateInfo.value?.let { info ->
+                        if (info.versionName.startsWith("Build-")) {
+                            val sha = info.versionName.removePrefix("Build-")
+                            sharedPreferences.edit().putString("last_installed_apk_sha", sha).apply()
+                        }
+                    }
                     installApk(context, apkFile)
                 } catch (e: Exception) {
                     e.printStackTrace()
