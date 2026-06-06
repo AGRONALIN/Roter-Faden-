@@ -463,9 +463,9 @@ fun CollectionScreen(
                     transitionSpec = {
                         val springSpec = androidx.compose.animation.core.spring<androidx.compose.ui.unit.IntOffset>(
                             dampingRatio = 0.8f,
-                            stiffness = 800f
+                            stiffness = 50f
                         )
-                        val fadeSpec = tween<Float>(200)
+                        val fadeSpec = tween<Float>(800)
 
                         if (targetState > initialState) {
                             (slideInHorizontally(
@@ -497,7 +497,8 @@ fun CollectionScreen(
                                 state = listState0,
                                 modifier = Modifier.fillMaxSize(),
                                 contentPadding = PaddingValues(bottom = 120.dp, top = 32.dp),
-                                verticalArrangement = Arrangement.spacedBy(16.dp)
+                                verticalArrangement = Arrangement.spacedBy(16.dp),
+                                userScrollEnabled = !sharedTransitionScope.isTransitionActive
                             ) {
                                 if (allArguments.isEmpty()) {
                                     item {
@@ -547,7 +548,8 @@ fun CollectionScreen(
                                 state = listState1,
                                 modifier = Modifier.fillMaxSize(),
                                 contentPadding = PaddingValues(bottom = 120.dp, top = 32.dp),
-                                verticalArrangement = Arrangement.spacedBy(16.dp)
+                                verticalArrangement = Arrangement.spacedBy(16.dp),
+                                userScrollEnabled = !sharedTransitionScope.isTransitionActive
                             ) {
                                 if (allGlossaryItems.isEmpty()) {
                                     item {
@@ -597,7 +599,8 @@ fun CollectionScreen(
                                 state = listState2,
                                 modifier = Modifier.fillMaxSize(),
                                 contentPadding = PaddingValues(bottom = 120.dp, top = 32.dp),
-                                verticalArrangement = Arrangement.spacedBy(16.dp)
+                                verticalArrangement = Arrangement.spacedBy(16.dp),
+                                userScrollEnabled = !sharedTransitionScope.isTransitionActive
                             ) {
                                 if (allLiteratureItems.isEmpty()) {
                                     item {

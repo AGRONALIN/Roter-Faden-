@@ -120,7 +120,8 @@ fun HomeScreen(
                     .fillMaxSize()
                     .verticalFadingEdge(topEdge = 20.dp, bottomEdge = 40.dp),
                 contentPadding = PaddingValues(bottom = 120.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                userScrollEnabled = !sharedTransitionScope.isTransitionActive
             ) {
                 // Header (always visible, scrolls with list)
                 item {
@@ -370,6 +371,7 @@ fun ArgumentCard(
                 enter = fadeIn(animationSpec = tween(200)),
                 exit = fadeOut(animationSpec = tween(150)),
                 clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(12.dp)),
+                renderInOverlayDuringTransition = true,
                 resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(contentScale = androidx.compose.ui.layout.ContentScale.Crop),
                 boundsTransform = { _, _ ->
                     spring(
@@ -401,6 +403,7 @@ fun ArgumentCard(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .height(130.dp)
                         .then(tabSharedBoundsModifier)
                         .background(if (isSelected) ImmersiveGreen.copy(alpha = 0.2f) else CreamRed, RoundedCornerShape(12.dp))
                         .clip(RoundedCornerShape(12.dp))
@@ -436,6 +439,7 @@ fun ArgumentCard(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .height(130.dp)
                     .then(tabSharedBoundsModifier)
                     .background(if (isSelected) ImmersiveGreen.copy(alpha = 0.2f) else CreamRed, RoundedCornerShape(12.dp))
                     .clip(RoundedCornerShape(12.dp))
@@ -490,6 +494,7 @@ fun GlossaryCard(
                 enter = fadeIn(animationSpec = tween(200)),
                 exit = fadeOut(animationSpec = tween(150)),
                 clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(12.dp)),
+                renderInOverlayDuringTransition = true,
                 resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(contentScale = androidx.compose.ui.layout.ContentScale.Crop),
                 boundsTransform = { _, _ ->
                     spring(
@@ -521,6 +526,7 @@ fun GlossaryCard(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .height(130.dp)
                         .then(tabSharedBoundsModifier)
                         .background(if (isSelected) ImmersiveGreen.copy(alpha = 0.2f) else ImmersivePillBg, RoundedCornerShape(12.dp))
                         .clip(RoundedCornerShape(12.dp))
@@ -553,6 +559,7 @@ fun GlossaryCard(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .height(130.dp)
                     .then(tabSharedBoundsModifier)
                     .background(if (isSelected) ImmersiveGreen.copy(alpha = 0.2f) else ImmersivePillBg, RoundedCornerShape(12.dp))
                     .clip(RoundedCornerShape(12.dp))
@@ -602,6 +609,7 @@ fun LiteratureCard(
                 enter = fadeIn(animationSpec = tween(200)),
                 exit = fadeOut(animationSpec = tween(150)),
                 clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(12.dp)),
+                renderInOverlayDuringTransition = true,
                 resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(contentScale = androidx.compose.ui.layout.ContentScale.Crop),
                 boundsTransform = { _, _ ->
                     spring(
@@ -633,6 +641,7 @@ fun LiteratureCard(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .height(150.dp)
                         .then(tabSharedBoundsModifier)
                         .background(if (isSelected) ImmersiveGreen.copy(alpha = 0.2f) else ImmersivePillBg, RoundedCornerShape(12.dp))
                         .clip(RoundedCornerShape(12.dp))
@@ -674,6 +683,7 @@ fun LiteratureCard(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .height(150.dp)
                     .then(tabSharedBoundsModifier)
                     .background(if (isSelected) ImmersiveGreen.copy(alpha = 0.2f) else ImmersivePillBg, RoundedCornerShape(12.dp))
                     .clip(RoundedCornerShape(12.dp))
@@ -774,7 +784,8 @@ fun SearchScreen(
                     .verticalFadingEdge(topEdge = 20.dp, bottomEdge = 40.dp)
                     .padding(horizontal = 24.dp),
                 contentPadding = PaddingValues(top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 160.dp, bottom = 120.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                userScrollEnabled = !sharedTransitionScope.isTransitionActive
             ) {
                 item {
                     val interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
