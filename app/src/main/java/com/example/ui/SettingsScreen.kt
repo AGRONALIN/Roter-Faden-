@@ -3,6 +3,7 @@ package com.example.ui
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -44,6 +45,8 @@ fun SettingsScreen(
     val githubRepoPath by viewModel.githubRepoPath.collectAsState()
     var editRepoPath by remember(githubRepoPath) { mutableStateOf(githubRepoPath) }
     var showDialog by remember { mutableStateOf(false) }
+    val updateInfo by viewModel.updateInfo.collectAsState()
+    val updateDownloadProgress by viewModel.updateDownloadProgress.collectAsState()
 
     Scaffold(
         containerColor = ImmersiveBackground,
@@ -291,7 +294,7 @@ fun SettingsScreen(
 
     if (showDialog) {
         AlertDialog(
-            onDismissRequest = { if (!isCheckingForUpdates) showDialog = false },
+            onDismissRequest = { if (!isCheckingForUpdates && updateDownloadProgress == null) showDialog = false },
             containerColor = ImmersiveSurface,
             titleContentColor = ImmersiveTextPrimary,
             textContentColor = ImmersiveTextSecondary,
@@ -323,10 +326,12 @@ fun SettingsScreen(
                         )
                     } else {
                         val resultText = updateCheckResult ?: ""
-                        val isSuccess = resultText.contains("neuesten Stand") || resultText.contains("Update verfügbar")
+                        val isUpdateAvailable = updateInfo != null
+                        val isSuccess = resultText.contains("neuesten Stand") || isUpdateAvailable
+                        
                         Icon(
-                            imageVector = if (isSuccess) Icons.Default.CheckCircle else Icons.Default.Error,
-                            contentDescription = if (isSuccess) "Ergebnis" else "Fehler",
+                            imageVector = if (isUpdateAvailable) Icons.Default.CloudDownload else if (isSuccess) Icons.Default.CheckCircle else Icons.Default.Error,
+                            contentDescription = "Status",
                             tint = if (isSuccess) ImmersiveGreen else Color(0xFFEF5350),
                             modifier = Modifier.size(48.dp)
                         )
@@ -337,15 +342,88 @@ fun SettingsScreen(
                             fontWeight = FontWeight.Medium,
                             lineHeight = 20.sp
                         )
+
+                        if (isUpdateAvailable && updateInfo != null) {
+                            val info = updateInfo!!
+                            if (info.changelog.isNotBlank()) {
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = "Änderungen in v${info.versionName}:",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 12.sp,
+                                    color = ImmersiveTextSecondary,
+                                    modifier = Modifier.align(Alignment.Start)
+                                )
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(ImmersiveBackground, RoundedCornerShape(8.dp))
+                                        .border(1.dp, ImmersiveBorder, RoundedCornerShape(8.dp))
+                                        .padding(10.dp)
+                                ) {
+                                    Text(
+                                        text = info.changelog,
+                                        fontSize = 11.sp,
+                                        color = ImmersiveTextPrimary
+                                    )
+                                }
+                            }
+
+                            if (updateDownloadProgress != null) {
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Column(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    LinearProgressIndicator(
+                                        progress = { updateDownloadProgress ?: 0f },
+                                        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(4.dp)),
+                                        color = ImmersiveGreen,
+                                        trackColor = ImmersiveBorder
+                                    )
+                                    val percent = ((updateDownloadProgress ?: 0f) * 100).toInt()
+                                    Text(
+                                        text = "Wird heruntergeladen... $percent%",
+                                        color = ImmersiveTextSecondary,
+                                        fontSize = 11.sp
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
             },
             confirmButton = {
                 if (!isCheckingForUpdates) {
+                    val info = updateInfo
+                    if (info != null) {
+                        Button(
+                            onClick = {
+                                viewModel.downloadAndInstallUpdate(context, info.downloadUrl)
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = ImmersiveGreen),
+                            enabled = updateDownloadProgress == null,
+                            shape = RoundedCornerShape(50)
+                        ) {
+                            Text("Jetzt installieren", color = Color.White)
+                        }
+                    } else {
+                        TextButton(
+                            onClick = { showDialog = false }
+                        ) {
+                            Text("Schließen", color = ImmersiveGreen, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            },
+            dismissButton = {
+                if (!isCheckingForUpdates && updateInfo != null) {
                     TextButton(
-                        onClick = { showDialog = false }
+                        onClick = { showDialog = false },
+                        enabled = updateDownloadProgress == null
                     ) {
-                        Text("Schließen", color = ImmersiveGreen, fontWeight = FontWeight.Bold)
+                        Text("Später", color = ImmersiveTextSecondary)
                     }
                 }
             }

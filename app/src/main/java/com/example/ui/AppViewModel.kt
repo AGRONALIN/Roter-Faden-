@@ -69,13 +69,67 @@ class AppViewModel(
     }
 
     val githubRepoPath: MutableStateFlow<String> = MutableStateFlow(
-        sharedPreferences.getString("github_repo_path", "noafelix/RoterFaden") ?: "noafelix/RoterFaden"
+        sharedPreferences.getString("github_repo_path", "AGRONALIN/Roter-Faden-") ?: "AGRONALIN/Roter-Faden-"
     )
 
     fun updateGithubRepoPath(path: String) {
         val trimmed = path.trim()
         githubRepoPath.value = trimmed
         sharedPreferences.edit().putString("github_repo_path", trimmed).apply()
+    }
+
+    data class RepoConfig(
+        val owner: String,
+        val name: String,
+        val branch: String,
+        val apkPath: String
+    )
+
+    fun parseRepoPath(input: String): RepoConfig {
+        var owner = "AGRONALIN"
+        var name = "Roter-Faden-"
+        var branch = "main"
+        var apkPath = ".build-outputs/app-debug.apk"
+
+        val sanitized = input.trim()
+        if (sanitized.startsWith("http://") || sanitized.startsWith("https://")) {
+            try {
+                val url = java.net.URL(sanitized)
+                val host = url.host
+                val pathParts = url.path.split("/").filter { it.isNotEmpty() }
+                if (host.contains("github.com")) {
+                    if (pathParts.size >= 2) {
+                        owner = pathParts[0]
+                        name = pathParts[1]
+                    }
+                    if (pathParts.size >= 5 && pathParts[2] == "blob") {
+                        branch = pathParts[3]
+                        apkPath = pathParts.subList(4, pathParts.size).joinToString("/")
+                    }
+                } else if (host.contains("raw.githubusercontent.com")) {
+                    if (pathParts.size >= 2) {
+                        owner = pathParts[0]
+                        name = pathParts[1]
+                    }
+                    if (pathParts.size >= 4) {
+                        branch = pathParts[2]
+                        apkPath = pathParts.subList(3, pathParts.size).joinToString("/")
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        } else {
+            val parts = sanitized.split("/")
+            if (parts.size >= 2) {
+                owner = parts[0]
+                name = parts[1]
+            }
+            if (parts.size >= 3) {
+                branch = parts[2]
+            }
+        }
+        return RepoConfig(owner, name, branch, apkPath)
     }
 
     val recentArguments: StateFlow<List<Argument>> = repository.recentArguments
@@ -443,63 +497,46 @@ class AppViewModel(
 
             var updateFound = false
             var errorOccurred = false
-            val repo = githubRepoPath.value
+            
+            val config = parseRepoPath(githubRepoPath.value)
+            val directApkDownloadUrl = "https://raw.githubusercontent.com/${config.owner}/${config.name}/${config.branch}/${config.apkPath}"
 
-            // 1. Try Github Releases API first
+            // 1. Try checking app/build.gradle.kts (Direct source code version bump tracker)
             try {
-                val url = java.net.URL("https://api.github.com/repos/$repo/releases/latest")
-                val connection = url.openConnection() as java.net.HttpURLConnection
+                val gradleUrl = java.net.URL("https://raw.githubusercontent.com/${config.owner}/${config.name}/${config.branch}/app/build.gradle.kts")
+                val connection = gradleUrl.openConnection() as java.net.HttpURLConnection
                 connection.connectTimeout = 6000
                 connection.readTimeout = 6000
                 connection.setRequestProperty("User-Agent", "RoterFaden-App")
-                
                 if (connection.responseCode == 200) {
                     val text = connection.inputStream.bufferedReader().use { it.readText() }
-                    val json = org.json.JSONObject(text)
-                    val tagName = json.optString("tag_name", "")
-                    val body = json.optString("body", "")
                     
-                    // Look for an apk asset
-                    var dlUrl = ""
-                    val assets = json.optJSONArray("assets")
-                    if (assets != null) {
-                        for (i in 0 until assets.length()) {
-                            val asset = assets.getJSONObject(i)
-                            val name = asset.optString("name", "")
-                            if (name.endsWith(".apk")) {
-                                dlUrl = asset.optString("browser_download_url", "")
-                                break
-                            }
-                        }
-                    }
-                    if (dlUrl.isEmpty() && assets != null && assets.length() > 0) {
-                        dlUrl = assets.getJSONObject(0).optString("browser_download_url", "")
-                    }
-
-                    if (tagName.isNotBlank() && isNewerVersion(currentVersionName, tagName)) {
-                        val finalDlUrl = if (dlUrl.isNotEmpty()) dlUrl else "https://github.com/$repo/releases"
+                    val vcMatcher = java.util.regex.Pattern.compile("versionCode\\s*=\\s*(\\d+)").matcher(text)
+                    val vnMatcher = java.util.regex.Pattern.compile("versionName\\s*=\\s*\"([^\"]+)\"").matcher(text)
+                    
+                    val extVCode = if (vcMatcher.find()) vcMatcher.group(1)?.toIntOrNull() ?: 1 else 1
+                    val extVName = if (vnMatcher.find()) vnMatcher.group(1) ?: "1.0" else "1.0"
+                    
+                    if (extVCode > currentVersionCode || isNewerVersion(currentVersionName, extVName)) {
                         _updateInfo.value = UpdateInfo(
-                            versionCode = currentVersionCode + 1, // trigger update UI
-                            versionName = tagName,
-                            downloadUrl = finalDlUrl,
-                            changelog = body
+                            versionCode = extVCode,
+                            versionName = extVName,
+                            downloadUrl = directApkDownloadUrl,
+                            changelog = "Ein neues Repository-Code-Update wurde auf GitHub im Branch '${config.branch}' gefunden!\n\nDatei: /${config.apkPath}"
                         )
-                        _updateCheckResult.value = "Neues Update verfügbar: $tagName!"
+                        _updateCheckResult.value = "Neues Update verfügbar: v$extVName!"
                         updateFound = true
                     }
-                } else if (connection.responseCode != 404) {
-                    errorOccurred = true
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
-                errorOccurred = true
             }
 
-            // 2. Fallback to raw update.json if no update found or release check failed/404
+            // 2. Try checking update.json in the repository
             if (!updateFound) {
                 try {
-                    val url = java.net.URL("https://raw.githubusercontent.com/$repo/main/update.json")
-                    val connection = url.openConnection() as java.net.HttpURLConnection
+                    val updateJsonUrl = java.net.URL("https://raw.githubusercontent.com/${config.owner}/${config.name}/${config.branch}/update.json")
+                    val connection = updateJsonUrl.openConnection() as java.net.HttpURLConnection
                     connection.connectTimeout = 6000
                     connection.readTimeout = 6000
                     connection.setRequestProperty("User-Agent", "RoterFaden-App")
@@ -512,8 +549,61 @@ class AppViewModel(
                         val log = json.optString("changelog", "")
                         
                         if (vCode > currentVersionCode || isNewerVersion(currentVersionName, vName)) {
-                            _updateInfo.value = UpdateInfo(vCode, vName, dlUrl, log)
+                            _updateInfo.value = UpdateInfo(
+                                versionCode = vCode,
+                                versionName = vName,
+                                downloadUrl = if (dlUrl.isNotEmpty()) dlUrl else directApkDownloadUrl,
+                                changelog = log.ifEmpty { "Neues Update auf GitHub (${config.branch}) gefunden!" }
+                            )
                             _updateCheckResult.value = "Neues Update verfügbar: v$vName!"
+                            updateFound = true
+                        }
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+
+            // 3. Try checking Github Releases API as the last formal source
+            if (!updateFound) {
+                try {
+                    val releasesUrl = java.net.URL("https://api.github.com/repos/${config.owner}/${config.name}/releases/latest")
+                    val connection = releasesUrl.openConnection() as java.net.HttpURLConnection
+                    connection.connectTimeout = 6000
+                    connection.readTimeout = 6000
+                    connection.setRequestProperty("User-Agent", "RoterFaden-App")
+                    
+                    if (connection.responseCode == 200) {
+                        val text = connection.inputStream.bufferedReader().use { it.readText() }
+                        val json = org.json.JSONObject(text)
+                        val tagName = json.optString("tag_name", "")
+                        val body = json.optString("body", "")
+                        
+                        var dlUrl = ""
+                        val assets = json.optJSONArray("assets")
+                        if (assets != null) {
+                            for (i in 0 until assets.length()) {
+                                val asset = assets.getJSONObject(i)
+                                val name = asset.optString("name", "")
+                                if (name.endsWith(".apk")) {
+                                    dlUrl = asset.optString("browser_download_url", "")
+                                    break
+                                }
+                            }
+                        }
+                        if (dlUrl.isEmpty() && assets != null && assets.length() > 0) {
+                            dlUrl = assets.getJSONObject(0).optString("browser_download_url", "")
+                        }
+
+                        if (tagName.isNotBlank() && isNewerVersion(currentVersionName, tagName)) {
+                            val finalDlUrl = if (dlUrl.isNotEmpty()) dlUrl else directApkDownloadUrl
+                            _updateInfo.value = UpdateInfo(
+                                versionCode = currentVersionCode + 1,
+                                versionName = tagName,
+                                downloadUrl = finalDlUrl,
+                                changelog = body.ifEmpty { "Release-Update von GitHub" }
+                            )
+                            _updateCheckResult.value = "Neues Update verfügbar: $tagName!"
                             updateFound = true
                         }
                     } else if (connection.responseCode != 404) {
@@ -525,12 +615,12 @@ class AppViewModel(
                 }
             }
 
-            // 3. Fallback for testing/isForceCheck
+            // 4. Fallback for testing/isForceCheck
             if (!updateFound && isForceCheck) {
                 _updateInfo.value = UpdateInfo(
                     versionCode = 99,
                     versionName = "2.0.0",
-                    downloadUrl = "https://github.com/noafelix/RoterFaden/releases/download/v2.0.0/app-release.apk",
+                    downloadUrl = directApkDownloadUrl,
                     changelog = "• Komplett überarbeitetes M3-Design\n• Fehlerbehebungen & Stabilitätsverbesserungen\n• Neue Funktionen für Argumentanalysen im RoterFaden-System"
                 )
                 _updateCheckResult.value = "Neues Update verfügbar: v2.0.0!"
