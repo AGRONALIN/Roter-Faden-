@@ -30,6 +30,22 @@ import androidx.compose.material.icons.filled.Download
 import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.launch
 
+private suspend fun animateTextTyping(target: String, onUpdate: (String) -> Unit) {
+    if (target.isEmpty()) {
+        onUpdate("")
+        return
+    }
+    val length = target.length
+    val steps = (length / 8).coerceIn(12, 35)
+    val delayMs = (400L / steps).coerceIn(8L, 25L)
+    for (i in 1..steps) {
+        val currentLen = (length * i / steps).coerceIn(0, length)
+        onUpdate(target.take(currentLen))
+        kotlinx.coroutines.delay(delayMs)
+    }
+    onUpdate(target)
+}
+
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun EditArgumentScreen(
@@ -42,14 +58,82 @@ fun EditArgumentScreen(
     val recentArguments by viewModel.recentArguments.collectAsState()
     val existingArg = remember(recentArguments, argId) { recentArguments.find { it.id == argId } }
 
-    var antiMarxist by remember(existingArg) { mutableStateOf(existingArg?.antiMarxistStatement ?: "") }
-    var marxist by remember(existingArg) { mutableStateOf(existingArg?.marxistCounterArgument ?: "") }
-    var category by remember(existingArg) { mutableStateOf(existingArg?.category ?: "") }
-    var imagePath by remember(existingArg) { mutableStateOf(existingArg?.imagePath) }
+    val context = LocalContext.current
+    val prefs = remember { context.getSharedPreferences("creation_drafts", android.content.Context.MODE_PRIVATE) }
+
+    var antiMarxist by remember(existingArg) {
+        mutableStateOf(existingArg?.antiMarxistStatement ?: "")
+    }
+    var marxist by remember(existingArg) {
+        mutableStateOf(existingArg?.marxistCounterArgument ?: "")
+    }
+    var category by remember(existingArg) {
+        mutableStateOf(existingArg?.category ?: "")
+    }
+    var imagePath by remember(existingArg) {
+        mutableStateOf(existingArg?.imagePath)
+    }
+
+    val draftAntiMarxist = remember { prefs.getString("draft_arg_anti_marxist", "") ?: "" }
+    val draftMarxist = remember { prefs.getString("draft_arg_marxist", "") ?: "" }
+    val draftCategory = remember { prefs.getString("draft_arg_category", "") ?: "" }
+    val draftImagePath = remember {
+        val p = prefs.getString("draft_arg_image_path", "")
+        if (p.isNullOrEmpty()) null else p
+    }
+
+    val hasDraft = remember(draftAntiMarxist, draftMarxist, draftCategory, draftImagePath) {
+        draftAntiMarxist.isNotEmpty() || draftMarxist.isNotEmpty() || draftCategory.isNotEmpty() || draftImagePath != null
+    }
+
+    var showRestoreDraftSuggestion by remember {
+        mutableStateOf(existingArg == null && hasDraft)
+    }
+
+    LaunchedEffect(antiMarxist, marxist, category, imagePath) {
+        if (showRestoreDraftSuggestion && (antiMarxist.isNotEmpty() || marxist.isNotEmpty() || category.isNotEmpty() || imagePath != null)) {
+            showRestoreDraftSuggestion = false
+        }
+    }
+
+    LaunchedEffect(antiMarxist, marxist, category, imagePath, showRestoreDraftSuggestion) {
+        if (existingArg == null && !showRestoreDraftSuggestion) {
+            prefs.edit().apply {
+                putString("draft_arg_anti_marxist", antiMarxist)
+                putString("draft_arg_marxist", marxist)
+                putString("draft_arg_category", category)
+                putString("draft_arg_image_path", imagePath ?: "")
+                apply()
+            }
+        }
+    }
+
+    val draftPreviewLines = remember(draftCategory, draftAntiMarxist, draftMarxist) {
+        val list = mutableListOf<String>()
+        val cleanAnti = draftAntiMarxist.replace(Regex("\\[image:[^\\]]+\\]"), "[BILD]").trim()
+        val cleanMarx = draftMarxist.replace(Regex("\\[image:[^\\]]+\\]"), "[BILD]").trim()
+        if (draftCategory.isNotBlank()) {
+            list.add("Kategorie: ${draftCategory.trim()}")
+        }
+        if (cleanAnti.isNotBlank()) {
+            val line = "These: $cleanAnti"
+            list.add(if (line.length > 50) line.take(47) + "..." else line)
+        }
+        if (cleanMarx.isNotBlank()) {
+            val line = "Gegenargument: $cleanMarx"
+            list.add(if (line.length > 50) line.take(47) + "..." else line)
+        }
+        if (list.isEmpty()) {
+            list.add("Leerer Entwurf")
+        }
+        list.take(3)
+    }
+
+    val previewText = remember(draftPreviewLines) {
+        draftPreviewLines.joinToString("\n")
+    }
     
     val scope = rememberCoroutineScope()
-
-    val context = LocalContext.current
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri ->
@@ -93,6 +177,72 @@ fun EditArgumentScreen(
                     .padding(horizontal = 24.dp, vertical = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(24.dp)
             ) {
+                AnimatedVisibility(
+                    visible = showRestoreDraftSuggestion,
+                    enter = fadeIn(animationSpec = tween(400)) + expandVertically(animationSpec = tween(400), expandFrom = androidx.compose.ui.Alignment.CenterVertically),
+                    exit = fadeOut(animationSpec = tween(400)) + shrinkVertically(animationSpec = tween(400), shrinkTowards = androidx.compose.ui.Alignment.CenterVertically)
+                ) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = ImmersiveSurface),
+                        shape = RoundedCornerShape(16.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, ImmersiveGreen.copy(alpha = 0.5f))
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(16.dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text("Entwurf gefunden 📝", color = ImmersiveTextPrimary, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                                Text(
+                                    text = previewText,
+                                    color = ImmersiveTextSecondary,
+                                    fontSize = 12.sp,
+                                    lineHeight = 16.sp,
+                                    maxLines = 3,
+                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                )
+                            }
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                                TextButton(
+                                    onClick = {
+                                        scope.launch {
+                                            showRestoreDraftSuggestion = false
+                                            imagePath = draftImagePath
+                                            launch {
+                                                animateTextTyping(draftCategory) { category = it }
+                                            }
+                                            launch {
+                                                animateTextTyping(draftAntiMarxist) { antiMarxist = it }
+                                            }
+                                            launch {
+                                                animateTextTyping(draftMarxist) { marxist = it }
+                                            }
+                                        }
+                                    }
+                                ) {
+                                    Text("Herstellen", color = ImmersiveGreen, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                }
+                                IconButton(
+                                    onClick = {
+                                        prefs.edit().apply {
+                                            remove("draft_arg_anti_marxist")
+                                            remove("draft_arg_marxist")
+                                            remove("draft_arg_category")
+                                            remove("draft_arg_image_path")
+                                            apply()
+                                        }
+                                        showRestoreDraftSuggestion = false
+                                    }
+                                ) {
+                                    Icon(Icons.Filled.Close, contentDescription = "Verwerfen", tint = ImmersiveTextSecondary, modifier = Modifier.size(18.dp))
+                                }
+                            }
+                        }
+                    }
+                }
+
                 OutlinedTextField(
                     value = category,
                 onValueChange = { category = it },
@@ -196,6 +346,13 @@ fun EditArgumentScreen(
                             ))
                         } else {
                             viewModel.insertArgument(antiMarxist, marxist, category, imagePath)
+                            prefs.edit().apply {
+                                remove("draft_arg_anti_marxist")
+                                remove("draft_arg_marxist")
+                                remove("draft_arg_category")
+                                remove("draft_arg_image_path")
+                                apply()
+                            }
                         }
                         navController.popBackStack()
                     }
@@ -235,13 +392,77 @@ fun EditGlossaryScreen(
     val glossaryItems by viewModel.glossaryItems.collectAsState()
     val existingItem = remember(glossaryItems, termId) { glossaryItems.find { it.id == termId } }
 
-    var term by remember(existingItem) { mutableStateOf(existingItem?.term ?: "") }
-    var definition by remember(existingItem) { mutableStateOf(existingItem?.definition ?: "") }
-    var imagePath by remember(existingItem) { mutableStateOf(existingItem?.imagePath) }
+    val context = LocalContext.current
+    val prefs = remember { context.getSharedPreferences("creation_drafts", android.content.Context.MODE_PRIVATE) }
+
+    var term by remember(existingItem) {
+        mutableStateOf(existingItem?.term ?: "")
+    }
+    var definition by remember(existingItem) {
+        mutableStateOf(existingItem?.definition ?: "")
+    }
+    var imagePath by remember(existingItem) {
+        mutableStateOf(existingItem?.imagePath)
+    }
+
+    val draftTerm = remember { prefs.getString("draft_gloss_term", "") ?: "" }
+    val draftDefinition = remember { prefs.getString("draft_gloss_definition", "") ?: "" }
+    val draftImagePath = remember {
+        val p = prefs.getString("draft_gloss_image_path", "")
+        if (p.isNullOrEmpty()) null else p
+    }
+
+    val hasDraft = remember(draftTerm, draftDefinition, draftImagePath) {
+        draftTerm.isNotEmpty() || draftDefinition.isNotEmpty() || draftImagePath != null
+    }
+
+    var showRestoreDraftSuggestion by remember {
+        mutableStateOf(existingItem == null && hasDraft)
+    }
+
+    LaunchedEffect(term, definition, imagePath) {
+        if (showRestoreDraftSuggestion && (term.isNotEmpty() || definition.isNotEmpty() || imagePath != null)) {
+            showRestoreDraftSuggestion = false
+        }
+    }
+
+    LaunchedEffect(term, definition, imagePath, showRestoreDraftSuggestion) {
+        if (existingItem == null && !showRestoreDraftSuggestion) {
+            prefs.edit().apply {
+                putString("draft_gloss_term", term)
+                putString("draft_gloss_definition", definition)
+                putString("draft_gloss_image_path", imagePath ?: "")
+                apply()
+            }
+        }
+    }
+
+    val draftPreviewLines = remember(draftTerm, draftDefinition, draftImagePath) {
+        val list = mutableListOf<String>()
+        val cleanTerm = draftTerm.trim()
+        val cleanDef = draftDefinition.replace(Regex("\\[image:[^\\]]+\\]"), "[BILD]").trim()
+        if (cleanTerm.isNotBlank()) {
+            val line = "Begriff: $cleanTerm"
+            list.add(if (line.length > 50) line.take(47) + "..." else line)
+        }
+        if (cleanDef.isNotBlank()) {
+            val line = "Definition: $cleanDef"
+            list.add(if (line.length > 50) line.take(47) + "..." else line)
+        }
+        if (list.size < 3 && draftImagePath != null) {
+            list.add("[BILD angehängt]")
+        }
+        if (list.isEmpty()) {
+            list.add("Leerer Entwurf")
+        }
+        list.take(3)
+    }
+
+    val previewText = remember(draftPreviewLines) {
+        draftPreviewLines.joinToString("\n")
+    }
     
     val scope = rememberCoroutineScope()
-
-    val context = LocalContext.current
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri ->
@@ -286,6 +507,68 @@ fun EditGlossaryScreen(
                         .padding(horizontal = 24.dp, vertical = 16.dp),
                     verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
+                    AnimatedVisibility(
+                        visible = showRestoreDraftSuggestion,
+                        enter = fadeIn(animationSpec = tween(400)) + expandVertically(animationSpec = tween(400), expandFrom = androidx.compose.ui.Alignment.CenterVertically),
+                        exit = fadeOut(animationSpec = tween(400)) + shrinkVertically(animationSpec = tween(400), shrinkTowards = androidx.compose.ui.Alignment.CenterVertically)
+                    ) {
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(containerColor = ImmersiveSurface),
+                            shape = RoundedCornerShape(16.dp),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, ImmersiveGreen.copy(alpha = 0.5f))
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(16.dp),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text("Entwurf gefunden 📝", color = ImmersiveTextPrimary, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                                    Text(
+                                        text = previewText,
+                                        color = ImmersiveTextSecondary,
+                                        fontSize = 12.sp,
+                                        lineHeight = 16.sp,
+                                        maxLines = 3,
+                                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                    )
+                                }
+                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                                    TextButton(
+                                        onClick = {
+                                            scope.launch {
+                                                showRestoreDraftSuggestion = false
+                                                imagePath = draftImagePath
+                                                launch {
+                                                    animateTextTyping(draftTerm) { term = it }
+                                                }
+                                                launch {
+                                                    animateTextTyping(draftDefinition) { definition = it }
+                                                }
+                                            }
+                                        }
+                                    ) {
+                                        Text("Herstellen", color = ImmersiveGreen, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                    }
+                                    IconButton(
+                                        onClick = {
+                                            prefs.edit().apply {
+                                                remove("draft_gloss_term")
+                                                remove("draft_gloss_definition")
+                                                remove("draft_gloss_image_path")
+                                                apply()
+                                            }
+                                            showRestoreDraftSuggestion = false
+                                        }
+                                    ) {
+                                        Icon(Icons.Filled.Close, contentDescription = "Verwerfen", tint = ImmersiveTextSecondary, modifier = Modifier.size(18.dp))
+                                    }
+                                }
+                            }
+                        }
+                    }
+
                     OutlinedTextField(
                         value = term,
                         onValueChange = { term = it },
@@ -381,6 +664,12 @@ fun EditGlossaryScreen(
                                     ))
                                 } else {
                                     viewModel.insertGlossary(term, definition, imagePath)
+                                    prefs.edit().apply {
+                                        remove("draft_gloss_term")
+                                        remove("draft_gloss_definition")
+                                        remove("draft_gloss_image_path")
+                                        apply()
+                                    }
                                 }
                                 navController.popBackStack()
                             }
@@ -420,12 +709,87 @@ fun EditLiteratureScreen(
     val literatureList by viewModel.literatureList.collectAsState()
     val existingLit = remember(literatureList, litId) { literatureList.find { it.id == litId } }
 
-    var title by remember(existingLit) { mutableStateOf(existingLit?.title ?: "") }
-    var author by remember(existingLit) { mutableStateOf(existingLit?.author ?: "") }
-    var summary by remember(existingLit) { mutableStateOf(existingLit?.summary ?: "") }
-    var imagePath by remember(existingLit) { mutableStateOf(existingLit?.imagePath) }
-
     val context = LocalContext.current
+    val prefs = remember { context.getSharedPreferences("creation_drafts", android.content.Context.MODE_PRIVATE) }
+    val scope = rememberCoroutineScope()
+
+    var title by remember(existingLit) {
+        mutableStateOf(existingLit?.title ?: "")
+    }
+    var author by remember(existingLit) {
+        mutableStateOf(existingLit?.author ?: "")
+    }
+    var summary by remember(existingLit) {
+        mutableStateOf(existingLit?.summary ?: "")
+    }
+    var imagePath by remember(existingLit) {
+        mutableStateOf(existingLit?.imagePath)
+    }
+
+    val draftTitle = remember { prefs.getString("draft_lit_title", "") ?: "" }
+    val draftAuthor = remember { prefs.getString("draft_lit_author", "") ?: "" }
+    val draftSummary = remember { prefs.getString("draft_lit_summary", "") ?: "" }
+    val draftImagePath = remember {
+        val p = prefs.getString("draft_lit_image_path", "")
+        if (p.isNullOrEmpty()) null else p
+    }
+
+    val hasDraft = remember(draftTitle, draftAuthor, draftSummary, draftImagePath) {
+        draftTitle.isNotEmpty() || draftAuthor.isNotEmpty() || draftSummary.isNotEmpty() || draftImagePath != null
+    }
+
+    var showRestoreDraftSuggestion by remember {
+        mutableStateOf(existingLit == null && hasDraft)
+    }
+
+    LaunchedEffect(title, author, summary, imagePath) {
+        if (showRestoreDraftSuggestion && (title.isNotEmpty() || author.isNotEmpty() || summary.isNotEmpty() || imagePath != null)) {
+            showRestoreDraftSuggestion = false
+        }
+    }
+
+    LaunchedEffect(title, author, summary, imagePath, showRestoreDraftSuggestion) {
+        if (existingLit == null && !showRestoreDraftSuggestion) {
+            prefs.edit().apply {
+                putString("draft_lit_title", title)
+                putString("draft_lit_author", author)
+                putString("draft_lit_summary", summary)
+                putString("draft_lit_image_path", imagePath ?: "")
+                apply()
+            }
+        }
+    }
+
+    val draftPreviewLines = remember(draftTitle, draftAuthor, draftSummary, draftImagePath) {
+        val list = mutableListOf<String>()
+        val cleanTitle = draftTitle.trim()
+        val cleanAuthor = draftAuthor.trim()
+        val cleanSummary = draftSummary.replace(Regex("\\[image:[^\\]]+\\]"), "[BILD]").trim()
+        if (cleanTitle.isNotBlank()) {
+            val line = "Titel: $cleanTitle"
+            list.add(if (line.length > 50) line.take(47) + "..." else line)
+        }
+        if (cleanAuthor.isNotBlank()) {
+            val line = "Autor: $cleanAuthor"
+            list.add(if (line.length > 50) line.take(47) + "..." else line)
+        }
+        if (cleanSummary.isNotBlank()) {
+            val line = "Inhalt: $cleanSummary"
+            list.add(if (line.length > 50) line.take(47) + "..." else line)
+        }
+        if (list.size < 3 && draftImagePath != null) {
+            list.add("[BILD angehängt]")
+        }
+        if (list.isEmpty()) {
+            list.add("Leerer Entwurf")
+        }
+        list.take(3)
+    }
+
+    val previewText = remember(draftPreviewLines) {
+        draftPreviewLines.joinToString("\n")
+    }
+
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri ->
@@ -454,6 +818,72 @@ fun EditLiteratureScreen(
                         .padding(horizontal = 24.dp, vertical = 16.dp),
                     verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
+                    AnimatedVisibility(
+                        visible = showRestoreDraftSuggestion,
+                        enter = fadeIn(animationSpec = tween(400)) + expandVertically(animationSpec = tween(400), expandFrom = androidx.compose.ui.Alignment.CenterVertically),
+                        exit = fadeOut(animationSpec = tween(400)) + shrinkVertically(animationSpec = tween(400), shrinkTowards = androidx.compose.ui.Alignment.CenterVertically)
+                    ) {
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(containerColor = ImmersiveSurface),
+                            shape = RoundedCornerShape(16.dp),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, ImmersiveGreen.copy(alpha = 0.5f))
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(16.dp),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text("Entwurf gefunden 📝", color = ImmersiveTextPrimary, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                                    Text(
+                                        text = previewText,
+                                        color = ImmersiveTextSecondary,
+                                        fontSize = 12.sp,
+                                        lineHeight = 16.sp,
+                                        maxLines = 3,
+                                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                    )
+                                }
+                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                                    TextButton(
+                                        onClick = {
+                                            scope.launch {
+                                                showRestoreDraftSuggestion = false
+                                                imagePath = draftImagePath
+                                                launch {
+                                                    animateTextTyping(draftTitle) { title = it }
+                                                }
+                                                launch {
+                                                    animateTextTyping(draftAuthor) { author = it }
+                                                }
+                                                launch {
+                                                    animateTextTyping(draftSummary) { summary = it }
+                                                }
+                                            }
+                                        }
+                                    ) {
+                                        Text("Herstellen", color = ImmersiveGreen, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                    }
+                                    IconButton(
+                                        onClick = {
+                                            prefs.edit().apply {
+                                                remove("draft_lit_title")
+                                                remove("draft_lit_author")
+                                                remove("draft_lit_summary")
+                                                remove("draft_lit_image_path")
+                                                apply()
+                                            }
+                                            showRestoreDraftSuggestion = false
+                                        }
+                                    ) {
+                                        Icon(Icons.Filled.Close, contentDescription = "Verwerfen", tint = ImmersiveTextSecondary, modifier = Modifier.size(18.dp))
+                                    }
+                                }
+                            }
+                        }
+                    }
+
                     OutlinedTextField(
                         value = title,
                         onValueChange = { title = it },
@@ -555,6 +985,13 @@ fun EditLiteratureScreen(
                                     ))
                                 } else {
                                     viewModel.insertLiterature(title, author, summary, imagePath)
+                                    prefs.edit().apply {
+                                        remove("draft_lit_title")
+                                        remove("draft_lit_author")
+                                        remove("draft_lit_summary")
+                                        remove("draft_lit_image_path")
+                                        apply()
+                                    }
                                 }
                                 navController.popBackStack()
                             }
