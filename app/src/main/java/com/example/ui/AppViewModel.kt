@@ -496,7 +496,7 @@ class AppViewModel(
             }
 
             var updateFound = false
-            var errorOccurred = false
+            var anyRequestSucceeded = false
             
             val config = parseRepoPath(githubRepoPath.value)
             val directApkDownloadUrl = "https://raw.githubusercontent.com/${config.owner}/${config.name}/${config.branch}/${config.apkPath}"
@@ -508,7 +508,11 @@ class AppViewModel(
                 connection.connectTimeout = 6000
                 connection.readTimeout = 6000
                 connection.setRequestProperty("User-Agent", "RoterFaden-App")
-                if (connection.responseCode == 200) {
+                
+                val responseCode = connection.responseCode
+                anyRequestSucceeded = true // Got an HTTP response from GitHub servers
+                
+                if (responseCode == 200) {
                     val text = connection.inputStream.bufferedReader().use { it.readText() }
                     
                     val vcMatcher = java.util.regex.Pattern.compile("versionCode\\s*=\\s*(\\d+)").matcher(text)
@@ -516,6 +520,8 @@ class AppViewModel(
                     
                     val extVCode = if (vcMatcher.find()) vcMatcher.group(1)?.toIntOrNull() ?: 1 else 1
                     val extVName = if (vnMatcher.find()) vnMatcher.group(1) ?: "1.0" else "1.0"
+                    
+                    android.util.Log.d("RoterFadenUpdater", "Gradle Check: online versionCode=$extVCode, versionName=$extVName vs local versionCode=$currentVersionCode, versionName=$currentVersionName")
                     
                     if (extVCode > currentVersionCode || isNewerVersion(currentVersionName, extVName)) {
                         _updateInfo.value = UpdateInfo(
@@ -527,9 +533,14 @@ class AppViewModel(
                         _updateCheckResult.value = "Neues Update verfügbar: v$extVName!"
                         updateFound = true
                     }
+                } else {
+                    android.util.Log.d("RoterFadenUpdater", "Gradle Check returned status $responseCode")
                 }
             } catch (e: Exception) {
-                e.printStackTrace()
+                android.util.Log.e("RoterFadenUpdater", "Gradle Check error", e)
+                if (e !is java.net.UnknownHostException && e !is java.net.ConnectException && e !is java.io.IOException) {
+                    anyRequestSucceeded = true
+                }
             }
 
             // 2. Try checking update.json in the repository
@@ -540,13 +551,19 @@ class AppViewModel(
                     connection.connectTimeout = 6000
                     connection.readTimeout = 6000
                     connection.setRequestProperty("User-Agent", "RoterFaden-App")
-                    if (connection.responseCode == 200) {
+                    
+                    val responseCode = connection.responseCode
+                    anyRequestSucceeded = true // Got an HTTP response from GitHub servers
+                    
+                    if (responseCode == 200) {
                         val text = connection.inputStream.bufferedReader().use { it.readText() }
                         val json = org.json.JSONObject(text)
                         val vCode = json.optInt("versionCode", 1)
                         val vName = json.optString("versionName", "1.1.0")
                         val dlUrl = json.optString("downloadUrl", "")
                         val log = json.optString("changelog", "")
+                        
+                        android.util.Log.d("RoterFadenUpdater", "update.json Check: online versionCode=$vCode, versionName=$vName vs local versionCode=$currentVersionCode, versionName=$currentVersionName")
                         
                         if (vCode > currentVersionCode || isNewerVersion(currentVersionName, vName)) {
                             _updateInfo.value = UpdateInfo(
@@ -558,9 +575,14 @@ class AppViewModel(
                             _updateCheckResult.value = "Neues Update verfügbar: v$vName!"
                             updateFound = true
                         }
+                    } else {
+                        android.util.Log.d("RoterFadenUpdater", "update.json Check returned status $responseCode")
                     }
                 } catch (e: Exception) {
-                    e.printStackTrace()
+                    android.util.Log.e("RoterFadenUpdater", "update.json Check error", e)
+                    if (e !is java.net.UnknownHostException && e !is java.net.ConnectException && e !is java.io.IOException) {
+                        anyRequestSucceeded = true
+                    }
                 }
             }
 
@@ -573,7 +595,10 @@ class AppViewModel(
                     connection.readTimeout = 6000
                     connection.setRequestProperty("User-Agent", "RoterFaden-App")
                     
-                    if (connection.responseCode == 200) {
+                    val responseCode = connection.responseCode
+                    anyRequestSucceeded = true // Got an HTTP response from GitHub API
+                    
+                    if (responseCode == 200) {
                         val text = connection.inputStream.bufferedReader().use { it.readText() }
                         val json = org.json.JSONObject(text)
                         val tagName = json.optString("tag_name", "")
@@ -595,6 +620,8 @@ class AppViewModel(
                             dlUrl = assets.getJSONObject(0).optString("browser_download_url", "")
                         }
 
+                        android.util.Log.d("RoterFadenUpdater", "Releases API Check: online tagName=$tagName vs local versionName=$currentVersionName")
+
                         if (tagName.isNotBlank() && isNewerVersion(currentVersionName, tagName)) {
                             val finalDlUrl = if (dlUrl.isNotEmpty()) dlUrl else directApkDownloadUrl
                             _updateInfo.value = UpdateInfo(
@@ -606,12 +633,14 @@ class AppViewModel(
                             _updateCheckResult.value = "Neues Update verfügbar: $tagName!"
                             updateFound = true
                         }
-                    } else if (connection.responseCode != 404) {
-                        errorOccurred = true
+                    } else {
+                        android.util.Log.d("RoterFadenUpdater", "Releases API Check returned status $responseCode")
                     }
                 } catch (e: Exception) {
-                    e.printStackTrace()
-                    errorOccurred = true
+                    android.util.Log.e("RoterFadenUpdater", "Releases API Check error", e)
+                    if (e !is java.net.UnknownHostException && e !is java.net.ConnectException && e !is java.io.IOException) {
+                        anyRequestSucceeded = true
+                    }
                 }
             }
 
@@ -628,7 +657,7 @@ class AppViewModel(
             }
 
             if (!updateFound) {
-                if (errorOccurred && isManual) {
+                if (!anyRequestSucceeded && isManual) {
                     _updateCheckResult.value = "Fehler bei der Verbindung zu GitHub.\nBitte prüfe dein Netzwerk oder deine Repository-Pfad-Einstellung."
                 } else {
                     _updateCheckResult.value = "Deine App ist auf dem neuesten Stand!\nVersion $currentVersionName"
