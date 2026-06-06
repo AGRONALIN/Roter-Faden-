@@ -122,7 +122,7 @@ fun HomeScreen(
                     .verticalFadingEdge(topEdge = 20.dp, bottomEdge = 40.dp),
                 contentPadding = PaddingValues(bottom = 120.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
-                userScrollEnabled = !isTransitionRunning
+                userScrollEnabled = !isTransitionRunning && !sharedTransitionScope.isTransitionActive
             ) {
                 // Header (always visible, scrolls with list)
                 item {
@@ -372,9 +372,7 @@ fun ArgumentCard(
                 animatedVisibilityScope = animatedVisibilityScope,
                 enter = fadeIn(animationSpec = tween(200)),
                 exit = fadeOut(animationSpec = tween(150)),
-                clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(12.dp)),
                 resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(contentScale = androidx.compose.ui.layout.ContentScale.Crop),
-                renderInOverlayDuringTransition = false,
                 boundsTransform = { _, _ ->
                     spring(
                         dampingRatio = Spring.DampingRatioNoBouncy,
@@ -493,9 +491,7 @@ fun GlossaryCard(
                 animatedVisibilityScope = animatedVisibilityScope,
                 enter = fadeIn(animationSpec = tween(200)),
                 exit = fadeOut(animationSpec = tween(150)),
-                clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(12.dp)),
                 resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(contentScale = androidx.compose.ui.layout.ContentScale.Crop),
-                renderInOverlayDuringTransition = false,
                 boundsTransform = { _, _ ->
                     spring(
                         dampingRatio = Spring.DampingRatioNoBouncy,
@@ -606,9 +602,7 @@ fun LiteratureCard(
                 animatedVisibilityScope = animatedVisibilityScope,
                 enter = fadeIn(animationSpec = tween(200)),
                 exit = fadeOut(animationSpec = tween(150)),
-                clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(12.dp)),
                 resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(contentScale = androidx.compose.ui.layout.ContentScale.Crop),
-                renderInOverlayDuringTransition = false,
                 boundsTransform = { _, _ ->
                     spring(
                         dampingRatio = Spring.DampingRatioNoBouncy,

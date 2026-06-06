@@ -493,7 +493,7 @@ fun CollectionScreen(
                     label = "tab animation"
                 ) { targetIndex ->
                     val isInternalTransitionActive = transition.currentState != transition.targetState
-                    val scrollEnabled = !isTransitionRunning && !isInternalTransitionActive
+                    val scrollEnabled = !isTransitionRunning && !isInternalTransitionActive && !sharedTransitionScope.isTransitionActive
                     when (targetIndex) {
                         0 -> {
                             LazyColumn(
