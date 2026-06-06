@@ -294,7 +294,7 @@ fun RoterFadenApp(viewModel: AppViewModel) {
                                 },
                             label = "tab_transition"
                         ) { page ->
-                            val isTransitionRunning = transition.currentState != transition.targetState
+                            val isTransitionRunning = transition.currentState != transition.targetState || transition.isRunning
                             when (page) {
                                 0 -> HomeScreen(
                                     viewModel = viewModel,

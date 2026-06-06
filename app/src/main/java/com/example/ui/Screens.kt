@@ -374,6 +374,7 @@ fun ArgumentCard(
                 exit = fadeOut(animationSpec = tween(150)),
                 clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(12.dp)),
                 resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(contentScale = androidx.compose.ui.layout.ContentScale.Crop),
+                renderInOverlayDuringTransition = false,
                 boundsTransform = { _, _ ->
                     spring(
                         dampingRatio = Spring.DampingRatioNoBouncy,
@@ -494,6 +495,7 @@ fun GlossaryCard(
                 exit = fadeOut(animationSpec = tween(150)),
                 clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(12.dp)),
                 resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(contentScale = androidx.compose.ui.layout.ContentScale.Crop),
+                renderInOverlayDuringTransition = false,
                 boundsTransform = { _, _ ->
                     spring(
                         dampingRatio = Spring.DampingRatioNoBouncy,
@@ -606,6 +608,7 @@ fun LiteratureCard(
                 exit = fadeOut(animationSpec = tween(150)),
                 clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(12.dp)),
                 resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(contentScale = androidx.compose.ui.layout.ContentScale.Crop),
+                renderInOverlayDuringTransition = false,
                 boundsTransform = { _, _ ->
                     spring(
                         dampingRatio = Spring.DampingRatioNoBouncy,
