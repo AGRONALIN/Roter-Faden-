@@ -22,6 +22,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.BuildConfig
 import com.example.ui.theme.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -155,7 +156,7 @@ fun SettingsScreen(
                                 updateResultText = null
                                 delay(1800)
                                 updateChecking = false
-                                updateResultText = "Deine App ist auf dem neuesten Stand!\nVersion 1.2.0 (aktuellste)"
+                                updateResultText = "Deine App ist auf dem neuesten Stand!\nVersion ${BuildConfig.VERSION_NAME} (aktuellste)"
                             }
                         }
                     },
@@ -203,7 +204,7 @@ fun SettingsScreen(
 
             // App Version Info
             Text(
-                text = "Roter Faden • Version 1.2.0\nEntwickelt mit ❤️",
+                text = "Roter Faden • Version ${BuildConfig.VERSION_NAME}\nEntwickelt von Agronalin",
                 color = ImmersiveTextSecondary,
                 fontSize = 11.sp,
                 textAlign = TextAlign.Center,
