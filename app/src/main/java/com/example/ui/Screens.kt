@@ -119,9 +119,139 @@ fun HomeScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .verticalFadingEdge(topEdge = 20.dp, bottomEdge = 40.dp),
-                contentPadding = PaddingValues(top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 280.dp, bottom = 120.dp),
+                contentPadding = PaddingValues(bottom = 120.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
+                // Header (always visible, scrolls with list)
+                item {
+                    with(sharedTransitionScope) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(
+                                    top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 16.dp, 
+                                    start = 12.dp,
+                                    end = 24.dp
+                                ),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.Top
+                            ) {
+                                Column(
+                                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    // Main Header Pill
+                                    Box(
+                                        modifier = Modifier
+                                            .whiteGlowPill(headerBgColor, headerBorderColor, headerGlowAlpha)
+                                            .clip(RoundedCornerShape(percent = 50))
+                                            .combinedClickable(
+                                                onLongClick = { navController.navigate("settings") },
+                                                onClick = {}
+                                            )
+                                            .padding(horizontal = 16.dp, vertical = 8.dp)
+                                    ) {
+                                        Text(
+                                            text = "Roter Faden",
+                                            modifier = Modifier,
+                                            style = MaterialTheme.typography.displayLarge.copy(
+                                                fontWeight = FontWeight.Black,
+                                                color = ImmersiveGreen
+                                            )
+                                        )
+                                    }
+
+                                    // Subtitle Pill
+                                    Box(
+                                        modifier = Modifier
+                                            .whiteGlowPill(headerBgColor, headerBorderColor, headerGlowAlpha)
+                                            .clip(RoundedCornerShape(percent = 50))
+                                            .combinedClickable(
+                                                onLongClick = { navController.navigate("songs") },
+                                                onClick = {}
+                                            )
+                                            .padding(start = 18.dp, end = 16.dp, top = 6.dp, bottom = 6.dp)
+                                    ) {
+                                        Text(
+                                            text = "VIVA LA REVOLUTION!",
+                                            style = MaterialTheme.typography.titleMedium.copy(
+                                                color = ImmersiveTextSecondary,
+                                                fontWeight = FontWeight.Medium
+                                            )
+                                        )
+                                    }
+                                }
+
+                                // Theme Toggle Pill
+                                Box(
+                                    modifier = Modifier
+                                        .whiteGlowPill(headerBgColor, headerBorderColor, headerGlowAlpha)
+                                        .clip(CircleShape)
+                                        .bounceClick { viewModel.toggleTheme() }
+                                        .padding(10.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = if (isDarkTheme) androidx.compose.material.icons.Icons.Filled.DarkMode else androidx.compose.material.icons.Icons.Filled.LightMode,
+                                        contentDescription = "Farbschema wechseln",
+                                        tint = ImmersiveGreen,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(32.dp))
+                            
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                // 'Zuletzt' Pill
+                                Box(
+                                    modifier = Modifier
+                                        .whiteGlowPill(headerBgColor, headerBorderColor, headerGlowAlpha)
+                                        .padding(horizontal = 16.dp, vertical = 6.dp)
+                                ) {
+                                    Text(
+                                        text = "Zuletzt",
+                                        style = MaterialTheme.typography.headlineMedium.copy(
+                                            fontWeight = FontWeight.Bold,
+                                            color = ImmersiveTextSecondary,
+                                            letterSpacing = 0.5.sp
+                                        )
+                                    )
+                                }
+                                
+                                if (recentArguments.isNotEmpty()) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(80.dp)
+                                            .clip(androidx.compose.foundation.shape.CircleShape)
+                                            .background(ImmersiveGreen)
+                                            .bounceClick {
+                                                val randomArg = recentArguments.random()
+                                                viewModel.updateArgumentLastAccessed(randomArg)
+                                                navController.navigate("argument_detail/${randomArg.id}?source=random")
+                                            },
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Filled.Star,
+                                            contentDescription = "Zufälliges Argument",
+                                            tint = Color.White,
+                                            modifier = Modifier.size(54.dp)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
                 if (topRecentArguments.isEmpty() && topRecentGlossaries.isEmpty()) {
                     item {
                         Box(modifier = Modifier.padding(horizontal = 24.dp)) {
@@ -216,132 +346,8 @@ fun HomeScreen(
                     }
                 }
             }
-
-            // Floating Header
-            with(sharedTransitionScope) {
-                Column(
-                    modifier = Modifier
-                        .align(Alignment.TopStart)
-                        .fillMaxWidth()
-                        .padding(
-                            top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 16.dp, 
-                            start = 12.dp,
-                            end = 24.dp
-                        ),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.Top
-                    ) {
-                        Column(
-                            verticalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            // Main Header Pill
-                            Box(
-                                modifier = Modifier
-                                    .whiteGlowPill(headerBgColor, headerBorderColor, headerGlowAlpha)
-                                    .clip(RoundedCornerShape(percent = 50))
-                                    .combinedClickable(
-                                        onLongClick = { navController.navigate("songs") },
-                                        onClick = {}
-                                    )
-                                    .padding(horizontal = 16.dp, vertical = 8.dp)
-                            ) {
-                            Text(
-                                text = "Roter Faden",
-                                modifier = Modifier,
-                                style = MaterialTheme.typography.displayLarge.copy(
-                                    fontWeight = FontWeight.Black,
-                                    color = ImmersiveGreen
-                                )
-                            )
-                            }
-
-                            // Subtitle Pill
-                            Box(
-                                modifier = Modifier
-                                    .whiteGlowPill(headerBgColor, headerBorderColor, headerGlowAlpha)
-                                    .padding(start = 18.dp, end = 16.dp, top = 6.dp, bottom = 6.dp)
-                            ) {
-                                Text(
-                                    text = "VIVA LA REVOLUTION!",
-                                    style = MaterialTheme.typography.titleMedium.copy(
-                                        color = ImmersiveTextSecondary,
-                                        fontWeight = FontWeight.Medium
-                                    )
-                                )
-                            }
-                        }
-
-                        // Theme Toggle Pill
-                        Box(
-                            modifier = Modifier
-                                .whiteGlowPill(headerBgColor, headerBorderColor, headerGlowAlpha)
-                                .clip(CircleShape)
-                                .bounceClick { viewModel.toggleTheme() }
-                                .padding(10.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = if (isDarkTheme) androidx.compose.material.icons.Icons.Filled.DarkMode else androidx.compose.material.icons.Icons.Filled.LightMode,
-                                contentDescription = "Farbschema wechseln",
-                                tint = ImmersiveGreen,
-                                modifier = Modifier.size(24.dp)
-                            )
-                        }
-                    }
-
-                Spacer(modifier = Modifier.height(32.dp))
-                
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // 'Zuletzt' Pill
-                    Box(
-                        modifier = Modifier
-                            .whiteGlowPill(headerBgColor, headerBorderColor, headerGlowAlpha)
-                            .padding(horizontal = 16.dp, vertical = 6.dp)
-                    ) {
-                        Text(
-                            text = "Zuletzt",
-                            style = MaterialTheme.typography.headlineMedium.copy(
-                                fontWeight = FontWeight.Bold,
-                                color = ImmersiveTextSecondary,
-                                letterSpacing = 0.5.sp
-                            )
-                        )
-                    }
-                    
-                    if (recentArguments.isNotEmpty()) {
-                        Box(
-                            modifier = Modifier
-                                .size(80.dp)
-                                .clip(androidx.compose.foundation.shape.CircleShape)
-                                .background(ImmersiveGreen)
-                                .bounceClick {
-                                    val randomArg = recentArguments.random()
-                                    viewModel.updateArgumentLastAccessed(randomArg)
-                                    navController.navigate("argument_detail/${randomArg.id}?source=random")
-                                },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Filled.Star,
-                                contentDescription = "Zufälliges Argument",
-                                tint = Color.White,
-                                modifier = Modifier.size(54.dp)
-                            )
-                        }
-                    }
-                }
-            }
         }
     }
-}
 }
 
 @OptIn(ExperimentalSharedTransitionApi::class, androidx.compose.foundation.ExperimentalFoundationApi::class)

@@ -429,6 +429,15 @@ fun RoterFadenApp(viewModel: AppViewModel) {
                         SongsScreen(viewModel, navController, this@SharedTransitionLayout, this@composable)
                     }
                     composable(
+                        "settings",
+                        enterTransition = slideUpEnter,
+                        exitTransition = slideDownExit,
+                        popEnterTransition = slideUpEnter,
+                        popExitTransition = slideDownExit
+                    ) {
+                        SettingsScreen(viewModel, navController, this@SharedTransitionLayout, this@composable)
+                    }
+                    composable(
                         route = "literature_detail/{litId}?source={source}",
                         arguments = listOf(
                             navArgument("litId") { type = NavType.IntType },

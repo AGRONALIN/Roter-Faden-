@@ -31,6 +31,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -383,7 +384,11 @@ fun CollectionScreen(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                if (isSelectionMode) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                } else {
+                    Spacer(modifier = Modifier.height(4.dp))
+                }
 
                 AnimatedVisibility(visible = isSelectionMode) {
                     val totalSelectedItems = selectedArgumentIds.size + selectedGlossaryIds.size + selectedLiteratureIds.size
@@ -441,10 +446,19 @@ fun CollectionScreen(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(24.dp))
+                if (isSelectionMode) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                } else {
+                    Spacer(modifier = Modifier.height(4.dp))
+                }
 
                 AnimatedContent(
-                    modifier = Modifier.fillMaxSize().weight(1f).padding(horizontal = 24.dp).verticalFadingEdge(topEdge = 20.dp, bottomEdge = 40.dp),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .weight(1f)
+                        .padding(horizontal = 24.dp)
+                        .clipToBounds()
+                        .verticalFadingEdge(topEdge = 32.dp, bottomEdge = 40.dp),
                     targetState = selectedTabIndex,
                     transitionSpec = {
                         val springSpec = androidx.compose.animation.core.spring<androidx.compose.ui.unit.IntOffset>(
@@ -482,7 +496,7 @@ fun CollectionScreen(
                             LazyColumn(
                                 state = listState0,
                                 modifier = Modifier.fillMaxSize(),
-                                contentPadding = PaddingValues(bottom = 120.dp, top = 16.dp),
+                                contentPadding = PaddingValues(bottom = 120.dp, top = 32.dp),
                                 verticalArrangement = Arrangement.spacedBy(16.dp)
                             ) {
                                 if (allArguments.isEmpty()) {
@@ -532,7 +546,7 @@ fun CollectionScreen(
                             LazyColumn(
                                 state = listState1,
                                 modifier = Modifier.fillMaxSize(),
-                                contentPadding = PaddingValues(bottom = 120.dp),
+                                contentPadding = PaddingValues(bottom = 120.dp, top = 32.dp),
                                 verticalArrangement = Arrangement.spacedBy(16.dp)
                             ) {
                                 if (allGlossaryItems.isEmpty()) {
@@ -582,7 +596,7 @@ fun CollectionScreen(
                             LazyColumn(
                                 state = listState2,
                                 modifier = Modifier.fillMaxSize(),
-                                contentPadding = PaddingValues(bottom = 120.dp),
+                                contentPadding = PaddingValues(bottom = 120.dp, top = 32.dp),
                                 verticalArrangement = Arrangement.spacedBy(16.dp)
                             ) {
                                 if (allLiteratureItems.isEmpty()) {

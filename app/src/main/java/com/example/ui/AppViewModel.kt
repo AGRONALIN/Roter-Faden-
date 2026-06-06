@@ -57,6 +57,11 @@ class AppViewModel(
         sharedPreferences.edit().putBoolean("onboarding_completed", true).apply()
     }
 
+    fun resetOnboarding() {
+        showOnboarding.value = true
+        sharedPreferences.edit().putBoolean("onboarding_completed", false).apply()
+    }
+
     fun toggleTheme() {
         val nextValue = !isDarkTheme.value
         isDarkTheme.value = nextValue

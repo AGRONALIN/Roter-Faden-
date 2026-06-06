@@ -175,104 +175,110 @@ fun EditArgumentScreen(
                     .verticalScroll(rememberScrollState())
                     .padding(top = padding.calculateTopPadding() + 80.dp)
                     .padding(horizontal = 24.dp, vertical = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(24.dp)
             ) {
                 AnimatedVisibility(
                     visible = showRestoreDraftSuggestion,
-                    enter = fadeIn(animationSpec = tween(400)) + expandVertically(animationSpec = tween(400), expandFrom = androidx.compose.ui.Alignment.CenterVertically),
-                    exit = fadeOut(animationSpec = tween(400)) + shrinkVertically(animationSpec = tween(400), shrinkTowards = androidx.compose.ui.Alignment.CenterVertically)
+                    enter = fadeIn(animationSpec = tween(400)) + expandVertically(animationSpec = tween(400), expandFrom = androidx.compose.ui.Alignment.Top),
+                    exit = fadeOut(animationSpec = tween(400)) + shrinkVertically(animationSpec = tween(400), shrinkTowards = androidx.compose.ui.Alignment.Top)
                 ) {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(containerColor = ImmersiveSurface),
-                        shape = RoundedCornerShape(16.dp),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, ImmersiveGreen.copy(alpha = 0.5f))
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(16.dp),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                    Column {
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(containerColor = ImmersiveSurface),
+                            shape = RoundedCornerShape(16.dp),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, ImmersiveGreen.copy(alpha = 0.5f))
                         ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text("Entwurf gefunden 📝", color = ImmersiveTextPrimary, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                                Text(
-                                    text = previewText,
-                                    color = ImmersiveTextSecondary,
-                                    fontSize = 12.sp,
-                                    lineHeight = 16.sp,
-                                    maxLines = 3,
-                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-                                )
-                            }
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                                TextButton(
-                                    onClick = {
-                                        scope.launch {
-                                            showRestoreDraftSuggestion = false
-                                            imagePath = draftImagePath
-                                            launch {
-                                                animateTextTyping(draftCategory) { category = it }
-                                            }
-                                            launch {
-                                                animateTextTyping(draftAntiMarxist) { antiMarxist = it }
-                                            }
-                                            launch {
-                                                animateTextTyping(draftMarxist) { marxist = it }
-                                            }
-                                        }
-                                    }
-                                ) {
-                                    Text("Herstellen", color = ImmersiveGreen, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                            Row(
+                                modifier = Modifier.padding(16.dp),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text("Entwurf gefunden 📝", color = ImmersiveTextPrimary, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                                    Text(
+                                        text = previewText,
+                                        color = ImmersiveTextSecondary,
+                                        fontSize = 12.sp,
+                                        lineHeight = 16.sp,
+                                        maxLines = 3,
+                                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                    )
                                 }
-                                IconButton(
-                                    onClick = {
-                                        prefs.edit().apply {
-                                            remove("draft_arg_anti_marxist")
-                                            remove("draft_arg_marxist")
-                                            remove("draft_arg_category")
-                                            remove("draft_arg_image_path")
-                                            apply()
+                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                                    TextButton(
+                                        onClick = {
+                                            scope.launch {
+                                                showRestoreDraftSuggestion = false
+                                                imagePath = draftImagePath
+                                                launch {
+                                                    animateTextTyping(draftCategory) { category = it }
+                                                }
+                                                launch {
+                                                    animateTextTyping(draftAntiMarxist) { antiMarxist = it }
+                                                }
+                                                launch {
+                                                    animateTextTyping(draftMarxist) { marxist = it }
+                                                }
+                                            }
                                         }
-                                        showRestoreDraftSuggestion = false
+                                    ) {
+                                        Text("Herstellen", color = ImmersiveGreen, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                                     }
-                                ) {
-                                    Icon(Icons.Filled.Close, contentDescription = "Verwerfen", tint = ImmersiveTextSecondary, modifier = Modifier.size(18.dp))
+                                    IconButton(
+                                        onClick = {
+                                            prefs.edit().apply {
+                                                remove("draft_arg_anti_marxist")
+                                                remove("draft_arg_marxist")
+                                                remove("draft_arg_category")
+                                                remove("draft_arg_image_path")
+                                                apply()
+                                            }
+                                            showRestoreDraftSuggestion = false
+                                        }
+                                    ) {
+                                        Icon(Icons.Filled.Close, contentDescription = "Verwerfen", tint = ImmersiveTextSecondary, modifier = Modifier.size(18.dp))
+                                    }
                                 }
                             }
                         }
+                        Spacer(modifier = Modifier.height(24.dp))
                     }
                 }
 
                 OutlinedTextField(
                     value = category,
-                onValueChange = { category = it },
-                label = { Text("Kategorie (optional)") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                shape = RoundedCornerShape(16.dp),
-                textStyle = MaterialTheme.typography.bodyLarge.copy(color = ImmersiveTextPrimary),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = ImmersiveGreen,
-                    focusedLabelColor = ImmersiveGreen,
-                    unfocusedBorderColor = ImmersiveBorder,
-                    focusedContainerColor = ImmersiveSurface,
-                    unfocusedContainerColor = ImmersiveSurface,
-                    focusedTextColor = ImmersiveTextPrimary,
-                    unfocusedTextColor = ImmersiveTextPrimary
+                    onValueChange = { category = it },
+                    label = { Text("Kategorie (optional)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    shape = RoundedCornerShape(16.dp),
+                    textStyle = MaterialTheme.typography.bodyLarge.copy(color = ImmersiveTextPrimary),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = ImmersiveGreen,
+                        focusedLabelColor = ImmersiveGreen,
+                        unfocusedBorderColor = ImmersiveBorder,
+                        focusedContainerColor = ImmersiveSurface,
+                        unfocusedContainerColor = ImmersiveSurface,
+                        focusedTextColor = ImmersiveTextPrimary,
+                        unfocusedTextColor = ImmersiveTextPrimary
+                    )
                 )
-            )
 
-            InlineRichTextEditor(
-                value = antiMarxist,
-                onValueChange = { antiMarxist = it },
-                placeholder = "Antimarxistisches Argument"
-            )
+                Spacer(modifier = Modifier.height(24.dp))
 
-            InlineRichTextEditor(
-                value = marxist,
-                onValueChange = { marxist = it },
-                placeholder = "Marxistisches Gegenargument"
-            )
+                InlineRichTextEditor(
+                    value = antiMarxist,
+                    onValueChange = { antiMarxist = it },
+                    placeholder = "Antimarxistisches Argument"
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                InlineRichTextEditor(
+                    value = marxist,
+                    onValueChange = { marxist = it },
+                    placeholder = "Marxistisches Gegenargument"
+                )
 
             Spacer(modifier = Modifier.height(100.dp))
         }
@@ -505,67 +511,69 @@ fun EditGlossaryScreen(
                         .verticalScroll(rememberScrollState())
                         .padding(top = padding.calculateTopPadding() + 80.dp)
                         .padding(horizontal = 24.dp, vertical = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
                     AnimatedVisibility(
                         visible = showRestoreDraftSuggestion,
-                        enter = fadeIn(animationSpec = tween(400)) + expandVertically(animationSpec = tween(400), expandFrom = androidx.compose.ui.Alignment.CenterVertically),
-                        exit = fadeOut(animationSpec = tween(400)) + shrinkVertically(animationSpec = tween(400), shrinkTowards = androidx.compose.ui.Alignment.CenterVertically)
+                        enter = fadeIn(animationSpec = tween(400)) + expandVertically(animationSpec = tween(400), expandFrom = androidx.compose.ui.Alignment.Top),
+                        exit = fadeOut(animationSpec = tween(400)) + shrinkVertically(animationSpec = tween(400), shrinkTowards = androidx.compose.ui.Alignment.Top)
                     ) {
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = CardDefaults.cardColors(containerColor = ImmersiveSurface),
-                            shape = RoundedCornerShape(16.dp),
-                            border = androidx.compose.foundation.BorderStroke(1.dp, ImmersiveGreen.copy(alpha = 0.5f))
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(16.dp),
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                        Column {
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = CardDefaults.cardColors(containerColor = ImmersiveSurface),
+                                shape = RoundedCornerShape(16.dp),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, ImmersiveGreen.copy(alpha = 0.5f))
                             ) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text("Entwurf gefunden 📝", color = ImmersiveTextPrimary, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                                    Text(
-                                        text = previewText,
-                                        color = ImmersiveTextSecondary,
-                                        fontSize = 12.sp,
-                                        lineHeight = 16.sp,
-                                        maxLines = 3,
-                                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-                                    )
-                                }
-                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                                    TextButton(
-                                        onClick = {
-                                            scope.launch {
-                                                showRestoreDraftSuggestion = false
-                                                imagePath = draftImagePath
-                                                launch {
-                                                    animateTextTyping(draftTerm) { term = it }
-                                                }
-                                                launch {
-                                                    animateTextTyping(draftDefinition) { definition = it }
-                                                }
-                                            }
-                                        }
-                                    ) {
-                                        Text("Herstellen", color = ImmersiveGreen, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                Row(
+                                    modifier = Modifier.padding(16.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text("Entwurf gefunden 📝", color = ImmersiveTextPrimary, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                                        Text(
+                                            text = previewText,
+                                            color = ImmersiveTextSecondary,
+                                            fontSize = 12.sp,
+                                            lineHeight = 16.sp,
+                                            maxLines = 3,
+                                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                        )
                                     }
-                                    IconButton(
-                                        onClick = {
-                                            prefs.edit().apply {
-                                                remove("draft_gloss_term")
-                                                remove("draft_gloss_definition")
-                                                remove("draft_gloss_image_path")
-                                                apply()
+                                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                                        TextButton(
+                                            onClick = {
+                                                scope.launch {
+                                                    showRestoreDraftSuggestion = false
+                                                    imagePath = draftImagePath
+                                                    launch {
+                                                        animateTextTyping(draftTerm) { term = it }
+                                                    }
+                                                    launch {
+                                                        animateTextTyping(draftDefinition) { definition = it }
+                                                    }
+                                                }
                                             }
-                                            showRestoreDraftSuggestion = false
+                                        ) {
+                                            Text("Herstellen", color = ImmersiveGreen, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                                         }
-                                    ) {
-                                        Icon(Icons.Filled.Close, contentDescription = "Verwerfen", tint = ImmersiveTextSecondary, modifier = Modifier.size(18.dp))
+                                        IconButton(
+                                            onClick = {
+                                                prefs.edit().apply {
+                                                    remove("draft_gloss_term")
+                                                    remove("draft_gloss_definition")
+                                                    remove("draft_gloss_image_path")
+                                                    apply()
+                                                }
+                                                showRestoreDraftSuggestion = false
+                                            }
+                                        ) {
+                                            Icon(Icons.Filled.Close, contentDescription = "Verwerfen", tint = ImmersiveTextSecondary, modifier = Modifier.size(18.dp))
+                                        }
                                     }
                                 }
                             }
+                            Spacer(modifier = Modifier.height(24.dp))
                         }
                     }
 
@@ -586,6 +594,8 @@ fun EditGlossaryScreen(
                             unfocusedContainerColor = ImmersiveSurface
                         )
                     )
+
+                    Spacer(modifier = Modifier.height(24.dp))
 
                     InlineRichTextEditor(
                         value = definition,
@@ -816,71 +826,73 @@ fun EditLiteratureScreen(
                         .verticalScroll(rememberScrollState())
                         .padding(top = padding.calculateTopPadding() + 80.dp)
                         .padding(horizontal = 24.dp, vertical = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
                     AnimatedVisibility(
                         visible = showRestoreDraftSuggestion,
-                        enter = fadeIn(animationSpec = tween(400)) + expandVertically(animationSpec = tween(400), expandFrom = androidx.compose.ui.Alignment.CenterVertically),
-                        exit = fadeOut(animationSpec = tween(400)) + shrinkVertically(animationSpec = tween(400), shrinkTowards = androidx.compose.ui.Alignment.CenterVertically)
+                        enter = fadeIn(animationSpec = tween(400)) + expandVertically(animationSpec = tween(400), expandFrom = androidx.compose.ui.Alignment.Top),
+                        exit = fadeOut(animationSpec = tween(400)) + shrinkVertically(animationSpec = tween(400), shrinkTowards = androidx.compose.ui.Alignment.Top)
                     ) {
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = CardDefaults.cardColors(containerColor = ImmersiveSurface),
-                            shape = RoundedCornerShape(16.dp),
-                            border = androidx.compose.foundation.BorderStroke(1.dp, ImmersiveGreen.copy(alpha = 0.5f))
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(16.dp),
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                        Column {
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = CardDefaults.cardColors(containerColor = ImmersiveSurface),
+                                shape = RoundedCornerShape(16.dp),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, ImmersiveGreen.copy(alpha = 0.5f))
                             ) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text("Entwurf gefunden 📝", color = ImmersiveTextPrimary, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                                    Text(
-                                        text = previewText,
-                                        color = ImmersiveTextSecondary,
-                                        fontSize = 12.sp,
-                                        lineHeight = 16.sp,
-                                        maxLines = 3,
-                                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-                                    )
-                                }
-                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                                    TextButton(
-                                        onClick = {
-                                            scope.launch {
-                                                showRestoreDraftSuggestion = false
-                                                imagePath = draftImagePath
-                                                launch {
-                                                    animateTextTyping(draftTitle) { title = it }
-                                                }
-                                                launch {
-                                                    animateTextTyping(draftAuthor) { author = it }
-                                                }
-                                                launch {
-                                                    animateTextTyping(draftSummary) { summary = it }
-                                                }
-                                            }
-                                        }
-                                    ) {
-                                        Text("Herstellen", color = ImmersiveGreen, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                Row(
+                                    modifier = Modifier.padding(16.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text("Entwurf gefunden 📝", color = ImmersiveTextPrimary, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                                        Text(
+                                            text = previewText,
+                                            color = ImmersiveTextSecondary,
+                                            fontSize = 12.sp,
+                                            lineHeight = 16.sp,
+                                            maxLines = 3,
+                                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                        )
                                     }
-                                    IconButton(
-                                        onClick = {
-                                            prefs.edit().apply {
-                                                remove("draft_lit_title")
-                                                remove("draft_lit_author")
-                                                remove("draft_lit_summary")
-                                                remove("draft_lit_image_path")
-                                                apply()
+                                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                                        TextButton(
+                                            onClick = {
+                                                scope.launch {
+                                                    showRestoreDraftSuggestion = false
+                                                    imagePath = draftImagePath
+                                                    launch {
+                                                        animateTextTyping(draftTitle) { title = it }
+                                                    }
+                                                    launch {
+                                                        animateTextTyping(draftAuthor) { author = it }
+                                                    }
+                                                    launch {
+                                                        animateTextTyping(draftSummary) { summary = it }
+                                                    }
+                                                }
                                             }
-                                            showRestoreDraftSuggestion = false
+                                        ) {
+                                            Text("Herstellen", color = ImmersiveGreen, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                                         }
-                                    ) {
-                                        Icon(Icons.Filled.Close, contentDescription = "Verwerfen", tint = ImmersiveTextSecondary, modifier = Modifier.size(18.dp))
+                                        IconButton(
+                                            onClick = {
+                                                prefs.edit().apply {
+                                                    remove("draft_lit_title")
+                                                    remove("draft_lit_author")
+                                                    remove("draft_lit_summary")
+                                                    remove("draft_lit_image_path")
+                                                    apply()
+                                                }
+                                                showRestoreDraftSuggestion = false
+                                            }
+                                        ) {
+                                            Icon(Icons.Filled.Close, contentDescription = "Verwerfen", tint = ImmersiveTextSecondary, modifier = Modifier.size(18.dp))
+                                        }
                                     }
                                 }
                             }
+                            Spacer(modifier = Modifier.height(24.dp))
                         }
                     }
 
@@ -902,6 +914,8 @@ fun EditLiteratureScreen(
                         )
                     )
 
+                    Spacer(modifier = Modifier.height(24.dp))
+
                     OutlinedTextField(
                         value = author,
                         onValueChange = { author = it },
@@ -919,6 +933,8 @@ fun EditLiteratureScreen(
                             unfocusedContainerColor = ImmersiveSurface
                         )
                     )
+
+                    Spacer(modifier = Modifier.height(24.dp))
 
                     InlineRichTextEditor(
                         value = summary,
