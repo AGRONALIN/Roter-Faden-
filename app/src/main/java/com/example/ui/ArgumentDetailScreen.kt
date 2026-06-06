@@ -72,6 +72,8 @@ fun ArgumentDetailScreen(
     val glossaryItems by viewModel.glossaryItems.collectAsState()
     val literatureItems by viewModel.literatureList.collectAsState()
     val tooltipState by viewModel.tooltipState.collectAsState()
+    val isDarkTheme by viewModel.isDarkTheme.collectAsState()
+    val literatureColor = if (isDarkTheme) Color(0xFF66BB6A) else Color(0xFF2E7D32)
 
     var textLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
     var containerPosition by remember { mutableStateOf(Offset.Zero) }
@@ -260,6 +262,18 @@ fun ArgumentDetailScreen(
                     }
                 }
 
+                argument.imagePath?.let { path ->
+                    LocalImageFromPath(
+                        path = path,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(240.dp)
+                            .clip(RoundedCornerShape(16.dp))
+                            .border(1.dp, ImmersiveBorder, RoundedCornerShape(16.dp))
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+
                 if (argument.category.isNotBlank()) {
                     Box(
                         modifier = Modifier
@@ -282,12 +296,13 @@ fun ArgumentDetailScreen(
 
                 // 1. Anti-Marxist Statement Bubble
                 val immersiveGreenColor = ImmersiveGreen
-                val annotatedAntiMarxist = remember(argument.antiMarxistStatement, glossaryItems, literatureItems, immersiveGreenColor) {
+                val annotatedAntiMarxist = remember(argument.antiMarxistStatement, glossaryItems, literatureItems, immersiveGreenColor, literatureColor) {
                     buildAutoLinkedText(
                         text = argument.antiMarxistStatement,
                         glossaryItems = glossaryItems,
                         literatureItems = literatureItems,
                         highlightColor = immersiveGreenColor,
+                        literatureColor = literatureColor,
                         navController = navController
                     )
                 }
@@ -322,12 +337,13 @@ fun ArgumentDetailScreen(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 // 2. Marxist Counter Argument Bubble
-                val annotatedMarxist = remember(argument.marxistCounterArgument, glossaryItems, literatureItems, immersiveGreenColor) {
+                val annotatedMarxist = remember(argument.marxistCounterArgument, glossaryItems, literatureItems, immersiveGreenColor, literatureColor) {
                     buildAutoLinkedText(
                         text = argument.marxistCounterArgument,
                         glossaryItems = glossaryItems,
                         literatureItems = literatureItems,
                         highlightColor = immersiveGreenColor,
+                        literatureColor = literatureColor,
                         navController = navController
                     )
                 }

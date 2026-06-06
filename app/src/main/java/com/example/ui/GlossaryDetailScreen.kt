@@ -9,6 +9,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -167,6 +168,8 @@ fun GlossaryDetailScreen(
         val allArguments by viewModel.recentArguments.collectAsState()
         val glossaryItems by viewModel.glossaryItems.collectAsState()
         val literatureItems by viewModel.literatureList.collectAsState()
+        val isDarkTheme by viewModel.isDarkTheme.collectAsState()
+        val literatureColor = if (isDarkTheme) Color(0xFF66BB6A) else Color(0xFF2E7D32)
         val relatedArguments = remember(allArguments, glossaryItem.term) {
             allArguments.filter {
                 it.marxistCounterArgument.contains(glossaryItem.term, ignoreCase = true) ||
@@ -234,6 +237,7 @@ fun GlossaryDetailScreen(
                             ) {
                                 BounceIconButton(onClick = {
                                     showOptions = false
+                                    navController.navigate("edit_glossary/${glossaryItem.id}")
                                 }) {
                                     Icon(Icons.Filled.Edit, contentDescription = "Bearbeiten", tint = ImmersiveTextPrimary)
                                 }
@@ -268,14 +272,27 @@ fun GlossaryDetailScreen(
                 ) 
                 
                 Spacer(modifier = Modifier.height(16.dp))
+
+                glossaryItem.imagePath?.let { path ->
+                    LocalImageFromPath(
+                        path = path,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(240.dp)
+                            .clip(RoundedCornerShape(16.dp))
+                            .border(1.dp, ImmersiveBorder, RoundedCornerShape(16.dp))
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
                 
             val immersiveGreenColor = ImmersiveGreen
-            val annotatedDefinition = remember(glossaryItem.definition, glossaryItems, literatureItems, immersiveGreenColor) {
+            val annotatedDefinition = remember(glossaryItem.definition, glossaryItems, literatureItems, immersiveGreenColor, literatureColor) {
                 buildAutoLinkedText(
                     text = glossaryItem.definition,
                     glossaryItems = glossaryItems.filter { it.id != glossaryItem.id },
                     literatureItems = literatureItems,
                     highlightColor = immersiveGreenColor,
+                    literatureColor = literatureColor,
                     navController = navController
                 )
             }

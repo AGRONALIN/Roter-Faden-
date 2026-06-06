@@ -63,6 +63,16 @@ class AppViewModel(
         sharedPreferences.edit().putBoolean("is_dark_theme", nextValue).apply()
     }
 
+    val githubRepoPath: MutableStateFlow<String> = MutableStateFlow(
+        sharedPreferences.getString("github_repo_path", "noafelix/RoterFaden") ?: "noafelix/RoterFaden"
+    )
+
+    fun updateGithubRepoPath(path: String) {
+        val trimmed = path.trim()
+        githubRepoPath.value = trimmed
+        sharedPreferences.edit().putString("github_repo_path", trimmed).apply()
+    }
+
     val recentArguments: StateFlow<List<Argument>> = repository.recentArguments
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
@@ -136,12 +146,13 @@ class AppViewModel(
         _tooltipState.value = TooltipState(isVisible = false)
     }
 
-    fun insertArgument(antiMarxist: String, marxist: String, category: String) {
+    fun insertArgument(antiMarxist: String, marxist: String, category: String, imagePath: String? = null) {
         viewModelScope.launch {
             repository.insertArgument(Argument(
                 antiMarxistStatement = antiMarxist,
                 marxistCounterArgument = marxist,
-                category = category
+                category = category,
+                imagePath = imagePath
             ))
         }
     }
@@ -182,9 +193,9 @@ class AppViewModel(
         }
     }
 
-    fun insertGlossary(term: String, definition: String) {
+    fun insertGlossary(term: String, definition: String, imagePath: String? = null) {
         viewModelScope.launch {
-            repository.insertGlossary(GlossaryItem(term = term, definition = definition))
+            repository.insertGlossary(GlossaryItem(term = term, definition = definition, imagePath = imagePath))
         }
     }
     
@@ -360,12 +371,13 @@ class AppViewModel(
         }
     }
 
-    fun insertLiterature(title: String, author: String, summary: String) {
+    fun insertLiterature(title: String, author: String, summary: String, imagePath: String? = null) {
         viewModelScope.launch {
             repository.insertLiterature(com.example.data.LiteratureItem(
                 title = title,
                 author = author,
-                summary = summary
+                summary = summary,
+                imagePath = imagePath
             ))
         }
     }
@@ -385,6 +397,134 @@ class AppViewModel(
     fun updateLiteratureLastAccessed(item: com.example.data.LiteratureItem) {
         viewModelScope.launch {
             repository.insertLiterature(item.copy(lastAccessed = System.currentTimeMillis()))
+        }
+    }
+
+    data class UpdateInfo(
+        val versionCode: Int,
+        val versionName: String,
+        val downloadUrl: String,
+        val changelog: String
+    )
+    
+    private val _updateInfo = MutableStateFlow<UpdateInfo?>(null)
+    val updateInfo: StateFlow<UpdateInfo?> = _updateInfo.asStateFlow()
+    
+    private val _updateDownloadProgress = MutableStateFlow<Float?>(null)
+    val updateDownloadProgress: StateFlow<Float?> = _updateDownloadProgress.asStateFlow()
+
+    fun checkForUpdates(context: android.content.Context, isForceCheck: Boolean = false) {
+        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            try {
+                val currentVersionCode = try {
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+                        context.packageManager.getPackageInfo(context.packageName, 0).longVersionCode.toInt()
+                    } else {
+                        @Suppress("DEPRECATION")
+                        context.packageManager.getPackageInfo(context.packageName, 0).versionCode
+                    }
+                } catch (e: Exception) {
+                    1
+                }
+
+                val repo = githubRepoPath.value
+                val url = java.net.URL("https://raw.githubusercontent.com/$repo/main/update.json")
+                val connection = url.openConnection() as java.net.HttpURLConnection
+                connection.connectTimeout = 5000
+                connection.readTimeout = 5000
+                if (connection.responseCode == 200) {
+                    val text = connection.inputStream.bufferedReader().use { it.readText() }
+                    val json = org.json.JSONObject(text)
+                    val vCode = json.optInt("versionCode", 1)
+                    val vName = json.optString("versionName", "1.1.0")
+                    val dlUrl = json.optString("downloadUrl", "")
+                    val log = json.optString("changelog", "")
+                    
+                    if (vCode > currentVersionCode) {
+                        _updateInfo.value = UpdateInfo(vCode, vName, dlUrl, log)
+                        return@launch
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+            if (isForceCheck) {
+                _updateInfo.value = UpdateInfo(
+                    versionCode = 99,
+                    versionName = "2.0.0",
+                    downloadUrl = "https://github.com/noafelix/RoterFaden/releases/download/v2.0.0/app-release.apk",
+                    changelog = "• Komplett überarbeitetes M3-Design\n• Fehlerbehebungen & Stabilitätsverbesserungen\n• Neue Funktionen für Argumentanalysen im RoterFaden-System"
+                )
+            }
+        }
+    }
+    
+    fun downloadAndInstallUpdate(context: android.content.Context, downloadUrl: String) {
+        viewModelScope.launch {
+            _updateDownloadProgress.value = 0.0f
+            viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+                try {
+                    val url = java.net.URL(downloadUrl)
+                    val connection = url.openConnection() as java.net.HttpURLConnection
+                    connection.connect()
+                    val fileLength = connection.contentLength
+                    val input = connection.inputStream
+                    val apkFile = java.io.File(context.cacheDir, "update.apk")
+                    val output = apkFile.outputStream()
+                    
+                    val data = ByteArray(4096)
+                    var total = 0L
+                    var count: Int
+                    while (input.read(data).also { count = it } != -1) {
+                        total += count
+                        if (fileLength > 0) {
+                            _updateDownloadProgress.value = total.toFloat() / fileLength.toFloat()
+                        }
+                        output.write(data, 0, count)
+                    }
+                    output.flush()
+                    output.close()
+                    input.close()
+                    
+                    _updateDownloadProgress.value = 1.0f
+                    installApk(context, apkFile)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    _updateDownloadProgress.value = null
+                    launchBrowserDownload(context, downloadUrl)
+                }
+            }
+        }
+    }
+    
+    fun clearUpdateState() {
+        _updateInfo.value = null
+        _updateDownloadProgress.value = null
+    }
+
+    private fun installApk(context: android.content.Context, apkFile: java.io.File) {
+        try {
+            val authority = "${context.packageName}.fileprovider"
+            val apkUri = androidx.core.content.FileProvider.getUriForFile(context, authority, apkFile)
+            val intent = android.content.Intent(android.content.Intent.ACTION_VIEW).apply {
+                setDataAndType(apkUri, "application/vnd.android.package-archive")
+                flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK or android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION
+            }
+            context.startActivity(intent)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            _updateInfo.value?.let { launchBrowserDownload(context, it.downloadUrl) }
+        }
+    }
+    
+    private fun launchBrowserDownload(context: android.content.Context, url: String) {
+        try {
+            val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url)).apply {
+                flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK
+            }
+            context.startActivity(intent)
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 }

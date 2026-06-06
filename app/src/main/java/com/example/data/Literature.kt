@@ -10,7 +10,8 @@ data class LiteratureItem(
     val author: String,
     val summary: String,
     val lastAccessed: Long = System.currentTimeMillis(),
-    val lastEdited: Long = lastAccessed
+    val lastEdited: Long = lastAccessed,
+    val imagePath: String? = null
 )
 
 val staticLiteratures = listOf(

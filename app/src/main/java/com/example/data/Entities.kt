@@ -10,7 +10,8 @@ data class Argument(
     val marxistCounterArgument: String,
     val category: String = "",
     val lastAccessed: Long = System.currentTimeMillis(),
-    val lastEdited: Long = lastAccessed
+    val lastEdited: Long = lastAccessed,
+    val imagePath: String? = null
 )
 
 @Entity(tableName = "glossary_items")
@@ -19,7 +20,8 @@ data class GlossaryItem(
     val term: String,
     val definition: String,
     val lastAccessed: Long = System.currentTimeMillis(),
-    val lastEdited: Long = lastAccessed
+    val lastEdited: Long = lastAccessed,
+    val imagePath: String? = null
 )
 
 @Entity(tableName = "songs")

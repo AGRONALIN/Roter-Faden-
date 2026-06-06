@@ -10,6 +10,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Image
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -44,10 +45,21 @@ fun EditArgumentScreen(
     var antiMarxist by remember(existingArg) { mutableStateOf(existingArg?.antiMarxistStatement ?: "") }
     var marxist by remember(existingArg) { mutableStateOf(existingArg?.marxistCounterArgument ?: "") }
     var category by remember(existingArg) { mutableStateOf(existingArg?.category ?: "") }
+    var imagePath by remember(existingArg) { mutableStateOf(existingArg?.imagePath) }
     
     val scope = rememberCoroutineScope()
 
     val context = LocalContext.current
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        uri?.let {
+            val copiedPath = copyUriToInternalStorage(context, it)
+            if (copiedPath != null) {
+                imagePath = copiedPath
+            }
+        }
+    }
     val importLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
     ) { uri ->
@@ -138,6 +150,41 @@ fun EditArgumentScreen(
                 )
             )
 
+            imagePath?.let { path ->
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .border(1.dp, ImmersiveBorder, RoundedCornerShape(16.dp))
+                ) {
+                    LocalImageFromPath(path, modifier = Modifier.fillMaxSize())
+                    IconButton(
+                        onClick = { imagePath = null },
+                        modifier = Modifier
+                            .align(androidx.compose.ui.Alignment.TopEnd)
+                            .padding(8.dp)
+                            .background(Color.Black.copy(alpha = 0.6f), androidx.compose.foundation.shape.CircleShape)
+                    ) {
+                        Icon(androidx.compose.material.icons.Icons.Filled.Close, contentDescription = "Bild entfernen", tint = Color.White)
+                    }
+                }
+            }
+
+            OutlinedButton(
+                onClick = { imagePickerLauncher.launch("image/*") },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = ImmersiveGreen)
+            ) {
+                Icon(
+                    imageVector = androidx.compose.material.icons.Icons.Default.Image,
+                    contentDescription = "Upload",
+                    modifier = Modifier.padding(end = 8.dp)
+                )
+                Text(if (imagePath == null) "Bild hinzufügen" else "Bild ändern")
+            }
+
             Spacer(modifier = Modifier.height(100.dp))
         }
 
@@ -205,10 +252,11 @@ fun EditArgumentScreen(
                             viewModel.updateArgument(existingArg.copy(
                                 antiMarxistStatement = antiMarxist,
                                 marxistCounterArgument = marxist,
-                                category = category
+                                category = category,
+                                imagePath = imagePath
                             ))
                         } else {
-                            viewModel.insertArgument(antiMarxist, marxist, category)
+                            viewModel.insertArgument(antiMarxist, marxist, category, imagePath)
                         }
                         navController.popBackStack()
                     }
@@ -242,14 +290,30 @@ fun EditGlossaryScreen(
     viewModel: AppViewModel,
     navController: NavController,
     sharedTransitionScope: SharedTransitionScope,
-    animatedVisibilityScope: AnimatedVisibilityScope
+    animatedVisibilityScope: AnimatedVisibilityScope,
+    termId: Int = -1
 ) {
-    var term by remember { mutableStateOf("") }
-    var definition by remember { mutableStateOf("") }
+    val glossaryItems by viewModel.glossaryItems.collectAsState()
+    val existingItem = remember(glossaryItems, termId) { glossaryItems.find { it.id == termId } }
+
+    var term by remember(existingItem) { mutableStateOf(existingItem?.term ?: "") }
+    var definition by remember(existingItem) { mutableStateOf(existingItem?.definition ?: "") }
+    var imagePath by remember(existingItem) { mutableStateOf(existingItem?.imagePath) }
     
     val scope = rememberCoroutineScope()
 
     val context = LocalContext.current
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        uri?.let {
+            val copiedPath = copyUriToInternalStorage(context, it)
+            if (copiedPath != null) {
+                imagePath = copiedPath
+            }
+        }
+    }
+
     val importLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
     ) { uri ->
@@ -266,139 +330,190 @@ fun EditGlossaryScreen(
         }
     }
 
-        PullToDismissContainer(
-            onDismiss = { navController.popBackStack() }
-        ) { nestedScrollConnection ->
+    PullToDismissContainer(
+        onDismiss = { navController.popBackStack() }
+    ) { nestedScrollConnection ->
         Scaffold(
             modifier = Modifier.fillMaxSize(),
             containerColor = ImmersiveBackground
         ) { padding ->
-        Box(modifier = Modifier.fillMaxSize().nestedScroll(nestedScrollConnection)) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalFadingEdge(topEdge = 20.dp, bottomEdge = 100.dp)
-                    .verticalScroll(rememberScrollState())
-                    .padding(top = padding.calculateTopPadding() + 80.dp)
-                    .padding(horizontal = 24.dp, vertical = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(24.dp)
-            ) {
-                OutlinedTextField(
-                    value = term,
-                onValueChange = { term = it },
-                label = { Text("Begriff") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                shape = RoundedCornerShape(16.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = ImmersiveGreen,
-                    focusedLabelColor = ImmersiveGreen,
-                    unfocusedBorderColor = ImmersiveBorder,
-                    focusedContainerColor = ImmersiveSurface,
-                    unfocusedContainerColor = ImmersiveSurface
-                )
-            )
+            Box(modifier = Modifier.fillMaxSize().nestedScroll(nestedScrollConnection)) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalFadingEdge(topEdge = 20.dp, bottomEdge = 100.dp)
+                        .verticalScroll(rememberScrollState())
+                        .padding(top = padding.calculateTopPadding() + 80.dp)
+                        .padding(horizontal = 24.dp, vertical = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(24.dp)
+                ) {
+                    OutlinedTextField(
+                        value = term,
+                        onValueChange = { term = it },
+                        label = { Text("Begriff") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        shape = RoundedCornerShape(16.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = ImmersiveTextPrimary,
+                            unfocusedTextColor = ImmersiveTextPrimary,
+                            focusedBorderColor = ImmersiveGreen,
+                            focusedLabelColor = ImmersiveGreen,
+                            unfocusedBorderColor = ImmersiveBorder,
+                            focusedContainerColor = ImmersiveSurface,
+                            unfocusedContainerColor = ImmersiveSurface
+                        )
+                    )
 
-            OutlinedTextField(
-                value = definition,
-                onValueChange = { definition = it },
-                label = { Text("Definition") },
-                modifier = Modifier.fillMaxWidth(),
-                minLines = 6,
-                shape = RoundedCornerShape(16.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = ImmersiveGreen,
-                    focusedLabelColor = ImmersiveGreen,
-                    unfocusedBorderColor = ImmersiveBorder,
-                    focusedContainerColor = ImmersiveSurface,
-                    unfocusedContainerColor = ImmersiveSurface
-                )
-            )
+                    OutlinedTextField(
+                        value = definition,
+                        onValueChange = { definition = it },
+                        label = { Text("Definition") },
+                        modifier = Modifier.fillMaxWidth(),
+                        minLines = 6,
+                        shape = RoundedCornerShape(16.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = ImmersiveTextPrimary,
+                            unfocusedTextColor = ImmersiveTextPrimary,
+                            focusedBorderColor = ImmersiveGreen,
+                            focusedLabelColor = ImmersiveGreen,
+                            unfocusedBorderColor = ImmersiveBorder,
+                            focusedContainerColor = ImmersiveSurface,
+                            unfocusedContainerColor = ImmersiveSurface
+                        )
+                    )
 
-            Spacer(modifier = Modifier.height(100.dp))
-        }
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 16.dp)
-                .padding(horizontal = 8.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
-        ) {
-            val closeInteractionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
-            IconButton(
-                onClick = { navController.popBackStack() },
-                modifier = Modifier
-                    .bounceScale(closeInteractionSource)
-                    .background(ImmersiveSurface, androidx.compose.foundation.shape.CircleShape),
-                interactionSource = closeInteractionSource
-            ) {
-                Icon(Icons.Filled.Close, contentDescription = "Abbrechen", tint = ImmersiveTextPrimary)
-            }
-            
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(50))
-                    .background(ImmersiveSurface)
-                    .border(1.dp, ImmersiveBorder, RoundedCornerShape(50))
-                    .padding(horizontal = 24.dp, vertical = 12.dp)
-            ) {
-                Text(
-                    text = "Neuer Begriff",
-                    fontWeight = FontWeight.Bold,
-                    color = ImmersiveTextPrimary
-                )
-            }
-
-            val importInteractionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
-            IconButton(
-                onClick = { importLauncher.launch(arrayOf("application/json")) },
-                modifier = Modifier
-                    .bounceScale(importInteractionSource)
-                    .background(ImmersiveSurface, androidx.compose.foundation.shape.CircleShape),
-                interactionSource = importInteractionSource
-            ) {
-                Icon(Icons.Filled.Download, contentDescription = "Importieren", tint = ImmersiveGreen)
-            }
-        }
-
-        Box(
-            modifier = Modifier
-                .align(androidx.compose.ui.Alignment.BottomCenter)
-                .padding(bottom = 24.dp)
-                .padding(horizontal = 24.dp)
-                .imePadding()
-        ) {
-            val btnInteractionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
-            Button(
-                onClick = {
-                    if (term.isNotBlank() && definition.isNotBlank()) {
-                        viewModel.insertGlossary(term, definition)
-                        navController.popBackStack()
+                    imagePath?.let { path ->
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(200.dp)
+                                .clip(RoundedCornerShape(16.dp))
+                                .border(1.dp, ImmersiveBorder, RoundedCornerShape(16.dp))
+                        ) {
+                            LocalImageFromPath(path, modifier = Modifier.fillMaxSize())
+                            IconButton(
+                                onClick = { imagePath = null },
+                                modifier = Modifier
+                                    .align(androidx.compose.ui.Alignment.TopEnd)
+                                    .padding(8.dp)
+                                    .background(Color.Black.copy(alpha = 0.6f), androidx.compose.foundation.shape.CircleShape)
+                            ) {
+                                Icon(androidx.compose.material.icons.Icons.Filled.Close, contentDescription = "Bild entfernen", tint = Color.White)
+                            }
+                        }
                     }
-                },
-                modifier = Modifier
-                    .wrapContentWidth()
-                    .height(56.dp)
-                    .bounceScale(btnInteractionSource)
-                    .clip(androidx.compose.foundation.shape.CircleShape),
-                interactionSource = btnInteractionSource,
-                colors = ButtonDefaults.buttonColors(containerColor = ImmersiveTextSecondary),
-                enabled = term.isNotBlank() && definition.isNotBlank()
-            ) {
-                Text(
-                    "Begriff speichern",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White,
-                    modifier = Modifier.padding(horizontal = 24.dp)
-                )
+
+                    OutlinedButton(
+                        onClick = { imagePickerLauncher.launch("image/*") },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = ImmersiveGreen)
+                    ) {
+                        Icon(
+                            imageVector = androidx.compose.material.icons.Icons.Default.Image,
+                            contentDescription = "Upload",
+                            modifier = Modifier.padding(end = 8.dp)
+                        )
+                        Text(if (imagePath == null) "Bild hinzufügen" else "Bild ändern")
+                    }
+
+                    Spacer(modifier = Modifier.height(100.dp))
+                }
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 16.dp)
+                        .padding(horizontal = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                ) {
+                    val closeInteractionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+                    IconButton(
+                        onClick = { navController.popBackStack() },
+                        modifier = Modifier
+                            .bounceScale(closeInteractionSource)
+                            .background(ImmersiveSurface, androidx.compose.foundation.shape.CircleShape),
+                        interactionSource = closeInteractionSource
+                    ) {
+                        Icon(Icons.Filled.Close, contentDescription = "Abbrechen", tint = ImmersiveTextPrimary)
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(50))
+                            .background(ImmersiveSurface)
+                            .border(1.dp, ImmersiveBorder, RoundedCornerShape(50))
+                            .padding(horizontal = 24.dp, vertical = 12.dp)
+                    ) {
+                        Text(
+                            text = if (existingItem != null) "Begriff bearbeiten" else "Neuer Begriff",
+                            fontWeight = FontWeight.Bold,
+                            color = ImmersiveTextPrimary
+                        )
+                    }
+
+                    if (existingItem == null) {
+                        val importInteractionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+                        IconButton(
+                            onClick = { importLauncher.launch(arrayOf("application/json")) },
+                            modifier = Modifier
+                                .bounceScale(importInteractionSource)
+                                .background(ImmersiveSurface, androidx.compose.foundation.shape.CircleShape),
+                            interactionSource = importInteractionSource
+                        ) {
+                            Icon(Icons.Filled.Download, contentDescription = "Importieren", tint = ImmersiveGreen)
+                        }
+                    } else {
+                        Spacer(modifier = Modifier.size(48.dp))
+                    }
+                }
+
+                Box(
+                    modifier = Modifier
+                        .align(androidx.compose.ui.Alignment.BottomCenter)
+                        .padding(bottom = 24.dp)
+                        .padding(horizontal = 24.dp)
+                        .imePadding()
+                ) {
+                    val btnInteractionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+                    Button(
+                        onClick = {
+                            if (term.isNotBlank() && definition.isNotBlank()) {
+                                if (existingItem != null) {
+                                    viewModel.updateGlossary(existingItem.copy(
+                                        term = term,
+                                        definition = definition,
+                                        imagePath = imagePath
+                                    ))
+                                } else {
+                                    viewModel.insertGlossary(term, definition, imagePath)
+                                }
+                                navController.popBackStack()
+                            }
+                        },
+                        modifier = Modifier
+                            .wrapContentWidth()
+                            .height(56.dp)
+                            .bounceScale(btnInteractionSource)
+                            .clip(androidx.compose.foundation.shape.CircleShape),
+                        interactionSource = btnInteractionSource,
+                        colors = ButtonDefaults.buttonColors(containerColor = ImmersiveGreen),
+                        enabled = term.isNotBlank() && definition.isNotBlank()
+                    ) {
+                        Text(
+                            "Begriff speichern",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White,
+                            modifier = Modifier.padding(horizontal = 24.dp)
+                        )
+                    }
+                }
             }
         }
     }
-    }
-}
 }
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
@@ -416,6 +531,19 @@ fun EditLiteratureScreen(
     var title by remember(existingLit) { mutableStateOf(existingLit?.title ?: "") }
     var author by remember(existingLit) { mutableStateOf(existingLit?.author ?: "") }
     var summary by remember(existingLit) { mutableStateOf(existingLit?.summary ?: "") }
+    var imagePath by remember(existingLit) { mutableStateOf(existingLit?.imagePath) }
+
+    val context = LocalContext.current
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        uri?.let {
+            val copiedPath = copyUriToInternalStorage(context, it)
+            if (copiedPath != null) {
+                imagePath = copiedPath
+            }
+        }
+    }
 
     PullToDismissContainer(
         onDismiss = { navController.popBackStack() }
@@ -488,6 +616,41 @@ fun EditLiteratureScreen(
                         )
                     )
 
+                    imagePath?.let { path ->
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(200.dp)
+                                .clip(RoundedCornerShape(16.dp))
+                                .border(1.dp, ImmersiveBorder, RoundedCornerShape(16.dp))
+                        ) {
+                            LocalImageFromPath(path, modifier = Modifier.fillMaxSize())
+                            IconButton(
+                                onClick = { imagePath = null },
+                                modifier = Modifier
+                                    .align(androidx.compose.ui.Alignment.TopEnd)
+                                    .padding(8.dp)
+                                    .background(Color.Black.copy(alpha = 0.6f), androidx.compose.foundation.shape.CircleShape)
+                            ) {
+                                Icon(androidx.compose.material.icons.Icons.Filled.Close, contentDescription = "Bild entfernen", tint = Color.White)
+                            }
+                        }
+                    }
+
+                    OutlinedButton(
+                        onClick = { imagePickerLauncher.launch("image/*") },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = ImmersiveGreen)
+                    ) {
+                        Icon(
+                            imageVector = androidx.compose.material.icons.Icons.Default.Image,
+                            contentDescription = "Upload",
+                            modifier = Modifier.padding(end = 8.dp)
+                        )
+                        Text(if (imagePath == null) "Bild hinzufügen" else "Bild ändern")
+                    }
+
                     Spacer(modifier = Modifier.height(100.dp))
                 }
 
@@ -542,10 +705,11 @@ fun EditLiteratureScreen(
                                     viewModel.updateLiterature(existingLit.copy(
                                         title = title,
                                         author = author,
-                                        summary = summary
+                                        summary = summary,
+                                        imagePath = imagePath
                                     ))
                                 } else {
-                                    viewModel.insertLiterature(title, author, summary)
+                                    viewModel.insertLiterature(title, author, summary, imagePath)
                                 }
                                 navController.popBackStack()
                             }

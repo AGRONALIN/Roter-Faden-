@@ -1,10 +1,13 @@
 package com.example.ui
 
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.unit.Dp
@@ -74,12 +77,13 @@ fun buildAutoLinkedText(
     glossaryItems: List<com.example.data.GlossaryItem>,
     literatureItems: List<com.example.data.LiteratureItem>,
     highlightColor: Color,
+    literatureColor: Color = Color(0xFF2E7D32),
     navController: androidx.navigation.NavController
 ): androidx.compose.ui.text.AnnotatedString {
     return androidx.compose.ui.text.buildAnnotatedString {
         append(text)
         
-        data class MatchRange(val start: Int, val end: Int, val route: String)
+        data class MatchRange(val start: Int, val end: Int, val route: String, val color: Color)
         val matches = mutableListOf<MatchRange>()
         
         val sortedLit = literatureItems.sortedByDescending { it.title.length }
@@ -97,7 +101,7 @@ fun buildAutoLinkedText(
                     (it.start >= startIndex && it.start < endIndex)
                 }
                 if (!hasOverlap) {
-                    matches.add(MatchRange(startIndex, endIndex, "literature_detail/${lit.id}?source=text"))
+                    matches.add(MatchRange(startIndex, endIndex, "literature_detail/${lit.id}?source=text", literatureColor))
                 }
                 startIndex = text.indexOf(title, startIndex + title.length, ignoreCase = true)
             }
@@ -115,7 +119,7 @@ fun buildAutoLinkedText(
                     (it.start >= startIndex && it.start < endIndex)
                 }
                 if (!hasOverlap) {
-                    matches.add(MatchRange(startIndex, endIndex, "glossary_detail/${glossary.id}?source=text"))
+                    matches.add(MatchRange(startIndex, endIndex, "glossary_detail/${glossary.id}?source=text", highlightColor))
                 }
                 startIndex = text.indexOf(term, startIndex + term.length, ignoreCase = true)
             }
@@ -124,7 +128,7 @@ fun buildAutoLinkedText(
         for (match in matches) {
             addStyle(
                 style = androidx.compose.ui.text.SpanStyle(
-                    color = highlightColor,
+                    color = match.color,
                     fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
                     textDecoration = androidx.compose.ui.text.style.TextDecoration.Underline
                 ),
@@ -139,5 +143,39 @@ fun buildAutoLinkedText(
                 end = match.end
             )
         }
+    }
+}
+
+fun copyUriToInternalStorage(context: android.content.Context, uri: android.net.Uri): String? {
+    return try {
+        val inputStream = context.contentResolver.openInputStream(uri) ?: return null
+        val fileName = "img_${System.currentTimeMillis()}.jpg"
+        val outputFile = java.io.File(context.filesDir, fileName)
+        outputFile.outputStream().use { outputStream ->
+            inputStream.use { it.copyTo(outputStream) }
+        }
+        outputFile.absolutePath
+    } catch (e: Exception) {
+        e.printStackTrace()
+        null
+    }
+}
+
+@Composable
+fun LocalImageFromPath(path: String, modifier: Modifier) {
+    val bitmap = remember(path) {
+        try {
+            android.graphics.BitmapFactory.decodeFile(path)?.asImageBitmap()
+        } catch (e: Exception) {
+            null
+        }
+    }
+    if (bitmap != null) {
+        androidx.compose.foundation.Image(
+            bitmap = bitmap,
+            contentDescription = "Eingefügtes Bild",
+            modifier = modifier,
+            contentScale = androidx.compose.ui.layout.ContentScale.Crop
+        )
     }
 }

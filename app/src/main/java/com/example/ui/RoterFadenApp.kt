@@ -20,6 +20,9 @@ import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.AutoStories
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.CloudDownload
+import androidx.compose.material.icons.filled.SystemUpdateAlt
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -92,6 +95,14 @@ fun RoterFadenApp(viewModel: AppViewModel) {
     var currentTab by remember { mutableIntStateOf(0) }
     val coroutineScope = rememberCoroutineScope()
 
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val updateInfo by viewModel.updateInfo.collectAsState()
+    val updateDownloadProgress by viewModel.updateDownloadProgress.collectAsState()
+
+    LaunchedEffect(Unit) {
+        viewModel.checkForUpdates(context, isForceCheck = false)
+    }
+
     SharedTransitionLayout {
         val isDarkTheme by viewModel.isDarkTheme.collectAsState()
 
@@ -118,6 +129,108 @@ fun RoterFadenApp(viewModel: AppViewModel) {
                 .background(immersiveBg)
         ) { _ ->
             val startDest = remember { if (viewModel.showOnboarding.value) "onboarding" else "main" }
+
+            // Automatic Update Offer Dialog
+            updateInfo?.let { info ->
+                AlertDialog(
+                    onDismissRequest = { viewModel.clearUpdateState() },
+                    title = {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.SystemUpdateAlt,
+                                contentDescription = "Update",
+                                tint = ImmersiveGreen,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "App-Update verfügbar!",
+                                color = ImmersiveTextPrimary,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 18.sp
+                            )
+                        }
+                    },
+                    text = {
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Text(
+                                text = "Eine neue Version ${info.versionName} (v${info.versionCode}) ist verfügbar.",
+                                color = ImmersiveTextPrimary,
+                                fontSize = 14.sp
+                            )
+                            
+                            if (info.changelog.isNotBlank()) {
+                                Text(
+                                    text = "Änderungen:",
+                                    fontWeight = FontWeight.Bold,
+                                    color = ImmersiveTextSecondary,
+                                    fontSize = 12.sp
+                                )
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(ImmersiveSurface, RoundedCornerShape(12.dp))
+                                        .border(1.dp, ImmersiveBorder, RoundedCornerShape(12.dp))
+                                        .padding(12.dp)
+                                ) {
+                                    Text(
+                                        text = info.changelog,
+                                        color = ImmersiveTextPrimary,
+                                        fontSize = 12.sp
+                                    )
+                                }
+                            }
+
+                            if (updateDownloadProgress != null) {
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Column(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    LinearProgressIndicator(
+                                        progress = { updateDownloadProgress ?: 0f },
+                                        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(4.dp)),
+                                        color = ImmersiveGreen,
+                                        trackColor = ImmersiveBorder
+                                    )
+                                    val percent = ((updateDownloadProgress ?: 0f) * 100).toInt()
+                                    Text(
+                                        text = "Wird heruntergeladen... $percent%",
+                                        color = ImmersiveTextSecondary,
+                                        fontSize = 12.sp
+                                    )
+                                }
+                            }
+                        }
+                    },
+                    confirmButton = {
+                        Button(
+                            onClick = {
+                                viewModel.downloadAndInstallUpdate(context, info.downloadUrl)
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = ImmersiveGreen),
+                            enabled = updateDownloadProgress == null,
+                            shape = RoundedCornerShape(50)
+                        ) {
+                            Text("Jetzt installieren", color = Color.White)
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(
+                            onClick = { viewModel.clearUpdateState() },
+                            enabled = updateDownloadProgress == null
+                        ) {
+                            Text("Später", color = ImmersiveTextSecondary)
+                        }
+                    },
+                    containerColor = ImmersiveBackground,
+                    shape = RoundedCornerShape(24.dp)
+                )
+            }
 
             Box(
                 modifier = Modifier
@@ -234,7 +347,18 @@ fun RoterFadenApp(viewModel: AppViewModel) {
                         popEnterTransition = slideUpEnter,
                         popExitTransition = slideDownExit
                     ) {
-                        EditGlossaryScreen(viewModel, navController, this@SharedTransitionLayout, this@composable)
+                        EditGlossaryScreen(viewModel, navController, this@SharedTransitionLayout, this@composable, -1)
+                    }
+                    composable(
+                        route = "edit_glossary/{termId}",
+                        arguments = listOf(navArgument("termId") { type = NavType.IntType }),
+                        enterTransition = slideUpEnter,
+                        exitTransition = slideDownExit,
+                        popEnterTransition = slideUpEnter,
+                        popExitTransition = slideDownExit
+                    ) { backStackEntry ->
+                        val termId = backStackEntry.arguments?.getInt("termId") ?: -1
+                        EditGlossaryScreen(viewModel, navController, this@SharedTransitionLayout, this@composable, termId)
                     }
                     composable(
                         "edit_literature",

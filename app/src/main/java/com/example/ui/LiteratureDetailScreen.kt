@@ -7,10 +7,12 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -40,6 +42,8 @@ fun LiteratureDetailScreen(
 ) {
     val glossaryItems by viewModel.glossaryItems.collectAsState()
     val literatureItems by viewModel.literatureList.collectAsState()
+    val isDarkTheme by viewModel.isDarkTheme.collectAsState()
+    val literatureColor = if (isDarkTheme) Color(0xFF66BB6A) else Color(0xFF2E7D32)
 
     Box(
         modifier = Modifier
@@ -117,14 +121,27 @@ fun LiteratureDetailScreen(
                 )
                 
                 Spacer(modifier = Modifier.height(16.dp))
+
+                literatureItem.imagePath?.let { path ->
+                    LocalImageFromPath(
+                        path = path,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(240.dp)
+                            .clip(RoundedCornerShape(16.dp))
+                            .border(1.dp, ImmersiveBorder, RoundedCornerShape(16.dp))
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
                 
                 val immersiveGreenColor = ImmersiveGreen
-                val annotatedSummary = remember(literatureItem.summary, glossaryItems, literatureItems, immersiveGreenColor) {
+                val annotatedSummary = remember(literatureItem.summary, glossaryItems, literatureItems, immersiveGreenColor, literatureColor) {
                     buildAutoLinkedText(
                         text = literatureItem.summary,
                         glossaryItems = glossaryItems,
                         literatureItems = literatureItems.filter { it.id != literatureItem.id },
                         highlightColor = immersiveGreenColor,
+                        literatureColor = literatureColor,
                         navController = navController
                     )
                 }
