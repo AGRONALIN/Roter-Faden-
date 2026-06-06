@@ -34,6 +34,94 @@ class AppViewModel(
     private val repository: AppRepository,
     private val sharedPreferences: android.content.SharedPreferences
 ) : ViewModel() {
+    private val aiRepository: com.example.data.AiAssistantRepository = com.example.data.AiAssistantRepositoryImpl()
+
+    val marxChatHistory = MutableStateFlow<List<com.example.data.ChatMessage>>(emptyList())
+    val isMarxThinking = MutableStateFlow<Boolean>(false)
+    val marxSpeechBubbleText = MutableStateFlow<String>("Heilige Allianz der Ausbeuter! Du hast den unerbittlichen Klassenkampf in Gang gesetzt, Genosse! Frag mich, was du willst, und ich zeige dir die marxistische Wahrheit!")
+
+    val customMarxImagePath = MutableStateFlow<String?>(
+        sharedPreferences.getString("custom_marx_image_path", null)
+    )
+
+    fun saveCustomMarxImage(context: android.content.Context, uri: android.net.Uri) {
+        viewModelScope.launch {
+            try {
+                val inputStream = context.contentResolver.openInputStream(uri)
+                if (inputStream != null) {
+                    val file = java.io.File(context.filesDir, "custom_marx_image.jpg")
+                    val outputStream = java.io.FileOutputStream(file)
+                    inputStream.use { input ->
+                        outputStream.use { output ->
+                            input.copyTo(output)
+                        }
+                    }
+                    val absolutePath = file.absolutePath
+                    customMarxImagePath.value = absolutePath
+                    sharedPreferences.edit().putString("custom_marx_image_path", absolutePath).apply()
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    fun removeCustomMarxImage(context: android.content.Context) {
+        viewModelScope.launch {
+            try {
+                val file = java.io.File(context.filesDir, "custom_marx_image.jpg")
+                if (file.exists()) {
+                    file.delete()
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+            customMarxImagePath.value = null
+            sharedPreferences.edit().remove("custom_marx_image_path").apply()
+        }
+    }
+
+    fun askKarlMarx(question: String) {
+        if (question.isBlank()) return
+        val trimmed = question.trim()
+        
+        val updatedHistory = marxChatHistory.value + com.example.data.ChatMessage("user", trimmed)
+        marxChatHistory.value = updatedHistory
+        
+        isMarxThinking.value = true
+        marxSpeechBubbleText.value = "Karl Marx schärft seine Feder..."
+        
+        viewModelScope.launch {
+            try {
+                val response = aiRepository.getMarxResponse(trimmed, updatedHistory)
+                marxSpeechBubbleText.value = response
+                marxChatHistory.value = marxChatHistory.value + com.example.data.ChatMessage("model", response)
+            } catch (e: Exception) {
+                val errorMsg = "Kompagnon! Mein Gehirn streikt gerade aufgrund von akuter Ausbeutung: ${e.localizedMessage}"
+                marxSpeechBubbleText.value = errorMsg
+                marxChatHistory.value = marxChatHistory.value + com.example.data.ChatMessage("model", errorMsg)
+            } finally {
+                isMarxThinking.value = false
+            }
+        }
+    }
+
+    fun clearMarxChat() {
+        marxChatHistory.value = emptyList()
+        marxSpeechBubbleText.value = "Heilige Allianz der Ausbeuter! Du hast den unerbittlichen Klassenkampf in Gang gesetzt, Genosse! Frag mich, was du willst, und ich zeige dir die marxistische Wahrheit!"
+        isMarxThinking.value = false
+    }
+
+    val isReturningFromMarx = MutableStateFlow<Boolean>(false)
+
+    fun triggerReturnFromMarxTransition() {
+        isReturningFromMarx.value = true
+    }
+
+    fun setReturningFromMarx(value: Boolean) {
+        isReturningFromMarx.value = value
+    }
+
     private val _appOverlay = MutableStateFlow<AppOverlay>(AppOverlay.None)
     val appOverlay: StateFlow<AppOverlay> = _appOverlay.asStateFlow()
 

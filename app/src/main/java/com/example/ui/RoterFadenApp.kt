@@ -525,6 +525,15 @@ fun RoterFadenApp(viewModel: AppViewModel) {
                             Text("Argument nicht gefunden", modifier = Modifier.fillMaxSize().wrapContentSize(Alignment.Center))
                         }
                     }
+                    composable(
+                        route = "marx_chat",
+                        enterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Up, animationSpec = tween(400)) },
+                        exitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Down, animationSpec = tween(400)) },
+                        popEnterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Up, animationSpec = tween(400)) },
+                        popExitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Down, animationSpec = tween(400)) }
+                    ) {
+                        MarxChatScreen(viewModel, navController)
+                    }
                 }
                 
                 // Top Blur Effect (Edge-to-Edge illusion)

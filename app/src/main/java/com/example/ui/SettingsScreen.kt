@@ -7,6 +7,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AutoStories
@@ -14,17 +15,23 @@ import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Link
+import androidx.compose.material.icons.filled.Image
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import coil.compose.AsyncImage
 import com.example.BuildConfig
 import com.example.ui.theme.*
 import kotlinx.coroutines.delay
@@ -47,6 +54,15 @@ fun SettingsScreen(
     var showDialog by remember { mutableStateOf(false) }
     val updateInfo by viewModel.updateInfo.collectAsState()
     val updateDownloadProgress by viewModel.updateDownloadProgress.collectAsState()
+    val customMarxImagePath by viewModel.customMarxImagePath.collectAsState()
+
+    val photoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        if (uri != null) {
+            viewModel.saveCustomMarxImage(context, uri)
+        }
+    }
 
     Scaffold(
         containerColor = ImmersiveBackground,
@@ -147,6 +163,113 @@ fun SettingsScreen(
                             fontSize = 12.sp,
                             lineHeight = 16.sp
                         )
+                    }
+                }
+            }
+
+            // Section Title: Karl Marx Button Customizer
+            Text(
+                text = "Marx-Button Personalisierung",
+                color = ImmersiveTextSecondary,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.sp,
+                modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
+            )
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = ImmersiveSurface),
+                border = androidx.compose.foundation.BorderStroke(1.dp, ImmersiveBorder)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // Display either custom image preview or default placeholder
+                        Box(
+                            modifier = Modifier
+                                .size(64.dp)
+                                .shadow(2.dp, CircleShape)
+                                .background(ImmersiveBackground, CircleShape)
+                                .border(2.dp, ImmersiveGreen, CircleShape)
+                                .clip(CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (customMarxImagePath != null) {
+                                AsyncImage(
+                                    model = customMarxImagePath,
+                                    contentDescription = "Vorschau",
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Crop
+                                )
+                            } else {
+                                Icon(
+                                    imageVector = Icons.Default.Image,
+                                    contentDescription = "Standard-Icon",
+                                    tint = ImmersiveTextSecondary,
+                                    modifier = Modifier.size(28.dp)
+                                )
+                            }
+                        }
+
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Eigenes Bild für Marx-Button",
+                                color = ImmersiveTextPrimary,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 15.sp
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = if (customMarxImagePath != null) {
+                                    "Dein eigenes Bild wird als drehender Button und im Marx-Chat verwendet!"
+                                } else {
+                                    "Ersetze die Standardzeichnung durch ein eigenes Foto von Karl Marx oder ein lustiges Meme-Bild."
+                                },
+                                color = ImmersiveTextSecondary,
+                                fontSize = 12.sp,
+                                lineHeight = 16.sp
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Button(
+                            onClick = { photoPickerLauncher.launch("image/*") },
+                            colors = ButtonDefaults.buttonColors(containerColor = ImmersiveGreen),
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text(
+                                text = if (customMarxImagePath != null) "Bild ändern" else "Bild hochladen",
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 13.sp
+                            )
+                        }
+
+                        if (customMarxImagePath != null) {
+                            OutlinedButton(
+                                onClick = { viewModel.removeCustomMarxImage(context) },
+                                colors = ButtonDefaults.outlinedButtonColors(contentColor = CreamRed),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, CreamRed.copy(alpha = 0.5f)),
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Text(
+                                    text = "Entfernen",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 13.sp
+                                )
+                            }
+                        }
                     }
                 }
             }

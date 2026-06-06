@@ -33,6 +33,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.foundation.Canvas
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.zIndex
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -45,6 +53,9 @@ import com.example.ui.theme.*
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import kotlinx.coroutines.launch
+import coil.compose.AsyncImage
+import androidx.compose.ui.layout.ContentScale
 
 import androidx.compose.material.icons.filled.Nightlight
 import androidx.compose.material.icons.filled.WbSunny
@@ -68,8 +79,41 @@ fun HomeScreen(
     navAnimatedVisibilityScope: AnimatedVisibilityScope? = null,
     onNavigateToSearch: () -> Unit = {}
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    var isSpinningAndZooming by remember { mutableStateOf(false) }
+    var currentRotation by remember { mutableStateOf(0f) }
+    var currentScale by remember { mutableStateOf(1f) }
+
     val recentArguments by viewModel.recentArguments.collectAsState()
+    val customMarxImagePath by viewModel.customMarxImagePath.collectAsState()
+    val isReturningFromMarx by viewModel.isReturningFromMarx.collectAsState()
     val topRecentArguments = remember(recentArguments) { recentArguments.take(3) }
+
+    // Reverse (zoom-out/zoom-down) transition when returning from Marx Chat
+    LaunchedEffect(isReturningFromMarx) {
+        if (isReturningFromMarx) {
+            currentScale = 45f
+            currentRotation = 720f
+            isSpinningAndZooming = true
+            
+            val returnDurationMs = 600L
+            val startTime = System.currentTimeMillis()
+            while (System.currentTimeMillis() - startTime < returnDurationMs) {
+                val progress = (System.currentTimeMillis() - startTime).toFloat() / returnDurationMs
+                val eased = 1f - progress
+                // Smooth cubic transition down to 1f
+                currentScale = 1f + (eased * eased * eased * 44f)
+                currentRotation = eased * 720f
+                kotlinx.coroutines.delay(16)
+            }
+            
+            currentScale = 1f
+            currentRotation = 0f
+            isSpinningAndZooming = false
+            viewModel.setReturningFromMarx(false)
+        }
+    }
     val recentCategories = remember(recentArguments) { recentArguments.map { it.category }.filter { it.isNotBlank() }.distinct() }
     val recentGlossaries by viewModel.recentGlossaryItems.collectAsState()
     val topRecentGlossaries = remember(recentGlossaries) { recentGlossaries.take(3) }
@@ -228,24 +272,84 @@ fun HomeScreen(
                                 }
                                 
                                 if (recentArguments.isNotEmpty()) {
+                                    val hasCustomImage = customMarxImagePath != null
                                     Box(
                                         modifier = Modifier
                                             .size(80.dp)
-                                            .clip(androidx.compose.foundation.shape.CircleShape)
-                                            .background(ImmersiveGreen)
-                                            .bounceClick {
-                                                val randomArg = recentArguments.random()
-                                                viewModel.updateArgumentLastAccessed(randomArg)
-                                                navController.navigate("argument_detail/${randomArg.id}?source=random")
+                                            .then(
+                                                if (!hasCustomImage) {
+                                                    Modifier
+                                                        .shadow(4.dp, androidx.compose.foundation.shape.CircleShape)
+                                                        .background(Color(0xFFC62828), androidx.compose.foundation.shape.CircleShape)
+                                                } else {
+                                                    Modifier.clip(androidx.compose.foundation.shape.CircleShape)
+                                                }
+                                            )
+                                            .graphicsLayer(
+                                                scaleX = currentScale,
+                                                scaleY = currentScale,
+                                                rotationZ = currentRotation
+                                            )
+                                            .then(
+                                                if (isSpinningAndZooming) {
+                                                    Modifier.zIndex(100f)
+                                                } else {
+                                                    Modifier
+                                                }
+                                            )
+                                            .testTag("marx_spin_button")
+                                            .pointerInput(recentArguments) {
+                                                detectTapGestures(
+                                                    onLongPress = {
+                                                        if (isSpinningAndZooming) return@detectTapGestures
+                                                        isSpinningAndZooming = true
+                                                        coroutineScope.launch {
+                                                            var speed = 1.2f
+                                                            val durationMs = 1500L
+                                                            val startTime = System.currentTimeMillis()
+                                                            
+                                                            while (System.currentTimeMillis() - startTime < durationMs) {
+                                                                currentRotation += speed
+                                                                speed += 0.25f
+                                                                kotlinx.coroutines.delay(16)
+                                                            }
+                                                            
+                                                            val zoomDuration = 500L
+                                                            val zoomStartTime = System.currentTimeMillis()
+                                                            while (System.currentTimeMillis() - zoomStartTime < zoomDuration) {
+                                                                val progress = (System.currentTimeMillis() - zoomStartTime).toFloat() / zoomDuration
+                                                                val eased = progress * progress * progress
+                                                                currentScale = 1f + (eased * 45f)
+                                                                currentRotation += speed
+                                                                speed += 0.15f
+                                                                kotlinx.coroutines.delay(16)
+                                                            }
+                                                            
+                                                            navController.navigate("marx_chat")
+                                                        }
+                                                    },
+                                                    onTap = {
+                                                        android.widget.Toast.makeText(context, "Halt gedrückt, um Karl Marx herbeizurufen! ☭", android.widget.Toast.LENGTH_SHORT).show()
+                                                    }
+                                                )
                                             },
                                         contentAlignment = Alignment.Center
                                     ) {
-                                        Icon(
-                                            imageVector = Icons.Filled.Star,
-                                            contentDescription = "Zufälliges Argument",
-                                            tint = Color.White,
-                                            modifier = Modifier.size(54.dp)
-                                        )
+                                        if (hasCustomImage) {
+                                            AsyncImage(
+                                                model = customMarxImagePath,
+                                                contentDescription = "Karl Marx custom image",
+                                                modifier = Modifier.fillMaxSize(),
+                                                contentScale = ContentScale.Crop
+                                            )
+                                        } else {
+                                            Icon(
+                                                imageVector = Icons.Filled.Star,
+                                                contentDescription = "Roter Stern",
+                                                tint = Color(0xFFFFD54F),
+                                                modifier = Modifier.size(52.dp)
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -347,7 +451,109 @@ fun HomeScreen(
                     }
                 }
             }
+
+            // Animate screen backdrop darkening during the zoom transition
+            if (isSpinningAndZooming) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = ((currentScale - 1f) / 44f).coerceIn(0.0f, 0.95f)))
+                        .zIndex(99f)
+                        .pointerInput(Unit) { /* Intercept all gestures */ }
+                )
+            }
         }
+    }
+}
+
+@Composable
+fun KarlMarxHeadIcon(modifier: Modifier = Modifier) {
+    Canvas(modifier = modifier) {
+        val w = size.width
+        val h = size.height
+        
+        val canvasBg = Color(0xFFC62828)
+        val beardColor = Color(0xFFEEEEEE)
+        val hairColor = Color(0xFFDDDDDD)
+        val faceColor = Color(0xFFFFD54F)
+        val eyeColor = Color(0xFF111111)
+
+        drawCircle(color = canvasBg, radius = w / 2f)
+
+        val leftHair = Path().apply {
+            moveTo(w * 0.28f, h * 0.45f)
+            cubicTo(w * 0.12f, h * 0.35f, w * 0.18f, h * 0.15f, w * 0.35f, h * 0.15f)
+            cubicTo(w * 0.32f, h * 0.3f, w * 0.35f, h * 0.4f, w * 0.38f, h * 0.42f)
+            close()
+        }
+        drawPath(leftHair, hairColor)
+
+        val rightHair = Path().apply {
+            moveTo(w * 0.72f, h * 0.45f)
+            cubicTo(w * 0.88f, h * 0.35f, w * 0.82f, h * 0.15f, w * 0.65f, h * 0.15f)
+            cubicTo(w * 0.68f, h * 0.3f, w * 0.65f, h * 0.4f, w * 0.62f, h * 0.42f)
+            close()
+        }
+        drawPath(rightHair, hairColor)
+
+        val topHair = Path().apply {
+            moveTo(w * 0.35f, h * 0.15f)
+            cubicTo(w * 0.4f, h * 0.08f, w * 0.6f, h * 0.08f, w * 0.65f, h * 0.15f)
+            cubicTo(w * 0.58f, h * 0.16f, w * 0.42f, h * 0.16f, w * 0.35f, h * 0.15f)
+            close()
+        }
+        drawPath(topHair, hairColor)
+
+        val facePath = Path().apply {
+            moveTo(w * 0.38f, h * 0.25f)
+            lineTo(w * 0.62f, h * 0.25f)
+            lineTo(w * 0.62f, h * 0.55f)
+            lineTo(w * 0.5f, h * 0.62f)
+            lineTo(w * 0.38f, h * 0.55f)
+            close()
+        }
+        drawPath(facePath, faceColor)
+
+        val leftEyebrow = Path().apply {
+            moveTo(w * 0.4f, h * 0.32f)
+            lineTo(w * 0.47f, h * 0.33f)
+        }
+        drawPath(leftEyebrow, Color.Black, style = Stroke(width = w * 0.04f))
+
+        val rightEyebrow = Path().apply {
+            moveTo(w * 0.60f, h * 0.32f)
+            lineTo(w * 0.53f, h * 0.33f)
+        }
+        drawPath(rightEyebrow, Color.Black, style = Stroke(width = w * 0.04f))
+
+        drawCircle(color = eyeColor, radius = w * 0.035f, center = Offset(w * 0.44f, h * 0.37f))
+        drawCircle(color = eyeColor, radius = w * 0.035f, center = Offset(w * 0.56f, h * 0.37f))
+
+        val nosePath = Path().apply {
+            moveTo(w * 0.5f, h * 0.35f)
+            lineTo(w * 0.47f, h * 0.46f)
+            lineTo(w * 0.53f, h * 0.46f)
+            close()
+        }
+        drawPath(nosePath, Color(0xFFE5A133))
+
+        val beardPath = Path().apply {
+            moveTo(w * 0.35f, h * 0.47f)
+            cubicTo(w * 0.2f, h * 0.62f, w * 0.3f, h * 0.95f, w * 0.5f, h * 0.95f)
+            cubicTo(w * 0.7f, h * 0.95f, w * 0.8f, h * 0.62f, w * 0.65f, h * 0.47f)
+            cubicTo(w * 0.6f, h * 0.55f, w * 0.4f, h * 0.55f, w * 0.35f, h * 0.47f)
+            close()
+        }
+        drawPath(beardPath, beardColor)
+
+        val mustachePath = Path().apply {
+            moveTo(w * 0.42f, h * 0.53f)
+            quadraticTo(w * 0.5f, h * 0.58f, w * 0.58f, h * 0.53f)
+            lineTo(w * 0.54f, h * 0.63f)
+            lineTo(w * 0.46f, h * 0.63f)
+            close()
+        }
+        drawPath(mustachePath, beardColor)
     }
 }
 
