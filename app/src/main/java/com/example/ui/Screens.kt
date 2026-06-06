@@ -368,15 +368,15 @@ fun ArgumentCard(
             .sharedBounds(
                 sharedContentState = rememberSharedContentState(key = "tab_argument_${argument.id}_${sourceKey}"),
                 animatedVisibilityScope = animatedVisibilityScope,
-                enter = fadeIn(animationSpec = tween(200)),
-                exit = fadeOut(animationSpec = tween(150)),
+                enter = fadeIn(animationSpec = tween(120)),
+                exit = fadeOut(animationSpec = tween(90)),
                 clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(12.dp)),
                 renderInOverlayDuringTransition = true,
                 resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(contentScale = androidx.compose.ui.layout.ContentScale.Crop),
                 boundsTransform = { _, _ ->
                     spring(
                         dampingRatio = Spring.DampingRatioNoBouncy,
-                        stiffness = Spring.StiffnessMedium
+                        stiffness = 2200f
                     )
                 }
             )
@@ -491,15 +491,15 @@ fun GlossaryCard(
             .sharedBounds(
                 sharedContentState = rememberSharedContentState(key = "tab_glossary_${item.id}_${sourceKey}"),
                 animatedVisibilityScope = animatedVisibilityScope,
-                enter = fadeIn(animationSpec = tween(200)),
-                exit = fadeOut(animationSpec = tween(150)),
+                enter = fadeIn(animationSpec = tween(120)),
+                exit = fadeOut(animationSpec = tween(90)),
                 clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(12.dp)),
                 renderInOverlayDuringTransition = true,
                 resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(contentScale = androidx.compose.ui.layout.ContentScale.Crop),
                 boundsTransform = { _, _ ->
                     spring(
                         dampingRatio = Spring.DampingRatioNoBouncy,
-                        stiffness = Spring.StiffnessMedium
+                        stiffness = 2200f
                     )
                 }
             )
@@ -606,15 +606,15 @@ fun LiteratureCard(
             .sharedBounds(
                 sharedContentState = rememberSharedContentState(key = "tab_literature_${item.id}_${sourceKey}"),
                 animatedVisibilityScope = animatedVisibilityScope,
-                enter = fadeIn(animationSpec = tween(200)),
-                exit = fadeOut(animationSpec = tween(150)),
+                enter = fadeIn(animationSpec = tween(120)),
+                exit = fadeOut(animationSpec = tween(90)),
                 clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(12.dp)),
                 renderInOverlayDuringTransition = true,
                 resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(contentScale = androidx.compose.ui.layout.ContentScale.Crop),
                 boundsTransform = { _, _ ->
                     spring(
                         dampingRatio = Spring.DampingRatioNoBouncy,
-                        stiffness = Spring.StiffnessMedium
+                        stiffness = 2200f
                     )
                 }
             )
