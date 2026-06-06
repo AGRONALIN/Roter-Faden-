@@ -194,11 +194,14 @@ fun LocalImageFromPath(path: String, modifier: Modifier) {
         }
     }
     if (bitmap != null) {
+        val aspectRatio = remember(bitmap) {
+            bitmap.width.toFloat() / bitmap.height.toFloat()
+        }
         androidx.compose.foundation.Image(
             bitmap = bitmap,
             contentDescription = "Eingefügtes Bild",
-            modifier = modifier,
-            contentScale = androidx.compose.ui.layout.ContentScale.Crop
+            modifier = modifier.aspectRatio(aspectRatio),
+            contentScale = androidx.compose.ui.layout.ContentScale.Fit
         )
     }
 }
@@ -383,14 +386,22 @@ fun InlineRichTextEditor(
     val context = androidx.compose.ui.platform.LocalContext.current
     val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
     
-    var blocks by remember(value) {
+    var lastSentValue by remember { mutableStateOf(value) }
+    var blocks by remember {
         mutableStateOf(textToBlocks(value))
+    }
+    
+    if (value != lastSentValue) {
+        blocks = textToBlocks(value)
+        lastSentValue = value
     }
     
     val updateParent = { newBlocks: List<EditorBlock> ->
         val clean = cleanAndMinimizeBlocks(newBlocks)
         blocks = clean
-        onValueChange(blocksToText(clean))
+        val outText = blocksToText(clean)
+        lastSentValue = outText
+        onValueChange(outText)
     }
 
     Column(
@@ -435,47 +446,10 @@ fun InlineRichTextEditor(
                             unfocusedTextColor = ImmersiveTextPrimary
                         ),
                         trailingIcon = {
-                            Row(
-                                modifier = Modifier.padding(end = 4.dp),
-                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            IconButton(
+                                onClick = { imagePickerLauncher.launch("image/*") }
                             ) {
-                                IconButton(
-                                    onClick = { imagePickerLauncher.launch("image/*") }
-                                ) {
-                                    Text("🖼️", fontSize = 16.sp)
-                                }
-                                IconButton(
-                                    onClick = {
-                                        val clip = clipboard?.primaryClip
-                                        if (clip != null && clip.itemCount > 0) {
-                                            val item = clip.getItemAt(0)
-                                            val uri = item.uri
-                                            val textPath = item.text?.toString()
-                                            val resolvedUri = when {
-                                                uri != null -> uri
-                                                textPath != null && (textPath.startsWith("content://") || textPath.startsWith("file://")) -> android.net.Uri.parse(textPath)
-                                                else -> null
-                                            }
-                                            if (resolvedUri != null) {
-                                                val copiedPath = copyUriToInternalStorage(context, resolvedUri)
-                                                if (copiedPath != null) {
-                                                    val newBlocks = blocks.toMutableList()
-                                                    newBlocks.add(index + 1, EditorBlock.Image("img_${System.currentTimeMillis()}", copiedPath))
-                                                    updateParent(newBlocks)
-                                                    android.widget.Toast.makeText(context, "Bild erfolgreich eingefügt!", android.widget.Toast.LENGTH_SHORT).show()
-                                                } else {
-                                                    android.widget.Toast.makeText(context, "Fehler beim Kopieren des Bildes", android.widget.Toast.LENGTH_SHORT).show()
-                                                }
-                                            } else {
-                                                android.widget.Toast.makeText(context, "Kein gültiges Bild in der Zwischenablage.", android.widget.Toast.LENGTH_SHORT).show()
-                                            }
-                                        } else {
-                                            android.widget.Toast.makeText(context, "Zwischenablage ist leer.", android.widget.Toast.LENGTH_SHORT).show()
-                                        }
-                                    }
-                                ) {
-                                    Text("📋", fontSize = 16.sp)
-                                }
+                                Text("🖼️", fontSize = 16.sp)
                             }
                         }
                     )
