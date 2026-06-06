@@ -295,16 +295,6 @@ fun ArgumentDetailScreen(
 
                 // 1. Anti-Marxist Statement Bubble
                 val immersiveGreenColor = ImmersiveGreen
-                val annotatedAntiMarxist = remember(argument.antiMarxistStatement, glossaryItems, literatureItems, immersiveGreenColor, literatureColor) {
-                    buildAutoLinkedText(
-                        text = argument.antiMarxistStatement,
-                        glossaryItems = glossaryItems,
-                        literatureItems = literatureItems,
-                        highlightColor = immersiveGreenColor,
-                        literatureColor = literatureColor,
-                        navController = navController
-                    )
-                }
 
                 Column(
                     modifier = Modifier
@@ -322,9 +312,14 @@ fun ArgumentDetailScreen(
                         ),
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
-                    Text(
-                        text = annotatedAntiMarxist,
-                        style = MaterialTheme.typography.titleLarge.copy(
+                    RichTextWithImages(
+                        text = argument.antiMarxistStatement,
+                        glossaryItems = glossaryItems,
+                        literatureItems = literatureItems,
+                        highlightColor = immersiveGreenColor,
+                        literatureColor = literatureColor,
+                        navController = navController,
+                        textStyle = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.Bold,
                             color = ImmersiveTextPrimary,
                             lineHeight = 28.sp,
@@ -336,17 +331,6 @@ fun ArgumentDetailScreen(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 // 2. Marxist Counter Argument Bubble
-                val annotatedMarxist = remember(argument.marxistCounterArgument, glossaryItems, literatureItems, immersiveGreenColor, literatureColor) {
-                    buildAutoLinkedText(
-                        text = argument.marxistCounterArgument,
-                        glossaryItems = glossaryItems,
-                        literatureItems = literatureItems,
-                        highlightColor = immersiveGreenColor,
-                        literatureColor = literatureColor,
-                        navController = navController
-                    )
-                }
-
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -363,9 +347,14 @@ fun ArgumentDetailScreen(
                         ),
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
-                    Text(
-                        text = annotatedMarxist,
-                        style = MaterialTheme.typography.titleLarge.copy(
+                    RichTextWithImages(
+                        text = argument.marxistCounterArgument,
+                        glossaryItems = glossaryItems,
+                        literatureItems = literatureItems,
+                        highlightColor = immersiveGreenColor,
+                        literatureColor = literatureColor,
+                        navController = navController,
+                        textStyle = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.Normal,
                             color = ImmersiveTextPrimary,
                             lineHeight = 32.sp,

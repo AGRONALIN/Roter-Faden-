@@ -134,20 +134,15 @@ fun LiteratureDetailScreen(
                 }
                 
                 val immersiveGreenColor = ImmersiveGreen
-                val annotatedSummary = remember(literatureItem.summary, glossaryItems, literatureItems, immersiveGreenColor, literatureColor) {
-                    buildAutoLinkedText(
-                        text = literatureItem.summary,
-                        glossaryItems = glossaryItems,
-                        literatureItems = literatureItems.filter { it.id != literatureItem.id },
-                        highlightColor = immersiveGreenColor,
-                        literatureColor = literatureColor,
-                        navController = navController
-                    )
-                }
 
-                Text(
-                    text = annotatedSummary,
-                    style = MaterialTheme.typography.bodyLarge.copy(
+                RichTextWithImages(
+                    text = literatureItem.summary,
+                    glossaryItems = glossaryItems,
+                    literatureItems = literatureItems.filter { it.id != literatureItem.id },
+                    highlightColor = immersiveGreenColor,
+                    literatureColor = literatureColor,
+                    navController = navController,
+                    textStyle = MaterialTheme.typography.bodyLarge.copy(
                         fontWeight = FontWeight.Normal,
                         color = ImmersiveTextSecondary,
                         lineHeight = 28.sp,

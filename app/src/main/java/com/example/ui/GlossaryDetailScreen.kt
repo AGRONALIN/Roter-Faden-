@@ -285,20 +285,15 @@ fun GlossaryDetailScreen(
                 }
                 
             val immersiveGreenColor = ImmersiveGreen
-            val annotatedDefinition = remember(glossaryItem.definition, glossaryItems, literatureItems, immersiveGreenColor, literatureColor) {
-                buildAutoLinkedText(
-                    text = glossaryItem.definition,
-                    glossaryItems = glossaryItems.filter { it.id != glossaryItem.id },
-                    literatureItems = literatureItems,
-                    highlightColor = immersiveGreenColor,
-                    literatureColor = literatureColor,
-                    navController = navController
-                )
-            }
 
-            Text(
-                text = annotatedDefinition,
-                style = MaterialTheme.typography.bodyLarge.copy(
+            RichTextWithImages(
+                text = glossaryItem.definition,
+                glossaryItems = glossaryItems.filter { it.id != glossaryItem.id },
+                literatureItems = literatureItems,
+                highlightColor = immersiveGreenColor,
+                literatureColor = literatureColor,
+                navController = navController,
+                textStyle = MaterialTheme.typography.bodyLarge.copy(
                     fontWeight = FontWeight.Normal,
                     color = ImmersiveTextSecondary,
                     lineHeight = 28.sp,

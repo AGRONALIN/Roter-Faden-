@@ -1,6 +1,8 @@
 package com.example.ui
 
 import android.content.Context
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
@@ -197,6 +199,168 @@ fun LocalImageFromPath(path: String, modifier: Modifier) {
             contentDescription = "Eingefügtes Bild",
             modifier = modifier,
             contentScale = androidx.compose.ui.layout.ContentScale.Crop
+        )
+    }
+}
+
+sealed class RichTextPart {
+    data class Text(val content: String) : RichTextPart()
+    data class Image(val path: String) : RichTextPart()
+}
+
+fun parseRichText(text: String): List<RichTextPart> {
+    val regex = "\\[image:([^\\]]+)\\]".toRegex()
+    val parts = mutableListOf<RichTextPart>()
+    var lastIndex = 0
+    
+    regex.findAll(text).forEach { matchResult ->
+        val matchStart = matchResult.range.first
+        val matchEnd = matchResult.range.last + 1
+        val imagePath = matchResult.groupValues[1]
+        
+        if (matchStart > lastIndex) {
+            parts.add(RichTextPart.Text(text.substring(lastIndex, matchStart)))
+        }
+        parts.add(RichTextPart.Image(imagePath))
+        lastIndex = matchEnd
+    }
+    
+    if (lastIndex < text.length) {
+        parts.add(RichTextPart.Text(text.substring(lastIndex)))
+    }
+    
+    return parts
+}
+
+@Composable
+fun RichTextWithImages(
+    text: String,
+    glossaryItems: List<com.example.data.GlossaryItem>,
+    literatureItems: List<com.example.data.LiteratureItem>,
+    highlightColor: Color,
+    literatureColor: Color,
+    navController: androidx.navigation.NavController,
+    modifier: Modifier = Modifier,
+    textStyle: androidx.compose.ui.text.TextStyle = MaterialTheme.typography.bodyLarge.copy(color = ImmersiveTextPrimary)
+) {
+    val parts = remember(text) { parseRichText(text) }
+    
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        parts.forEach { part ->
+            when (part) {
+                is RichTextPart.Text -> {
+                    val trimmedText = part.content
+                    if (trimmedText.isNotBlank() || trimmedText.contains('\n')) {
+                        val annotatedText = remember(trimmedText, glossaryItems, literatureItems, highlightColor, literatureColor) {
+                            buildAutoLinkedText(
+                                text = trimmedText,
+                                glossaryItems = glossaryItems,
+                                literatureItems = literatureItems,
+                                highlightColor = highlightColor,
+                                literatureColor = literatureColor,
+                                navController = navController
+                            )
+                        }
+                        Text(
+                            text = annotatedText,
+                            style = textStyle,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+                is RichTextPart.Image -> {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 120.dp, max = 280.dp)
+                            .clip(RoundedCornerShape(16.dp))
+                            .border(1.dp, ImmersiveBorder, RoundedCornerShape(16.dp))
+                    ) {
+                        LocalImageFromPath(
+                            path = part.path,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun InlineImageInsertBar(
+    textValue: String,
+    onTextChange: (String) -> Unit,
+    placeholderName: String = "Text"
+) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
+    
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        uri?.let {
+            val copiedPath = copyUriToInternalStorage(context, it)
+            if (copiedPath != null) {
+                val updatedText = if (textValue.endsWith("\n") || textValue.isEmpty()) {
+                    textValue + "[image:$copiedPath]\n"
+                } else {
+                    textValue + "\n[image:$copiedPath]\n"
+                }
+                onTextChange(updatedText)
+            }
+        }
+    }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        AssistChip(
+            onClick = { imagePickerLauncher.launch("image/*") },
+            label = { Text("Bild einfügen (Galerie) 🖼️", fontSize = 11.sp, color = ImmersiveTextPrimary) },
+            colors = AssistChipDefaults.assistChipColors(containerColor = ImmersiveSurface, labelColor = ImmersiveTextPrimary)
+        )
+        
+        AssistChip(
+            onClick = {
+                val clip = clipboard?.primaryClip
+                if (clip != null && clip.itemCount > 0) {
+                    val item = clip.getItemAt(0)
+                    val uri = item.uri
+                    val textPath = item.text?.toString()
+                    val resolvedUri = when {
+                        uri != null -> uri
+                        textPath != null && (textPath.startsWith("content://") || textPath.startsWith("file://")) -> android.net.Uri.parse(textPath)
+                        else -> null
+                    }
+                    if (resolvedUri != null) {
+                        val copiedPath = copyUriToInternalStorage(context, resolvedUri)
+                        if (copiedPath != null) {
+                            val updatedText = if (textValue.endsWith("\n") || textValue.isEmpty()) {
+                                textValue + "[image:$copiedPath]\n"
+                            } else {
+                                textValue + "\n[image:$copiedPath]\n"
+                            }
+                            onTextChange(updatedText)
+                            android.widget.Toast.makeText(context, "Bild erfolgreich aus Zwischenablage eingefügt!", android.widget.Toast.LENGTH_SHORT).show()
+                        } else {
+                            android.widget.Toast.makeText(context, "Fehler beim Kopieren des Bildes", android.widget.Toast.LENGTH_SHORT).show()
+                        }
+                    } else {
+                        android.widget.Toast.makeText(context, "Kein gültiges Bild in der Zwischenablage gefunden. Kopiere zuerst ein Bild.", android.widget.Toast.LENGTH_SHORT).show()
+                    }
+                } else {
+                    android.widget.Toast.makeText(context, "Zwischenablage ist leer.", android.widget.Toast.LENGTH_SHORT).show()
+                }
+            },
+            label = { Text("Aus Zwischenablage einfügen 📋", fontSize = 11.sp, color = ImmersiveTextPrimary) },
+            colors = AssistChipDefaults.assistChipColors(containerColor = ImmersiveSurface, labelColor = ImmersiveTextPrimary)
         )
     }
 }

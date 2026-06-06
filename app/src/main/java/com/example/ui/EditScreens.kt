@@ -131,6 +131,12 @@ fun EditArgumentScreen(
                 )
             )
 
+            InlineImageInsertBar(
+                textValue = antiMarxist,
+                onTextChange = { antiMarxist = it },
+                placeholderName = "Aufhänger/Argument"
+            )
+
             OutlinedTextField(
                 value = marxist,
                 onValueChange = { marxist = it },
@@ -148,6 +154,12 @@ fun EditArgumentScreen(
                     focusedTextColor = ImmersiveTextPrimary,
                     unfocusedTextColor = ImmersiveTextPrimary
                 )
+            )
+
+            InlineImageInsertBar(
+                textValue = marxist,
+                onTextChange = { marxist = it },
+                placeholderName = "Gegenargument"
             )
 
             imagePath?.let { path ->
@@ -383,6 +395,12 @@ fun EditGlossaryScreen(
                         )
                     )
 
+                    InlineImageInsertBar(
+                        textValue = definition,
+                        onTextChange = { definition = it },
+                        placeholderName = "Definition"
+                    )
+
                     imagePath?.let { path ->
                         Box(
                             modifier = Modifier
@@ -614,6 +632,12 @@ fun EditLiteratureScreen(
                             focusedContainerColor = ImmersiveSurface,
                             unfocusedContainerColor = ImmersiveSurface
                         )
+                    )
+
+                    InlineImageInsertBar(
+                        textValue = summary,
+                        onTextChange = { summary = it },
+                        placeholderName = "Inhalt"
                     )
 
                     imagePath?.let { path ->
