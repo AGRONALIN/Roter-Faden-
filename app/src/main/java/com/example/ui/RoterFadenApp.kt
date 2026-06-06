@@ -263,12 +263,12 @@ fun RoterFadenApp(viewModel: AppViewModel) {
                             targetState = currentTab,
                             transitionSpec = {
                                 if (targetState > initialState) {
-                                    slideInHorizontally(animationSpec = spring(stiffness = 800f, dampingRatio = 0.9f)) { width -> width }.togetherWith(
-                                        slideOutHorizontally(animationSpec = spring(stiffness = 800f, dampingRatio = 0.9f)) { width -> -width }
+                                    slideInHorizontally(animationSpec = tween(220, easing = FastOutSlowInEasing)) { width -> width }.togetherWith(
+                                        slideOutHorizontally(animationSpec = tween(220, easing = FastOutSlowInEasing)) { width -> -width }
                                     ).using(SizeTransform(clip = false))
                                 } else {
-                                    slideInHorizontally(animationSpec = spring(stiffness = 800f, dampingRatio = 0.9f)) { width -> -width }.togetherWith(
-                                        slideOutHorizontally(animationSpec = spring(stiffness = 800f, dampingRatio = 0.9f)) { width -> width }
+                                    slideInHorizontally(animationSpec = tween(220, easing = FastOutSlowInEasing)) { width -> -width }.togetherWith(
+                                        slideOutHorizontally(animationSpec = tween(220, easing = FastOutSlowInEasing)) { width -> width }
                                     ).using(SizeTransform(clip = false))
                                 }
                             },

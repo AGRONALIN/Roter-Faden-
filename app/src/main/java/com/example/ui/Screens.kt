@@ -121,7 +121,7 @@ fun HomeScreen(
                     .verticalFadingEdge(topEdge = 20.dp, bottomEdge = 40.dp),
                 contentPadding = PaddingValues(bottom = 120.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
-                userScrollEnabled = !sharedTransitionScope.isTransitionActive
+                userScrollEnabled = animatedVisibilityScope.transition.currentState == animatedVisibilityScope.transition.targetState
             ) {
                 // Header (always visible, scrolls with list)
                 item {
@@ -785,7 +785,7 @@ fun SearchScreen(
                     .padding(horizontal = 24.dp),
                 contentPadding = PaddingValues(top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 160.dp, bottom = 120.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
-                userScrollEnabled = !sharedTransitionScope.isTransitionActive
+                userScrollEnabled = animatedVisibilityScope.transition.currentState == animatedVisibilityScope.transition.targetState
             ) {
                 item {
                     val interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }

@@ -4,7 +4,7 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -461,29 +461,32 @@ fun CollectionScreen(
                         .verticalFadingEdge(topEdge = 32.dp, bottomEdge = 40.dp),
                     targetState = selectedTabIndex,
                     transitionSpec = {
-                        val springSpec = androidx.compose.animation.core.spring<androidx.compose.ui.unit.IntOffset>(
-                            dampingRatio = 0.8f,
-                            stiffness = 50f
+                        val animSpec = tween<androidx.compose.ui.unit.IntOffset>(
+                            durationMillis = 220,
+                            easing = FastOutSlowInEasing
                         )
-                        val fadeSpec = tween<Float>(800)
+                        val fadeSpec = tween<Float>(
+                            durationMillis = 180,
+                            easing = FastOutSlowInEasing
+                        )
 
                         if (targetState > initialState) {
                             (slideInHorizontally(
-                                animationSpec = springSpec,
+                                animationSpec = animSpec,
                                 initialOffsetX = { fullWidth -> fullWidth }
                             ) + fadeIn(animationSpec = fadeSpec)).togetherWith(
                                 slideOutHorizontally(
-                                    animationSpec = springSpec,
+                                    animationSpec = animSpec,
                                     targetOffsetX = { fullWidth -> -fullWidth }
                                 ) + fadeOut(animationSpec = fadeSpec)
                             )
                         } else {
                             (slideInHorizontally(
-                                animationSpec = springSpec,
+                                animationSpec = animSpec,
                                 initialOffsetX = { fullWidth -> -fullWidth }
                             ) + fadeIn(animationSpec = fadeSpec)).togetherWith(
                                 slideOutHorizontally(
-                                    animationSpec = springSpec,
+                                    animationSpec = animSpec,
                                     targetOffsetX = { fullWidth -> fullWidth }
                                 ) + fadeOut(animationSpec = fadeSpec)
                             )
@@ -491,6 +494,9 @@ fun CollectionScreen(
                     },
                     label = "tab animation"
                 ) { targetIndex ->
+                    val isParentTabTransitionActive = animatedVisibilityScope.transition.currentState != animatedVisibilityScope.transition.targetState
+                    val isSubTabTransitionActive = transition.currentState != transition.targetState
+                    val isScrollLocked = isParentTabTransitionActive || isSubTabTransitionActive
                     when (targetIndex) {
                         0 -> {
                             LazyColumn(
@@ -498,7 +504,7 @@ fun CollectionScreen(
                                 modifier = Modifier.fillMaxSize(),
                                 contentPadding = PaddingValues(bottom = 120.dp, top = 32.dp),
                                 verticalArrangement = Arrangement.spacedBy(16.dp),
-                                userScrollEnabled = !sharedTransitionScope.isTransitionActive
+                                userScrollEnabled = !isScrollLocked
                             ) {
                                 if (allArguments.isEmpty()) {
                                     item {
@@ -549,7 +555,7 @@ fun CollectionScreen(
                                 modifier = Modifier.fillMaxSize(),
                                 contentPadding = PaddingValues(bottom = 120.dp, top = 32.dp),
                                 verticalArrangement = Arrangement.spacedBy(16.dp),
-                                userScrollEnabled = !sharedTransitionScope.isTransitionActive
+                                userScrollEnabled = !isScrollLocked
                             ) {
                                 if (allGlossaryItems.isEmpty()) {
                                     item {
@@ -600,7 +606,7 @@ fun CollectionScreen(
                                 modifier = Modifier.fillMaxSize(),
                                 contentPadding = PaddingValues(bottom = 120.dp, top = 32.dp),
                                 verticalArrangement = Arrangement.spacedBy(16.dp),
-                                userScrollEnabled = !sharedTransitionScope.isTransitionActive
+                                userScrollEnabled = !isScrollLocked
                             ) {
                                 if (allLiteratureItems.isEmpty()) {
                                     item {
