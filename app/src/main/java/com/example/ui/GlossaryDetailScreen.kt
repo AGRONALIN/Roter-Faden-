@@ -274,13 +274,12 @@ fun GlossaryDetailScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 glossaryItem.imagePath?.let { path ->
-                    LocalImageFromPath(
+                    TransformableLocalImage(
                         path = path,
+                        transformKey = "glossary_${glossaryItem.id}",
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(240.dp)
-                            .clip(RoundedCornerShape(16.dp))
-                            .border(1.dp, ImmersiveBorder, RoundedCornerShape(16.dp))
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                 }
