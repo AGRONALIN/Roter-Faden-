@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
+import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.material.icons.filled.AutoStories
@@ -81,9 +82,26 @@ fun HomeScreen(
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val coroutineScope = rememberCoroutineScope()
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    val configuration = androidx.compose.ui.platform.LocalConfiguration.current
+    
     var isSpinningAndZooming by remember { mutableStateOf(false) }
     var currentRotation by remember { mutableStateOf(0f) }
     var currentScale by remember { mutableStateOf(1f) }
+    var currentTranslationX by remember { mutableStateOf(0f) }
+    var currentTranslationY by remember { mutableStateOf(0f) }
+    var buttonCenterInWindow by remember { mutableStateOf(Offset.Zero) }
+
+    val windowWidth = with(density) { configuration.screenWidthDp.dp.toPx() }
+    val windowHeight = with(density) { configuration.screenHeightDp.dp.toPx() }
+
+    val translationVector = remember(buttonCenterInWindow, windowWidth, windowHeight) {
+        if (buttonCenterInWindow == Offset.Zero) {
+            Offset.Zero
+        } else {
+            Offset(windowWidth / 2f - buttonCenterInWindow.x, windowHeight / 2f - buttonCenterInWindow.y)
+        }
+    }
 
     val recentArguments by viewModel.recentArguments.collectAsState()
     val customMarxImagePath by viewModel.customMarxImagePath.collectAsState()
@@ -91,10 +109,12 @@ fun HomeScreen(
     val topRecentArguments = remember(recentArguments) { recentArguments.take(3) }
 
     // Reverse (zoom-out/zoom-down) transition when returning from Marx Chat
-    LaunchedEffect(isReturningFromMarx) {
+    LaunchedEffect(isReturningFromMarx, translationVector) {
         if (isReturningFromMarx) {
             currentScale = 45f
             currentRotation = 720f
+            currentTranslationX = translationVector.x
+            currentTranslationY = translationVector.y
             isSpinningAndZooming = true
             
             val returnDurationMs = 600L
@@ -102,14 +122,19 @@ fun HomeScreen(
             while (System.currentTimeMillis() - startTime < returnDurationMs) {
                 val progress = (System.currentTimeMillis() - startTime).toFloat() / returnDurationMs
                 val eased = 1f - progress
+                val easedCube = eased * eased * eased
                 // Smooth cubic transition down to 1f
-                currentScale = 1f + (eased * eased * eased * 44f)
+                currentScale = 1f + (easedCube * 44f)
+                currentTranslationX = easedCube * translationVector.x
+                currentTranslationY = easedCube * translationVector.y
                 currentRotation = eased * 720f
                 kotlinx.coroutines.delay(16)
             }
             
             currentScale = 1f
             currentRotation = 0f
+            currentTranslationX = 0f
+            currentTranslationY = 0f
             isSpinningAndZooming = false
             viewModel.setReturningFromMarx(false)
         }
@@ -276,6 +301,9 @@ fun HomeScreen(
                                     Box(
                                         modifier = Modifier
                                             .size(80.dp)
+                                            .onGloballyPositioned { coords ->
+                                                buttonCenterInWindow = coords.boundsInWindow().center
+                                            }
                                             .then(
                                                 if (!hasCustomImage) {
                                                     Modifier
@@ -288,7 +316,9 @@ fun HomeScreen(
                                             .graphicsLayer(
                                                 scaleX = currentScale,
                                                 scaleY = currentScale,
-                                                rotationZ = currentRotation
+                                                rotationZ = currentRotation,
+                                                translationX = currentTranslationX,
+                                                translationY = currentTranslationY
                                             )
                                             .then(
                                                 if (isSpinningAndZooming) {
@@ -319,7 +349,9 @@ fun HomeScreen(
                                                             while (System.currentTimeMillis() - zoomStartTime < zoomDuration) {
                                                                 val progress = (System.currentTimeMillis() - zoomStartTime).toFloat() / zoomDuration
                                                                 val eased = progress * progress * progress
-                                                                currentScale = 1f + (eased * 45f)
+                                                                currentScale = 1f + (eased * 44f)
+                                                                currentTranslationX = eased * translationVector.x
+                                                                currentTranslationY = eased * translationVector.y
                                                                 currentRotation += speed
                                                                 speed += 0.15f
                                                                 kotlinx.coroutines.delay(16)
