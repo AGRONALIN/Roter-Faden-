@@ -36,9 +36,23 @@ class AppViewModel(
 ) : ViewModel() {
     private val aiRepository: com.example.data.AiAssistantRepository = com.example.data.AiAssistantRepositoryImpl()
 
+    val activeNpcId = MutableStateFlow<String>("marx")
+
     val marxChatHistory = MutableStateFlow<List<com.example.data.ChatMessage>>(emptyList())
     val isMarxThinking = MutableStateFlow<Boolean>(false)
     val marxSpeechBubbleText = MutableStateFlow<String>("Heilige Allianz der Ausbeuter! Du hast den unerbittlichen Klassenkampf in Gang gesetzt, Genosse! Frag mich, was du willst, und ich zeige dir die marxistische Wahrheit!")
+
+    val engelsChatHistory = MutableStateFlow<List<com.example.data.ChatMessage>>(emptyList())
+    val isEngelsThinking = MutableStateFlow<Boolean>(false)
+    val engelsSpeechBubbleText = MutableStateFlow<String>("AHA! Werter Genosse! Willkommen im Manchester-Büro. Ich habe gerade die Garnrechnungen frisiert, damit wir Karls neues Buch finanzieren können. Was bedrückt dich ökonomisch?")
+
+    val leninChatHistory = MutableStateFlow<List<com.example.data.ChatMessage>>(emptyList())
+    val isLeninThinking = MutableStateFlow<Boolean>(false)
+    val leninSpeechBubbleText = MutableStateFlow<String>("Genosse! Keine Zeit für reformistisches Geschwätz! Das Volk hungert, die Bourgeoisie zittert, und die Telegrafenstationen müssen besetzt werden! Welche revolutionäre Tat besprechen wir?")
+
+    val luxemburgChatHistory = MutableStateFlow<List<com.example.data.ChatMessage>>(emptyList())
+    val isLuxemburgThinking = MutableStateFlow<Boolean>(false)
+    val luxemburgSpeechBubbleText = MutableStateFlow<String>("Freund der Freiheit! Schön, dich hier im Rosengarten der Revolution zu treffen. Wahre Freiheit ist immer Freiheit des Andersdenkenden. Sag, welche Poesie des Befreiungskampfes bewegt dich?")
 
     val customMarxImagePath = MutableStateFlow<String?>(
         sharedPreferences.getString("custom_marx_image_path", null)
@@ -84,32 +98,95 @@ class AppViewModel(
     fun askKarlMarx(question: String) {
         if (question.isBlank()) return
         val trimmed = question.trim()
-        
-        val updatedHistory = marxChatHistory.value + com.example.data.ChatMessage("user", trimmed)
-        marxChatHistory.value = updatedHistory
-        
-        isMarxThinking.value = true
-        marxSpeechBubbleText.value = "Karl Marx schärft seine Feder..."
-        
+        val characterId = activeNpcId.value
+
         viewModelScope.launch {
             try {
-                val response = aiRepository.getMarxResponse(trimmed, updatedHistory)
-                marxSpeechBubbleText.value = response
-                marxChatHistory.value = marxChatHistory.value + com.example.data.ChatMessage("model", response)
+                if (characterId == "marx") {
+                    val updatedHistory = marxChatHistory.value + com.example.data.ChatMessage("user", trimmed)
+                    marxChatHistory.value = updatedHistory
+                    isMarxThinking.value = true
+                    marxSpeechBubbleText.value = "Karl Marx schärft seine Feder..."
+                    
+                    val response = aiRepository.getNpcResponse("marx", trimmed, updatedHistory)
+                    marxSpeechBubbleText.value = response
+                    marxChatHistory.value = marxChatHistory.value + com.example.data.ChatMessage("model", response)
+                } else if (characterId == "engels") {
+                    val updatedHistory = engelsChatHistory.value + com.example.data.ChatMessage("user", trimmed)
+                    engelsChatHistory.value = updatedHistory
+                    isEngelsThinking.value = true
+                    engelsSpeechBubbleText.value = "Friedrich Engels rechnet die Finanzen nach..."
+                    
+                    val response = aiRepository.getNpcResponse("engels", trimmed, updatedHistory)
+                    engelsSpeechBubbleText.value = response
+                    engelsChatHistory.value = engelsChatHistory.value + com.example.data.ChatMessage("model", response)
+                } else if (characterId == "lenin") {
+                    val updatedHistory = leninChatHistory.value + com.example.data.ChatMessage("user", trimmed)
+                    leninChatHistory.value = updatedHistory
+                    isLeninThinking.value = true
+                    leninSpeechBubbleText.value = "Lenin entwirft ein revolutionäres Dekret..."
+                    
+                    val response = aiRepository.getNpcResponse("lenin", trimmed, updatedHistory)
+                    leninSpeechBubbleText.value = response
+                    leninChatHistory.value = leninChatHistory.value + com.example.data.ChatMessage("model", response)
+                } else if (characterId == "luxemburg") {
+                    val updatedHistory = luxemburgChatHistory.value + com.example.data.ChatMessage("user", trimmed)
+                    luxemburgChatHistory.value = updatedHistory
+                    isLuxemburgThinking.value = true
+                    luxemburgSpeechBubbleText.value = "Rosa Luxemburg verfasst leidenschaftlich einen Text..."
+                    
+                    val response = aiRepository.getNpcResponse("luxemburg", trimmed, updatedHistory)
+                    luxemburgSpeechBubbleText.value = response
+                    luxemburgChatHistory.value = luxemburgChatHistory.value + com.example.data.ChatMessage("model", response)
+                }
             } catch (e: Exception) {
-                val errorMsg = "Kompagnon! Mein Gehirn streikt gerade aufgrund von akuter Ausbeutung: ${e.localizedMessage}"
-                marxSpeechBubbleText.value = errorMsg
-                marxChatHistory.value = marxChatHistory.value + com.example.data.ChatMessage("model", errorMsg)
+                val errorMsg = "Genosse! Ein Fehler in der Netzinfrastruktur bremst die Revolution aus: ${e.localizedMessage}"
+                when (characterId) {
+                    "marx" -> {
+                        marxSpeechBubbleText.value = errorMsg
+                        marxChatHistory.value = marxChatHistory.value + com.example.data.ChatMessage("model", errorMsg)
+                    }
+                    "engels" -> {
+                        engelsSpeechBubbleText.value = errorMsg
+                        engelsChatHistory.value = engelsChatHistory.value + com.example.data.ChatMessage("model", errorMsg)
+                    }
+                    "lenin" -> {
+                        leninSpeechBubbleText.value = errorMsg
+                        leninChatHistory.value = leninChatHistory.value + com.example.data.ChatMessage("model", errorMsg)
+                    }
+                    "luxemburg" -> {
+                        luxemburgSpeechBubbleText.value = errorMsg
+                        luxemburgChatHistory.value = luxemburgChatHistory.value + com.example.data.ChatMessage("model", errorMsg)
+                    }
+                }
             } finally {
                 isMarxThinking.value = false
+                isEngelsThinking.value = false
+                isLeninThinking.value = false
+                isLuxemburgThinking.value = false
             }
         }
     }
 
     fun clearMarxChat() {
-        marxChatHistory.value = emptyList()
-        marxSpeechBubbleText.value = "Heilige Allianz der Ausbeuter! Du hast den unerbittlichen Klassenkampf in Gang gesetzt, Genosse! Frag mich, was du willst, und ich zeige dir die marxistische Wahrheit!"
-        isMarxThinking.value = false
+        val characterId = activeNpcId.value
+        if (characterId == "marx") {
+            marxChatHistory.value = emptyList()
+            marxSpeechBubbleText.value = "Heilige Allianz der Ausbeuter! Du hast den unerbittlichen Klassenkampf in Gang gesetzt, Genosse! Frag mich, was du willst, und ich zeige dir die marxistische Wahrheit!"
+            isMarxThinking.value = false
+        } else if (characterId == "engels") {
+            engelsChatHistory.value = emptyList()
+            engelsSpeechBubbleText.value = "AHA! Werter Genosse! Willkommen im Manchester-Büro. Ich habe gerade die Garnrechnungen frisiert, damit wir Karls neues Buch finanzieren können. Was bedrückt dich ökonomisch?"
+            isEngelsThinking.value = false
+        } else if (characterId == "lenin") {
+            leninChatHistory.value = emptyList()
+            leninSpeechBubbleText.value = "Genosse! Keine Zeit für reformistisches Geschwätz! Das Volk hungert, die Bourgeoisie zittert, und die Telegrafenstationen müssen besetzt werden! Welche revolutionäre Tat besprechen wir?"
+            isLeninThinking.value = false
+        } else if (characterId == "luxemburg") {
+            luxemburgChatHistory.value = emptyList()
+            luxemburgSpeechBubbleText.value = "Freund der Freiheit! Schön, dich hier im Rosengarten der Revolution zu treffen. Wahre Freiheit ist immer Freiheit des Andersdenkenden. Sag, welche Poesie des Befreiungskampfes bewegt dich?"
+            isLuxemburgThinking.value = false
+        }
     }
 
     val isReturningFromMarx = MutableStateFlow<Boolean>(false)
